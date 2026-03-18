@@ -318,23 +318,55 @@ No phases. No waves. No gates. Agents reasoning their way to a complete app.
 ## NOTES FOR FUTURE SESSIONS
 
 ### What's Been Done
-- Engine built and tested (~6,200 lines, 52 files)
-- Server with auth, project CRUD, OAuth catalog (178 providers), SSE streaming
+- Engine built and tested (~7,000 lines, 52 files in `src/`)
+- Server with auth, project CRUD, OAuth catalog (178 providers), SSE streaming, request tracing
 - Client with login, signup, dashboard, builder with premium streaming chat UI
 - Unified Feed + Swim Lane views with SDF agent icons, Brain orb, correction prompts
-- Full auth flow working (Better Auth + Supabase PostgreSQL)
-- Project creation and isolation verified
+- Full auth flow working (Better Auth + Supabase PostgreSQL) — AUTH_SPEC.md defines immutable contract
+- Project creation and isolation verified (cross-user, cross-project)
 - System sort of 154 old app systems completed (see `SYSTEM_SORT.md`)
+- Architecture enforcement: `scripts/check-modularity.sh` + `scripts/check-mechanical.sh` + Husky hooks
+- Mechanical pattern scan: ZERO violations across all 11 prohibitions (see `MECHANICAL_SCAN_REPORT.md`)
+
+### Deployment Infrastructure (as of 2026-03-18)
+- **Frontend**: Vercel project `kriptik-ai-opus-build` → kriptik.app (Vite, Node 22)
+- **Backend**: Vercel project `kriptik-ai-opus-build-backend` → api.kriptik.app (Express serverless)
+- **Modal**: App `kriptik-engine` deployed with Node 22 + Playwright image
+  - Build endpoint: `https://logantbaird--kriptik-engine-start-build.modal.run`
+  - Volumes: `kriptik-brains` (Brain SQLite), `kriptik-sandboxes` (generated code)
+  - Secrets: `kriptik-env` (API keys from Vercel)
+- **Supabase**: PostgreSQL with 8 tables (users, session, account, verification, projects, build_events, credentials, oauth_states)
+- **GitHub**: `Flickinny11/kriptik-engine`, both Vercel projects linked
+- **Vercel Team**: `team_Dc3dRfYzsIxYPiaqu2kgVcJJ` (Logan's projects)
+
+### Build Execution Dual Path
+`server/src/routes/execute.ts` has two paths:
+- **Modal path** (when `MODAL_ENABLED=true`): Calls Modal HTTP endpoint, events streamed back
+- **Local path** (default): Lazy-imports engine from `src/`, runs in-process
+The `MODAL_SPAWN_URL` env var points to the Modal web endpoint.
+
+### Stripe Integration (needs reconfiguration)
+The old app's Stripe setup used mechanical tier-based billing (Starter/Builder/Developer/Pro plans).
+The new engine needs **credit-based billing** where users buy credits that are consumed per-build
+based on LLM token usage. The Stripe product/price IDs on Vercel are from the old tier system.
+New billing system needs:
+- Credit packages (replace tier subscriptions)
+- Per-build cost tracking (engine already tracks estimated spend via `budgetCapDollars`)
+- Webhook handler for credit purchases
+- UI for credit balance + purchase flow
 
 ### What's NOT Done Yet
-- Anthropic API key not configured (engine can't actually build yet)
+- Anthropic API key needs to be activated (key exists in Vercel, just disabled)
 - OAuth individual provider flows (catalog exists, flows not wired)
-- Credential vault encryption (structure exists, AES-256 not implemented)
+- Credential vault encryption (AES-256-GCM structure exists, uses BETTER_AUTH_SECRET as fallback)
 - Deploy tools (Vercel, GitHub) not in engine yet
 - Interaction testing tool not in engine yet
 - Fix My App / Import App capture tools not in engine yet
 - Vision tool stubs not implemented
 - Mobile responsive optimization
+- Stripe billing reconfiguration (old tiers → credit-based)
+- Live UI preview via Modal tunnel (infrastructure exists, not wired to frontend iframe)
+- Sandbox prewarming on user login (architecture designed, not implemented)
 
 ### Critical Reminders
 - The engine in `src/` is UNTOUCHABLE without explicit permission
@@ -344,3 +376,8 @@ No phases. No waves. No gates. Agents reasoning their way to a complete app.
 - Design_References.md is the ONLY source of allowed UI dependencies
 - Every UI element must have depth, realistic shadows — no flat CSS
 - No lucide-react, no emojis, no icon libraries — custom SDF/3D only
+- AUTH_SPEC.md is the immutable auth contract — read it before touching auth
+- `@types/*` and `typescript` must be in server `dependencies` (not devDeps) for Vercel builds
+- Server TypeScript must NOT import engine paths directly — use inline types + opaque dynamic import
+- Modal image needs `tsx` installed locally in `/app` (not just globally)
+- Client uses `@react-three/drei@10.7.7` which needs `--legacy-peer-deps` for React 18

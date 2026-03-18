@@ -45,7 +45,7 @@ engine_image = (
     .add_local_file("package-lock.json", "/app/package-lock.json", copy=True)
     .add_local_file("tsconfig.json", "/app/tsconfig.json", copy=True)
     .add_local_file("modal/run-engine.ts", "/app/run-engine.ts", copy=True)
-    .run_commands("cd /app && npm ci --omit=dev")
+    .run_commands("cd /app && npm ci --omit=dev && npm install tsx@4")
 )
 
 # Persistent volumes
