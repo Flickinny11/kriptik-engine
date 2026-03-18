@@ -78,7 +78,7 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
     return (
       <div className="border border-green-500/20 rounded-lg p-4 bg-green-500/5">
         <div className="flex items-center gap-2 text-green-400 text-sm font-medium">
-          <CheckIconsize={16} />
+          <CheckIcon size={16} />
           Answered: {selectedOption || textAnswer}
         </div>
       </div>
@@ -128,7 +128,7 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
                     onClick={(e) => { e.stopPropagation(); handleConnect(matchedProvider.id); }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-kriptik-lime/10 text-kriptik-lime text-xs font-medium rounded-md hover:bg-kriptik-lime/20 transition-colors"
                   >
-                    <LinkIconsize={12} />
+                    <LinkIcon size={12} />
                     Connect
                   </button>
                 )}
@@ -136,7 +136,7 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
                 {/* Connected indicator */}
                 {isConnected && (
                   <span className="flex items-center gap-1.5 px-3 py-1.5 text-green-400 text-xs font-medium">
-                    <CheckIconsize={12} />
+                    <CheckIcon size={12} />
                     Connected
                   </span>
                 )}

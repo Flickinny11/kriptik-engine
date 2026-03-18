@@ -88,7 +88,7 @@ export default function Dashboard() {
             onClick={() => { logout(); navigate('/login'); }}
             className="text-kriptik-silver hover:text-kriptik-white transition-colors"
           >
-            <LogOutIconsize={18} />
+            <LogOutIcon size={18} />
           </button>
         </div>
       </header>
@@ -121,7 +121,7 @@ export default function Dashboard() {
               disabled={!prompt.trim() || isGenerating}
               className="absolute bottom-4 right-4 bg-kriptik-lime text-kriptik-black px-5 py-2 rounded-lg font-semibold text-sm flex items-center gap-2 hover:bg-kriptik-lime/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              <SparklesIconsize={16} />
+              <SparklesIcon size={16} />
               {isGenerating ? 'Creating...' : 'Generate'}
             </button>
           </div>
@@ -137,7 +137,7 @@ export default function Dashboard() {
               onClick={() => setShowNewProjectWizard(true)}
               className="flex items-center gap-2 px-4 py-2 bg-kriptik-charcoal border border-white/10 rounded-lg text-sm text-kriptik-white hover:border-kriptik-lime/30 transition-all"
             >
-              <PlusIconsize={16} />
+              <PlusIcon size={16} />
               New Project
             </button>
           </div>
@@ -190,7 +190,7 @@ export default function Dashboard() {
                   onClick={() => setShowNewProjectWizard(false)}
                   className="text-kriptik-silver hover:text-kriptik-white transition-colors"
                 >
-                  <XIconsize={18} />
+                  <XIcon size={18} />
                 </button>
               </div>
               <p className="text-sm text-kriptik-silver mb-4">
