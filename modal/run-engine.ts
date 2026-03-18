@@ -4,11 +4,39 @@
  * Reads JSON config from stdin, initializes the engine, and streams
  * newline-delimited JSON events to stdout. Each line is one EngineEvent.
  *
+ * Fixes applied:
+ * - Single event listener (no duplicate registration)
+ * - Graceful shutdown on SIGTERM/SIGINT (prevents Brain DB corruption)
+ * - No duplicate build_complete event (engine emits its own)
+ *
  * Usage (inside Modal container):
  *   echo '{"projectId":"abc","prompt":"Build me a todo app",...}' | node --import tsx run-engine.ts
  */
 
 import { initEngine } from './src/index.js';
+
+let engineHandle: any = null;
+
+// Graceful shutdown — ensures Brain DB is closed properly
+async function shutdown(signal: string) {
+  writeEvent({
+    type: 'build_progress',
+    data: { message: `Shutting down (${signal})...` },
+  });
+
+  if (engineHandle) {
+    try {
+      await engineHandle.terminate();
+    } catch {
+      // Best-effort cleanup
+    }
+  }
+
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 async function main() {
   // Read config from stdin
@@ -33,7 +61,6 @@ async function main() {
     process.exit(1);
   }
 
-  // Write a startup event
   writeEvent({
     type: 'build_progress',
     data: { message: 'Engine initializing...', projectId },
@@ -53,31 +80,27 @@ async function main() {
       budgetCapDollars,
     });
 
-    // Stream events to stdout as newline-delimited JSON
-    handle.onEvent((event: any) => {
-      writeEvent(event);
-    });
+    engineHandle = handle;
 
     writeEvent({
       type: 'build_progress',
       data: { message: 'Engine started, Lead Agent reasoning...', projectId },
     });
 
-    // Wait for the engine to complete
-    // The engine runs until the Lead Agent determines all intents are satisfied
-    // or the budget is exhausted
+    // Single event listener — streams events AND detects completion
     await new Promise<void>((resolve) => {
       handle.onEvent((event: any) => {
+        writeEvent(event);
+
         if (event.type === 'build_complete' || event.type === 'build_error') {
           resolve();
         }
       });
     });
 
-    writeEvent({
-      type: 'build_complete',
-      data: { message: 'Build finished', projectId },
-    });
+    // Gracefully close the engine (flushes Brain DB)
+    await handle.terminate();
+    engineHandle = null;
 
   } catch (error: any) {
     writeEvent({
@@ -88,6 +111,12 @@ async function main() {
         projectId,
       },
     });
+
+    // Still try to close engine gracefully
+    if (engineHandle) {
+      try { await engineHandle.terminate(); } catch { /* best-effort */ }
+    }
+
     process.exit(1);
   }
 
@@ -95,7 +124,6 @@ async function main() {
 }
 
 function writeEvent(event: any) {
-  // Write as newline-delimited JSON to stdout
   process.stdout.write(JSON.stringify(event) + '\n');
 }
 

@@ -250,7 +250,7 @@ export default function Builder() {
                 src={previewUrl}
                 className="w-full h-full border-0"
                 title="App Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                sandbox="allow-scripts allow-forms allow-popups"
               />
             ) : (
               <div className="text-center">

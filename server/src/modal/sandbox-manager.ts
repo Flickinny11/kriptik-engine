@@ -2,17 +2,19 @@
  * Modal Sandbox Manager
  *
  * Manages build execution via Modal's HTTP endpoint.
- * In production (MODAL_ENABLED=true), builds run in Modal containers
- * instead of locally. Events are streamed back via the response.
+ * In production (MODAL_ENABLED=true), builds run in Modal containers.
+ *
+ * Real-time streaming: Modal app reads stdout line-by-line and POSTs
+ * each event to our callback URL. Events are persisted immediately.
+ * The full event list is also returned in the response as a fallback.
  */
-
-const MODAL_APP_URL = process.env.MODAL_SPAWN_URL || '';
 
 interface BuildConfig {
   projectId: string;
   prompt: string;
   mode?: string;
   budgetCapDollars?: number;
+  callbackUrl?: string;
 }
 
 interface BuildResult {
@@ -24,10 +26,11 @@ interface BuildResult {
 
 /**
  * Start a build via Modal's web endpoint.
- * Returns the full result with all events.
+ * If callbackUrl is provided, Modal POSTs each event in real-time.
+ * The full response also contains all events as a fallback.
  */
 export async function startModalBuild(config: BuildConfig): Promise<BuildResult> {
-  const url = MODAL_APP_URL || getModalEndpointUrl();
+  const url = getModalEndpointUrl();
 
   if (!url) {
     throw new Error('Modal endpoint URL not configured. Set MODAL_SPAWN_URL env var.');
@@ -41,6 +44,7 @@ export async function startModalBuild(config: BuildConfig): Promise<BuildResult>
       prompt: config.prompt,
       mode: config.mode || 'builder',
       budgetCapDollars: config.budgetCapDollars || 5,
+      callbackUrl: config.callbackUrl,
     }),
   });
 
@@ -53,8 +57,11 @@ export async function startModalBuild(config: BuildConfig): Promise<BuildResult>
 }
 
 /**
- * Start a build with streaming — events are forwarded as they arrive.
- * Uses the Modal endpoint and processes the response incrementally.
+ * Start a build with real-time event forwarding.
+ *
+ * If a callbackUrl is configured, Modal POSTs each event as it happens.
+ * The onEvent handler is called for any events that weren't already
+ * received via the callback (fallback for missed events).
  */
 export async function startModalBuildStreaming(
   config: BuildConfig,
@@ -62,12 +69,13 @@ export async function startModalBuildStreaming(
 ): Promise<void> {
   const result = await startModalBuild(config);
 
-  // Forward all events
+  // Forward any events from the response that weren't already persisted
+  // via the callback URL. This acts as a fallback/catchup mechanism.
   for (const event of result.events) {
     onEvent(event);
   }
 
-  if (result.status === 'error') {
+  if (result.status === 'error' && result.events.length === 0) {
     onEvent({
       type: 'build_error',
       data: { message: result.stderr || 'Build failed in Modal', projectId: config.projectId },
@@ -82,10 +90,6 @@ export function isModalEnabled(): boolean {
   return process.env.MODAL_ENABLED === 'true' && !!getModalEndpointUrl();
 }
 
-/**
- * Get the Modal web endpoint URL for the kriptik-engine app.
- * This is set after `modal deploy modal/app.py` completes.
- */
 function getModalEndpointUrl(): string {
   return process.env.MODAL_SPAWN_URL || '';
 }

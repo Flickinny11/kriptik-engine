@@ -68,16 +68,31 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   const sessionId = uuid();
 
   // Persist event helper — used by both local and Modal paths
-  const persistEvent = (event: any) => {
-    db.insert(buildEvents).values({
+  // Includes retry on failure and handles both build_complete and build_error
+  const persistEvent = async (event: any) => {
+    const insert = () => db.insert(buildEvents).values({
       projectId,
       eventType: event.type,
       eventData: event,
-    }).catch(console.error);
+    });
 
-    if (event.type === 'build_complete') {
+    try {
+      await insert();
+    } catch (err) {
+      console.error('Event persist failed, retrying:', err);
+      try {
+        await new Promise(r => setTimeout(r, 500));
+        await insert();
+      } catch (err2) {
+        console.error('Event persist retry failed:', err2);
+      }
+    }
+
+    // Update project status on completion or error
+    if (event.type === 'build_complete' || event.type === 'build_error') {
+      const status = event.type === 'build_complete' ? 'complete' : 'failed';
       db.update(projects)
-        .set({ status: 'complete', updatedAt: new Date() })
+        .set({ status, updatedAt: new Date() })
         .where(eq(projects.id, projectId))
         .then(() => activeEngines.delete(projectId))
         .catch(console.error);
@@ -94,9 +109,13 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       // === MODAL PATH: Run build in Modal container ===
       startingBuilds.delete(projectId);
 
-      // Fire and return — Modal streams events which we persist
+      // Build callback URL for real-time event streaming from Modal
+      const apiBase = process.env.BETTER_AUTH_URL || process.env.API_URL || '';
+      const callbackUrl = apiBase ? `${apiBase}/api/events/callback/${projectId}` : undefined;
+
+      // Fire and return — Modal streams events via callback + returns full list
       startModalBuildStreaming(
-        { projectId, prompt, mode: 'builder', budgetCapDollars: 5 },
+        { projectId, prompt, mode: 'builder', budgetCapDollars: 5, callbackUrl },
         persistEvent,
       ).catch((err) => {
         console.error('Modal build error:', err);

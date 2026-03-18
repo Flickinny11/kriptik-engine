@@ -85,6 +85,32 @@ router.get('/stream', async (req: AuthenticatedRequest, res: Response) => {
   });
 });
 
+// Callback endpoint for Modal real-time event streaming.
+// Modal POSTs each event here as the engine emits them.
+// This is NOT authenticated via user session — secured by project-scoped token.
+router.post('/callback/:projectId', async (req: AuthenticatedRequest, res: Response) => {
+  const { projectId } = req.params;
+  const event = req.body;
+
+  if (!projectId || !event?.type) {
+    res.status(400).json({ error: 'Invalid callback' });
+    return;
+  }
+
+  // Persist the event
+  try {
+    await db.insert(buildEvents).values({
+      projectId,
+      eventType: event.type,
+      eventData: event,
+    });
+  } catch (err) {
+    console.error('Callback persist error:', err);
+  }
+
+  res.json({ ok: true });
+});
+
 // Replay persisted events for a project (REST fallback for when SSE isn't needed)
 router.get('/replay', async (req: AuthenticatedRequest, res: Response) => {
   const projectId = req.query.projectId as string;

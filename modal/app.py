@@ -1,13 +1,11 @@
 """
 KripTik Engine — Modal App Definition
 
-Defines the container image and infrastructure for running builds in Modal sandboxes.
-Each project gets its own named sandbox with persistent Brain SQLite and code volumes.
+Container image + endpoints for running builds in Modal.
+Events stream in real-time via incremental stdout reading + callback URL.
 
 Usage:
-  modal deploy modal/app.py          # Deploy the app definition
-  modal volume create kriptik-brains  # Create Brain volume (done once)
-  modal volume create kriptik-sandboxes  # Create sandbox volume (done once)
+  modal deploy modal/app.py
 """
 
 import modal
@@ -18,28 +16,16 @@ app = modal.App("kriptik-engine")
 engine_image = (
     modal.Image.from_registry("node:22-slim", add_python="3.12")
     .apt_install(
-        "git",
-        "build-essential",
-        "curl",
-        "python3",
-        # Playwright system deps
-        "libnss3",
-        "libatk-bridge2.0-0",
-        "libdrm2",
-        "libxkbcommon0",
-        "libgbm1",
-        "libasound2",
-        "libatspi2.0-0",
-        "libxshmfence1",
+        "git", "build-essential", "curl",
+        # Playwright Chromium system deps
+        "libnss3", "libatk-bridge2.0-0", "libdrm2", "libxkbcommon0",
+        "libgbm1", "libasound2", "libatspi2.0-0", "libxshmfence1",
     )
     .run_commands(
-        # Install tsx for TypeScript execution
         "npm install -g tsx@4",
-        # Install Playwright Chromium
         "npx playwright install chromium",
     )
-    .pip_install("fastapi[standard]")
-    # Copy engine source and install deps (baked into image for fast sandbox creation)
+    .pip_install("fastapi[standard]", "httpx")
     .add_local_dir("src", "/app/src", copy=True)
     .add_local_file("package.json", "/app/package.json", copy=True)
     .add_local_file("package-lock.json", "/app/package-lock.json", copy=True)
@@ -48,42 +34,36 @@ engine_image = (
     .run_commands("cd /app && npm ci --omit=dev && npm install tsx@4")
 )
 
-# Persistent volumes
 brain_volume = modal.Volume.from_name("kriptik-brains", create_if_missing=True)
 sandbox_volume = modal.Volume.from_name("kriptik-sandboxes", create_if_missing=True)
 
 
 @app.function(
     image=engine_image,
-    volumes={
-        "/brains": brain_volume,
-        "/sandboxes": sandbox_volume,
-    },
-    timeout=1800,  # 30 min max per build
-    memory=4096,
+    volumes={"/brains": brain_volume, "/sandboxes": sandbox_volume},
+    timeout=3600,   # 1 hour max per build
+    memory=8192,    # 8GB — Playwright + SQLite + multi-agent reasoning
     secrets=[modal.Secret.from_name("kriptik-env")],
 )
 @modal.fastapi_endpoint(method="POST")
 async def start_build(request: dict):
     """
-    HTTP endpoint called by the Vercel backend to start a build.
-    Receives: { projectId, prompt, mode, budgetCapDollars, callbackUrl }
-    Runs the engine inside this container, streams events to callbackUrl.
+    Runs a build inside the container. Streams events in real-time
+    via callback URL (if provided) AND returns them in the response.
     """
     import subprocess
     import json
+    import os
 
     project_id = request.get("projectId")
     prompt = request.get("prompt", "")
     mode = request.get("mode", "builder")
     budget = request.get("budgetCapDollars", 5)
+    callback_url = request.get("callbackUrl")
 
-    # Ensure project directories exist
-    import os
-    os.makedirs(f"/brains", exist_ok=True)
+    os.makedirs("/brains", exist_ok=True)
     os.makedirs(f"/sandboxes/{project_id}", exist_ok=True)
 
-    # Run the engine
     config = json.dumps({
         "projectId": project_id,
         "prompt": prompt,
@@ -102,41 +82,72 @@ async def start_build(request: dict):
         cwd="/app",
     )
 
-    # Send config via stdin
-    stdout, stderr = proc.communicate(input=config, timeout=1800)
+    # Write config to stdin, then close it
+    proc.stdin.write(config)
+    proc.stdin.close()
 
-    # Parse events from stdout (newline-delimited JSON)
+    # Stream events in real-time — read stdout line by line as engine emits them
     events = []
-    for line in stdout.strip().split("\n"):
-        if line.strip():
+    httpx_client = None
+
+    if callback_url:
+        import httpx
+        httpx_client = httpx.Client(timeout=10)
+
+    try:
+        for line in proc.stdout:
+            line = line.strip()
+            if not line:
+                continue
             try:
-                events.append(json.loads(line))
+                event = json.loads(line)
+                events.append(event)
+
+                # Forward event to callback URL in real-time
+                if httpx_client and callback_url:
+                    try:
+                        httpx_client.post(callback_url, json=event)
+                    except Exception:
+                        pass  # Don't let callback failures stop the build
             except json.JSONDecodeError:
                 pass
 
-    # Commit volume changes
+        proc.wait(timeout=60)  # Wait for process to fully exit
+    except Exception as e:
+        proc.kill()
+        events.append({"type": "build_error", "data": {"message": str(e)}})
+    finally:
+        if httpx_client:
+            httpx_client.close()
+
+    # Read any remaining stderr
+    stderr = ""
+    try:
+        stderr = proc.stderr.read() or ""
+    except Exception:
+        pass
+
+    # Commit volume changes (Brain DB + sandbox files)
     brain_volume.commit()
     sandbox_volume.commit()
 
     return {
         "status": "complete" if proc.returncode == 0 else "error",
         "events": events,
-        "stderr": stderr[-1000:] if stderr else "",
+        "stderr": stderr[-5000:] if stderr else "",
         "returnCode": proc.returncode,
     }
 
 
 @app.function(
     image=engine_image,
-    volumes={
-        "/brains": brain_volume,
-        "/sandboxes": sandbox_volume,
-    },
+    volumes={"/brains": brain_volume, "/sandboxes": sandbox_volume},
     timeout=3600,
-    memory=4096,
+    memory=8192,
     secrets=[modal.Secret.from_name("kriptik-env")],
+    keep_warm=1,  # Keep 1 container warm for fast cold starts
 )
 @modal.fastapi_endpoint(method="GET")
 async def health():
-    """Health check for the Modal app."""
+    """Health check — also keeps a container warm."""
     return {"status": "ok", "service": "kriptik-engine-modal"}
