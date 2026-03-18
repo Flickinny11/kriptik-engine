@@ -10,19 +10,26 @@ import executeRouter from './routes/execute.js';
 import eventsRouter from './routes/events.js';
 import oauthRouter from './routes/oauth.js';
 import credentialsRouter from './routes/credentials.js';
+import publishRouter from './routes/publish.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS — allow frontend origins
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  process.env.FRONTEND_URL,
-].filter(Boolean) as string[];
-
+// CORS — allow frontend origins + any *.kriptik.app subdomain
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Allow non-browser requests
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
+    // Allow any *.kriptik.app subdomain
+    if (allowed.includes(origin) || /^https:\/\/[a-z0-9-]+\.kriptik\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(null, false);
+  },
   credentials: true,
 }));
 
@@ -46,6 +53,7 @@ app.use('/api/execute', executeRouter);
 app.use('/api/events', eventsRouter);
 app.use('/api/oauth', oauthRouter);
 app.use('/api/credentials', credentialsRouter);
+app.use('/api/publish', publishRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -8,6 +8,7 @@ export const users = pgTable('users', {
   name: text('name').notNull(),
   emailVerified: boolean('email_verified').default(false),
   image: text('image'),
+  slug: text('slug').unique(),               // user's namespace for app URLs
   credits: integer('credits').default(500),
   tier: text('tier').default('free'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
@@ -67,9 +68,19 @@ export const projects = pgTable('projects', {
   engineSessionId: text('engine_session_id'),
   brainDbPath: text('brain_db_path'),       // path to this project's brain.db
   sandboxPath: text('sandbox_path'),         // path to this project's sandbox directory
+  // App hosting — {appSlug}.kriptik.app
+  appSlug: text('app_slug'),                 // user-customizable subdomain
+  isPublished: boolean('is_published').default(false),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+  publishedVersion: integer('published_version').default(0),
+  customDomain: text('custom_domain'),       // future: user's own domain
+  previewUrl: text('preview_url'),           // Modal tunnel or dev server URL
+  lastAccessedAt: timestamp('last_accessed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => [
+  uniqueIndex('projects_app_slug_unique').on(table.appSlug),
+]);
 
 // Encrypted credential storage — per user, per project, per service
 export const credentials = pgTable('credentials', {
