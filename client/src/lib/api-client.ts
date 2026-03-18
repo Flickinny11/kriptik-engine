@@ -90,6 +90,11 @@ class ApiClient {
   async unpublishProject(projectId: string) {
     return this.request<{ published: boolean }>('POST', `/api/publish/${projectId}/unpublish`);
   }
+
+  // Speculative analysis
+  async speculate(text: string, projectId: string) {
+    return this.request<{ speculation: unknown; reason?: string; model?: string }>('POST', '/api/speculate', { text, projectId });
+  }
 }
 
 export interface OAuthCatalogEntry {

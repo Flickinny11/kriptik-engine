@@ -6,6 +6,8 @@ import { useEngineEvents } from '@/hooks/useEngineEvents';
 import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { useProjectStore } from '@/store/useProjectStore';
 import { AgentStreamView } from '@/components/builder/AgentStreamView';
+import { useSpeculation } from '@/hooks/useSpeculation';
+import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
 
 type BuildMode = 'plan' | 'iterate' | 'chat';
 
@@ -29,6 +31,12 @@ export default function Builder() {
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const { updateProjectStatus } = useProjectStore();
+
+  // Speculative AI analysis — runs while user types (debounced, real AI inference)
+  const { speculation, isAnalyzing } = useSpeculation(
+    projectStatus === 'idle' ? userInput : '',  // Only speculate when idle (not building)
+    projectId || null,
+  );
 
   // Fetch OAuth catalog once on mount
   useEffect(() => {
@@ -263,6 +271,11 @@ export default function Builder() {
                 oauthCatalog={oauthCatalog}
                 onAnswer={handleAnswer}
               />
+            )}
+
+            {/* Speculative plan — shows AI analysis while user types */}
+            {isIdle && (speculation || isAnalyzing) && (
+              <SpeculativePlan speculation={speculation} isAnalyzing={isAnalyzing} />
             )}
 
             {/* Input area with mode toggle */}

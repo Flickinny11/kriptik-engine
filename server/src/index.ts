@@ -11,6 +11,7 @@ import eventsRouter from './routes/events.js';
 import oauthRouter from './routes/oauth.js';
 import credentialsRouter from './routes/credentials.js';
 import publishRouter from './routes/publish.js';
+import speculateRouter from './routes/speculate.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -54,6 +55,7 @@ app.use('/api/events', eventsRouter);
 app.use('/api/oauth', oauthRouter);
 app.use('/api/credentials', credentialsRouter);
 app.use('/api/publish', publishRouter);
+app.use('/api/speculate', speculateRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
