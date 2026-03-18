@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { eq, asc } from 'drizzle-orm';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import { verifyProjectOwnership } from '../middleware/ownership.js';
@@ -11,7 +11,7 @@ router.use(requireAuth as any);
 
 // SSE stream for a project's build events
 // Replays ALL persisted events first, then streams live events
-router.get('/stream', async (req: AuthenticatedRequest, res) => {
+router.get('/stream', async (req: AuthenticatedRequest, res: Response) => {
   const projectId = req.query.projectId as string;
   if (!projectId) {
     res.status(400).json({ error: 'projectId query param required' });
@@ -85,7 +85,7 @@ router.get('/stream', async (req: AuthenticatedRequest, res) => {
 });
 
 // Replay persisted events for a project (REST fallback for when SSE isn't needed)
-router.get('/replay', async (req: AuthenticatedRequest, res) => {
+router.get('/replay', async (req: AuthenticatedRequest, res: Response) => {
   const projectId = req.query.projectId as string;
   if (!projectId) {
     res.status(400).json({ error: 'projectId query param required' });

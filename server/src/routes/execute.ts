@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { eq } from 'drizzle-orm';
 import { v4 as uuid } from 'uuid';
 import { db } from '../db.js';
@@ -40,7 +40,7 @@ export const activeEngines = new Map<string, { handle: EngineHandle; ownerId: st
 const startingBuilds = new Set<string>();
 
 // Start a build
-router.post('/', async (req: AuthenticatedRequest, res) => {
+router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   const { projectId, prompt } = req.body;
   if (!projectId || !prompt) {
     res.status(400).json({ error: 'projectId and prompt are required' });
@@ -126,7 +126,7 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
 });
 
 // Send a user directive to a running build
-router.post('/:projectId/directive', async (req: AuthenticatedRequest, res) => {
+router.post('/:projectId/directive', async (req: AuthenticatedRequest, res: Response) => {
   const project = await verifyProjectOwnership(req, req.params.projectId);
   if (!project) {
     res.status(403).json({ error: 'Project not found or access denied' });
@@ -143,7 +143,7 @@ router.post('/:projectId/directive', async (req: AuthenticatedRequest, res) => {
 });
 
 // Respond to a specific agent question
-router.post('/:projectId/respond', async (req: AuthenticatedRequest, res) => {
+router.post('/:projectId/respond', async (req: AuthenticatedRequest, res: Response) => {
   const project = await verifyProjectOwnership(req, req.params.projectId);
   if (!project) {
     res.status(403).json({ error: 'Project not found or access denied' });
@@ -166,7 +166,7 @@ router.post('/:projectId/respond', async (req: AuthenticatedRequest, res) => {
 });
 
 // Send a user correction — writes richly contextual directive to Brain
-router.post('/:projectId/correct', async (req: AuthenticatedRequest, res) => {
+router.post('/:projectId/correct', async (req: AuthenticatedRequest, res: Response) => {
   const project = await verifyProjectOwnership(req, req.params.projectId);
   if (!project) {
     res.status(403).json({ error: 'Project not found or access denied' });
@@ -204,7 +204,7 @@ router.post('/:projectId/correct', async (req: AuthenticatedRequest, res) => {
 });
 
 // Stop a running build
-router.post('/:projectId/stop', async (req: AuthenticatedRequest, res) => {
+router.post('/:projectId/stop', async (req: AuthenticatedRequest, res: Response) => {
   const project = await verifyProjectOwnership(req, req.params.projectId);
   if (!project) {
     res.status(403).json({ error: 'Project not found or access denied' });

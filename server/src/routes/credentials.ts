@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import { verifyProjectOwnership } from '../middleware/ownership.js';
 import { listCredentials, revokeCredential } from '../vault/vault-service.js';
@@ -7,7 +7,7 @@ const router = Router();
 router.use(requireAuth as any);
 
 // List connected services for a project
-router.get('/:projectId', async (req: AuthenticatedRequest, res) => {
+router.get('/:projectId', async (req: AuthenticatedRequest, res: Response) => {
   const project = await verifyProjectOwnership(req, req.params.projectId);
   if (!project) {
     res.status(403).json({ error: 'Project not found or access denied' });
@@ -18,7 +18,7 @@ router.get('/:projectId', async (req: AuthenticatedRequest, res) => {
 });
 
 // Revoke a credential
-router.delete('/:projectId/:providerId', async (req: AuthenticatedRequest, res) => {
+router.delete('/:projectId/:providerId', async (req: AuthenticatedRequest, res: Response) => {
   const project = await verifyProjectOwnership(req, req.params.projectId);
   if (!project) {
     res.status(403).json({ error: 'Project not found or access denied' });

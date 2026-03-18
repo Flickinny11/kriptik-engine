@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { eq, and, desc } from 'drizzle-orm';
 import { v4 as uuid } from 'uuid';
 import { db } from '../db.js';
@@ -9,7 +9,7 @@ const router = Router();
 router.use(requireAuth as any);
 
 // List user's projects
-router.get('/', async (req: AuthenticatedRequest, res) => {
+router.get('/', async (req: AuthenticatedRequest, res: Response) => {
   const rows = await db.select().from(projects)
     .where(eq(projects.ownerId, req.user!.id))
     .orderBy(desc(projects.updatedAt));
@@ -17,7 +17,7 @@ router.get('/', async (req: AuthenticatedRequest, res) => {
 });
 
 // Create project
-router.post('/', async (req: AuthenticatedRequest, res) => {
+router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   const { name, description } = req.body;
   if (!name) {
     res.status(400).json({ error: 'name is required' });
@@ -35,7 +35,7 @@ router.post('/', async (req: AuthenticatedRequest, res) => {
 });
 
 // Get single project
-router.get('/:id', async (req: AuthenticatedRequest, res) => {
+router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
   const [project] = await db.select().from(projects)
     .where(and(eq(projects.id, req.params.id), eq(projects.ownerId, req.user!.id)));
   if (!project) {
@@ -46,7 +46,7 @@ router.get('/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 // Update project
-router.put('/:id', async (req: AuthenticatedRequest, res) => {
+router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
   const { name, description } = req.body;
   const [project] = await db.update(projects)
     .set({ name, description, updatedAt: new Date() })
@@ -60,7 +60,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res) => {
 });
 
 // Delete project
-router.delete('/:id', async (req: AuthenticatedRequest, res) => {
+router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
   const [deleted] = await db.delete(projects)
     .where(and(eq(projects.id, req.params.id), eq(projects.ownerId, req.user!.id)))
     .returning();

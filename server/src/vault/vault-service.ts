@@ -38,7 +38,7 @@ export async function storeCredential(
   providerEmail?: string,
 ): Promise<string> {
   const id = uuid();
-  const encrypted = encryptCredentialsForStorage(tokens as Record<string, unknown>);
+  const encrypted = encryptCredentialsForStorage(tokens as unknown as Record<string, unknown>);
 
   // Upsert — replace existing credential for same user/project/provider
   await db.delete(credentials).where(
@@ -78,7 +78,7 @@ export async function getCredential(
   );
   if (!row) return null;
   const decrypted = decryptCredentialsFromStorage(JSON.stringify(row.encryptedTokens));
-  return (decrypted as CredentialTokens) || null;
+  return (decrypted as unknown as CredentialTokens) || null;
 }
 
 export async function listCredentials(

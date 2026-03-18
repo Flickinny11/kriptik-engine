@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import { PROVIDER_CATALOG } from '../oauth/catalog.js';
 import { startFlow, completeFlow, getConfiguredProviders } from '../oauth/manager.js';
@@ -6,7 +6,7 @@ import { startFlow, completeFlow, getConfiguredProviders } from '../oauth/manage
 const router = Router();
 
 // Public: Get the full provider catalog (for UI Connect button matching)
-router.get('/catalog', (_req, res) => {
+router.get('/catalog', (_req: Request, res: Response) => {
   // Return only id, displayName, category, authType — no secrets
   const catalog = PROVIDER_CATALOG.map(p => ({
     id: p.id,
@@ -18,12 +18,12 @@ router.get('/catalog', (_req, res) => {
 });
 
 // Public: Get which providers have OAuth configured (env vars set)
-router.get('/configured', (_req, res) => {
+router.get('/configured', (_req: Request, res: Response) => {
   res.json({ configured: getConfiguredProviders() });
 });
 
 // Auth required: Start OAuth flow
-router.post('/:provider/authorize', requireAuth as any, async (req: AuthenticatedRequest, res) => {
+router.post('/:provider/authorize', requireAuth as any, async (req: AuthenticatedRequest, res: Response) => {
   const { provider } = req.params;
   const { projectId } = req.body;
 
@@ -42,7 +42,7 @@ router.post('/:provider/authorize', requireAuth as any, async (req: Authenticate
 });
 
 // Public: OAuth callback (user's browser redirects here from provider)
-router.get('/callback/:provider', async (req, res) => {
+router.get('/callback/:provider', async (req: Request, res: Response) => {
   const { provider } = req.params;
   const { code, state, error } = req.query;
 
