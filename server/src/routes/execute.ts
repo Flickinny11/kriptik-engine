@@ -7,6 +7,7 @@ import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import { verifyProjectOwnership } from '../middleware/ownership.js';
 import path from 'path';
 import os from 'os';
+import { isModalEnabled, startModalBuildStreaming } from '../modal/sandbox-manager.js';
 
 // Engine types — defined inline to avoid TypeScript resolving the engine path.
 // The actual engine is at ../../../src/engine.js but we don't import it at compile time.
@@ -65,57 +66,80 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
   startingBuilds.add(projectId);
 
   const sessionId = uuid();
-  const brainDir = path.join(os.tmpdir(), 'kriptik-brains');
-  const sandboxDir = path.join(os.tmpdir(), 'kriptik-sandboxes', projectId);
+
+  // Persist event helper — used by both local and Modal paths
+  const persistEvent = (event: any) => {
+    db.insert(buildEvents).values({
+      projectId,
+      eventType: event.type,
+      eventData: event,
+    }).catch(console.error);
+
+    if (event.type === 'build_complete') {
+      db.update(projects)
+        .set({ status: 'complete', updatedAt: new Date() })
+        .where(eq(projects.id, projectId))
+        .then(() => activeEngines.delete(projectId))
+        .catch(console.error);
+    }
+  };
 
   try {
-    const initEngine = await loadEngine();
-    const handle = await initEngine({
-      projectId,
-      mode: 'builder',
-      initialContext: prompt,
-      anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
-      qdrantUrl: process.env.QDRANT_URL!,
-      qdrantApiKey: process.env.QDRANT_API_KEY,
-      hfApiKey: process.env.HF_API_KEY,
-      brainDbPath: path.join(brainDir, `${projectId}.db`),
-      sandboxRootDir: sandboxDir,
-      budgetCapDollars: 5,
-    });
-
-    activeEngines.set(projectId, { handle, ownerId: req.user!.id });
-    startingBuilds.delete(projectId);
-
-    // Update project status and store paths
-    const brainDbPath = path.join(brainDir, `${projectId}.db`);
+    // Update project to building status
     await db.update(projects)
-      .set({
-        status: 'building',
-        engineSessionId: sessionId,
-        brainDbPath: brainDbPath,
-        sandboxPath: sandboxDir,
-        updatedAt: new Date(),
-      })
+      .set({ status: 'building', engineSessionId: sessionId, updatedAt: new Date() })
       .where(eq(projects.id, projectId));
 
-    // Persist every engine event for chat replay + update status on complete
-    handle.onEvent((event) => {
-      db.insert(buildEvents).values({
-        projectId,
-        eventType: event.type,
-        eventData: event,
-      }).catch(console.error);
+    if (isModalEnabled()) {
+      // === MODAL PATH: Run build in Modal container ===
+      startingBuilds.delete(projectId);
 
-      if (event.type === 'build_complete') {
+      // Fire and return — Modal streams events which we persist
+      startModalBuildStreaming(
+        { projectId, prompt, mode: 'builder', budgetCapDollars: 5 },
+        persistEvent,
+      ).catch((err) => {
+        console.error('Modal build error:', err);
         db.update(projects)
-          .set({ status: 'complete', updatedAt: new Date() })
+          .set({ status: 'failed', updatedAt: new Date() })
           .where(eq(projects.id, projectId))
-          .then(() => activeEngines.delete(projectId))
           .catch(console.error);
-      }
-    });
+      });
 
-    res.json({ sessionId, projectId });
+      res.json({ sessionId, projectId, runtime: 'modal' });
+    } else {
+      // === LOCAL PATH: Run engine in-process ===
+      const brainDir = path.join(os.tmpdir(), 'kriptik-brains');
+      const sandboxDir = path.join(os.tmpdir(), 'kriptik-sandboxes', projectId);
+
+      const initEngine = await loadEngine();
+      const handle = await initEngine({
+        projectId,
+        mode: 'builder',
+        initialContext: prompt,
+        anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
+        qdrantUrl: process.env.QDRANT_URL!,
+        qdrantApiKey: process.env.QDRANT_API_KEY,
+        hfApiKey: process.env.HF_API_KEY,
+        brainDbPath: path.join(brainDir, `${projectId}.db`),
+        sandboxRootDir: sandboxDir,
+        budgetCapDollars: 5,
+      });
+
+      activeEngines.set(projectId, { handle, ownerId: req.user!.id });
+      startingBuilds.delete(projectId);
+
+      await db.update(projects)
+        .set({
+          brainDbPath: path.join(brainDir, `${projectId}.db`),
+          sandboxPath: sandboxDir,
+        })
+        .where(eq(projects.id, projectId));
+
+      handle.onEvent(persistEvent);
+
+      res.json({ sessionId, projectId, runtime: 'local' });
+    }
   } catch (err) {
     startingBuilds.delete(projectId);
     console.error('Failed to start engine:', err);
