@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send, X, Check } from 'lucide-react';
+import { SendIcon, XIcon, CheckIcon } from '@/components/ui/icons';
 import type { AgentInfo, EventGroup } from '@/hooks/useAgentTracker';
 import { apiClient } from '@/lib/api-client';
 
@@ -60,7 +60,7 @@ export function CorrectionPrompt({
   if (sent) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/5 border border-green-500/20 text-xs text-green-400">
-        <Check size={12} />
+        <CheckIconsize={12} />
         Correction sent — agents will adapt
       </div>
     );
@@ -73,7 +73,7 @@ export function CorrectionPrompt({
           Correcting {agent.role}'s work
         </span>
         <button onClick={onClose} className="text-kriptik-slate hover:text-kriptik-white">
-          <X size={14} />
+          <XIconsize={14} />
         </button>
       </div>
       <div className="flex gap-2">
@@ -90,7 +90,7 @@ export function CorrectionPrompt({
           disabled={!text.trim() || sending}
           className="px-3 py-2 bg-kriptik-amber/15 text-kriptik-amber rounded-lg hover:bg-kriptik-amber/25 disabled:opacity-30 transition-colors"
         >
-          <Send size={14} />
+          <SendIconsize={14} />
         </button>
       </div>
     </div>

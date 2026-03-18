@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { ArrowLeft, Send, Square, Loader2, Sparkles } from 'lucide-react';
+import { ArrowLeftIcon, SendIcon, SquareIcon, LoadingIcon, SparklesIcon } from '@/components/ui/icons';
 import { useEngineEvents } from '@/hooks/useEngineEvents';
 import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { useProjectStore } from '@/store/useProjectStore';
@@ -137,7 +137,7 @@ export default function Builder() {
       <header className="h-12 border-b border-white/5 px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/dashboard')} className="text-kriptik-silver hover:text-kriptik-white transition-colors">
-            <ArrowLeft size={18} />
+            <ArrowLeftIcon size={18} />
           </button>
           <span className="text-sm font-medium text-kriptik-white truncate max-w-[300px]">
             {projectName || initialPrompt?.slice(0, 60) || 'New Project'}
@@ -151,7 +151,7 @@ export default function Builder() {
                 Building
               </span>
               <button onClick={handleStop} className="text-kriptik-silver hover:text-red-400 transition-colors" title="Stop build">
-                <Square size={16} />
+                <SquareIcon size={16} />
               </button>
             </>
           )}
@@ -170,7 +170,7 @@ export default function Builder() {
             {isIdle ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="text-center max-w-md">
-                  <Sparkles size={32} className="text-kriptik-lime/40 mx-auto mb-4" />
+                  <SparklesIcon size={32} className="text-kriptik-lime/40 mx-auto mb-4" />
                   <h3 className="text-lg font-display font-semibold text-kriptik-white mb-2">
                     What do you want to build?
                   </h3>
@@ -233,7 +233,7 @@ export default function Builder() {
                   disabled={!canSubmit}
                   className="bg-kriptik-lime/10 text-kriptik-lime px-3 py-2 rounded-lg hover:bg-kriptik-lime/20 disabled:opacity-30 transition-colors"
                 >
-                  <Send size={16} />
+                  <SendIcon size={16} />
                 </button>
               </div>
             </div>
@@ -259,7 +259,7 @@ export default function Builder() {
                    isComplete ? 'Build complete' :
                    'Live preview will appear here during build'}
                 </div>
-                {isBuilding && <Loader2 size={24} className="animate-spin text-kriptik-lime/50 mx-auto" />}
+                {isBuilding && <LoadingIcon size={24} className="animate-spin text-kriptik-lime/50 mx-auto" />}
               </div>
             )}
           </div>

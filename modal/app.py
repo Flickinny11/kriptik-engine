@@ -22,10 +22,37 @@ engine_image = (
         "libgbm1", "libasound2", "libatspi2.0-0", "libxshmfence1",
     )
     .run_commands(
-        "npm install -g tsx@4",
+        "npm install -g tsx@4 create-vite create-next-app",
         "npx playwright install chromium",
     )
     .pip_install("fastapi[standard]", "httpx")
+    # Pre-install common frameworks so user builds start faster
+    .run_commands(
+        "mkdir -p /cache/npm-packages && cd /cache/npm-packages && "
+        "npm init -y && npm install --save "
+        # Core React + Vite stack
+        "react react-dom vite @vitejs/plugin-react typescript "
+        # Next.js
+        "next "
+        # Styling
+        "tailwindcss postcss autoprefixer "
+        # UI libraries
+        "@radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tabs "
+        # State management
+        "zustand "
+        # Design References dependencies (from Design_References.md)
+        "curtainsjs ogl three @react-three/fiber @react-three/drei "
+        "gsap @gsap/react "
+        "glslify gl-noise "
+        "postprocessing "
+        "@barba/core lenis "
+        # Data & API
+        "drizzle-orm @supabase/supabase-js "
+        # Common utilities
+        "zod uuid clsx tailwind-merge "
+        "2>/dev/null || true"
+    )
+    # Copy engine source and install deps
     .add_local_dir("src", "/app/src", copy=True)
     .add_local_file("package.json", "/app/package.json", copy=True)
     .add_local_file("package-lock.json", "/app/package-lock.json", copy=True)
@@ -41,7 +68,7 @@ sandbox_volume = modal.Volume.from_name("kriptik-sandboxes", create_if_missing=T
 @app.function(
     image=engine_image,
     volumes={"/brains": brain_volume, "/sandboxes": sandbox_volume},
-    timeout=3600,   # 1 hour max per build
+    timeout=86400,  # 24 hours — large production builds can take extended time
     memory=8192,    # 8GB — Playwright + SQLite + multi-agent reasoning
     secrets=[modal.Secret.from_name("kriptik-env")],
 )
@@ -142,7 +169,7 @@ async def start_build(request: dict):
 @app.function(
     image=engine_image,
     volumes={"/brains": brain_volume, "/sandboxes": sandbox_volume},
-    timeout=3600,
+    timeout=86400,
     memory=8192,
     secrets=[modal.Secret.from_name("kriptik-env")],
     keep_warm=1,  # Keep 1 container warm for fast cold starts

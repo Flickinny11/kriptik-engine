@@ -328,22 +328,35 @@ No phases. No waves. No gates. Agents reasoning their way to a complete app.
 - Architecture enforcement: `scripts/check-modularity.sh` + `scripts/check-mechanical.sh` + Husky hooks
 - Mechanical pattern scan: ZERO violations across all 11 prohibitions (see `MECHANICAL_SCAN_REPORT.md`)
 
-### Deployment Infrastructure (as of 2026-03-18)
-- **Frontend**: Vercel project `kriptik-ai-opus-build` → kriptik.app (Vite, Node 22)
-- **Backend**: Vercel project `kriptik-ai-opus-build-backend` → api.kriptik.app (Express serverless)
-- **Modal**: App `kriptik-engine` deployed with Node 22 + Playwright image
+### Deployment Infrastructure (as of 2026-03-19)
+- **Frontend**: Vercel project `prj_MqCB45npYNv8fyQ37mLvtHfmOyqz` → kriptik.app (Vite, Node 22)
+- **Backend**: Vercel project `prj_WdJ8bvaORsFLf9C0TtHiBYTm3tPK` → api.kriptik.app (Express serverless)
+- **Modal**: App `kriptik-engine` deployed with Node 22 + Playwright + Design_References deps
   - Build endpoint: `https://logantbaird--kriptik-engine-start-build.modal.run`
+  - Health: `https://logantbaird--kriptik-engine-health.modal.run`
   - Volumes: `kriptik-brains` (Brain SQLite), `kriptik-sandboxes` (generated code)
-  - Secrets: `kriptik-env` (API keys from Vercel)
-- **Supabase**: PostgreSQL with 8 tables (users, session, account, verification, projects, build_events, credentials, oauth_states)
+  - Secrets: `kriptik-env` (API keys)
+  - Memory: 8GB, Timeout: 24 hours, keep_warm: 1
+  - Pre-installed: React, Vite, Next.js, Three.js, GSAP, curtains.js, OGL, Tailwind, Radix, Zustand
+  - Real-time streaming: events POST'd to callback URL line-by-line (not batch)
+  - Graceful shutdown: SIGTERM/SIGINT handlers close Brain DB properly
+- **Supabase**: PostgreSQL with 8 tables + `idx_build_events_project_id` index
 - **GitHub**: `Flickinny11/kriptik-engine`, both Vercel projects linked
 - **Vercel Team**: `team_Dc3dRfYzsIxYPiaqu2kgVcJJ` (Logan's projects)
 
 ### Build Execution Dual Path
 `server/src/routes/execute.ts` has two paths:
-- **Modal path** (when `MODAL_ENABLED=true`): Calls Modal HTTP endpoint, events streamed back
+- **Modal path** (when `MODAL_ENABLED=true`): Calls Modal HTTP endpoint with callbackUrl for real-time event streaming. Each event is POST'd to `/api/events/callback/:projectId` and persisted immediately.
 - **Local path** (default): Lazy-imports engine from `src/`, runs in-process
 The `MODAL_SPAWN_URL` env var points to the Modal web endpoint.
+
+### Mechanical Pattern Enforcement
+- `scripts/check-mechanical.sh` — scans for all 11 CLAUDE.md prohibitions (run on pre-commit)
+- `scripts/check-modularity.sh` — max file size, engine protection, import boundaries
+- NO lucide-react anywhere — all 5 previous violations fixed, using custom SDF icons
+- NO "Phase 1/2" language in comments — use "First", "Then", "Replay then stream"
+- Event deduplication in client via `seenIds` set
+- Iframe sandbox: `allow-scripts allow-forms allow-popups` (NO allow-same-origin — XSS prevention)
 
 ### Stripe Integration (needs reconfiguration)
 The old app's Stripe setup used mechanical tier-based billing (Starter/Builder/Developer/Pro plans).
@@ -356,17 +369,20 @@ New billing system needs:
 - UI for credit balance + purchase flow
 
 ### What's NOT Done Yet
-- Anthropic API key needs to be activated (key exists in Vercel, just disabled)
+- Anthropic API key needs to be activated (key exists in Vercel, just disabled by Logan)
+- App hosting: `{app-slug}.kriptik.app` subdomain system (wildcard DNS + publish endpoint)
+- Speculative prompt execution (intent classification while typing, sandbox prewarming)
+- Deploy tools in engine: `src/tools/deploy/` (push_to_github, deploy_to_vercel, deploy_to_netlify, verify_deployment)
+- Sandbox prewarming on user login (architecture designed, not implemented)
+- Sandbox idle timeout with activity beacon (30 min idle, reset on UI interaction)
+- Live UI preview via Modal tunnel (infrastructure exists, not wired to frontend iframe)
 - OAuth individual provider flows (catalog exists, flows not wired)
 - Credential vault encryption (AES-256-GCM structure exists, uses BETTER_AUTH_SECRET as fallback)
-- Deploy tools (Vercel, GitHub) not in engine yet
 - Interaction testing tool not in engine yet
 - Fix My App / Import App capture tools not in engine yet
 - Vision tool stubs not implemented
-- Mobile responsive optimization
 - Stripe billing reconfiguration (old tiers → credit-based)
-- Live UI preview via Modal tunnel (infrastructure exists, not wired to frontend iframe)
-- Sandbox prewarming on user login (architecture designed, not implemented)
+- Mobile responsive optimization
 
 ### Critical Reminders
 - The engine in `src/` is UNTOUCHABLE without explicit permission

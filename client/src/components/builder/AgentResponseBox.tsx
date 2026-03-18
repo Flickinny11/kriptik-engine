@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, MessageSquarePlus } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon, MessageSquareIcon } from '@/components/ui/icons';
 import type { AgentInfo, EventGroup } from '@/hooks/useAgentTracker';
 import type { EngineEvent } from '@/hooks/useEngineEvents';
 import { AgentBadge } from './AgentBadge';
@@ -76,7 +76,7 @@ export function AgentResponseBox({
           className="text-kriptik-slate hover:text-kriptik-amber transition-colors p-1 rounded hover:bg-kriptik-amber/10"
           title="Send correction"
         >
-          <MessageSquarePlus size={14} />
+          <MessageSquareIconsize={14} />
         </button>
       </div>
 
@@ -119,7 +119,7 @@ function EventSection({
             onClick={onToggleThinking}
             className="flex items-center gap-1.5 w-full px-2 py-1.5 text-kriptik-violet/70 hover:text-kriptik-violet transition-colors"
           >
-            {thinkingExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+            {thinkingExpanded ? <ChevronDownIconsize={11} /> : <ChevronRightIconsize={11} />}
             <span className="italic font-mono text-[10px]">thinking...</span>
           </button>
           <div className="thinking-content">
@@ -197,7 +197,7 @@ function ToolCallSection({ event, agent }: { event: EngineEvent; agent: AgentInf
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 w-full px-2.5 py-2 text-left"
       >
-        {expanded ? <ChevronDown size={10} className="text-cyan-400" /> : <ChevronRight size={10} className="text-cyan-400" />}
+        {expanded ? <ChevronDownIconsize={10} className="text-cyan-400" /> : <ChevronRightIconsize={10} className="text-cyan-400" />}
         <span className="font-mono text-cyan-400 font-medium">{toolName}</span>
       </button>
       {expanded && event.data.input != null && (
@@ -219,7 +219,7 @@ function ToolResultSection({ event }: { event: EngineEvent }) {
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1 hover:text-kriptik-silver transition-colors"
       >
-        {expanded ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
+        {expanded ? <ChevronDownIconsize={10} /> : <ChevronRightIconsize={10} />}
         <span className="font-mono">{toolName} result</span>
       </button>
       {expanded && event.data.result != null && (

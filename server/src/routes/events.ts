@@ -35,8 +35,8 @@ router.get('/stream', async (req: AuthenticatedRequest, res: Response) => {
   // Send initial connection event
   res.write(`data: ${JSON.stringify({ type: 'connected', projectId })}\n\n`);
 
-  // Phase 1: Replay all persisted events for this project (chat history)
-  // This ensures no events are lost between build start and SSE connection
+  // Replay all persisted events for this project (chat history).
+  // Ensures no events are lost between build start and SSE connection.
   const historicalEvents = await db.select().from(buildEvents)
     .where(eq(buildEvents.projectId, projectId))
     .orderBy(asc(buildEvents.id));
@@ -51,7 +51,7 @@ router.get('/stream', async (req: AuthenticatedRequest, res: Response) => {
   // Mark end of replay so the client can distinguish historical from live
   res.write(`data: ${JSON.stringify({ type: 'replay_complete', count: historicalEvents.length })}\n\n`);
 
-  // Phase 2: Stream live events if engine is still running
+  // Then stream live events if engine is still running
   const entry = activeEngines.get(projectId);
   let unsubscribe: (() => void) | null = null;
 
