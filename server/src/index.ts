@@ -4,6 +4,7 @@ import cors from 'cors';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './auth.js';
 import { optionalAuth } from './middleware/auth.js';
+import { tracing } from './middleware/tracing.js';
 import projectsRouter from './routes/projects.js';
 import executeRouter from './routes/execute.js';
 import eventsRouter from './routes/events.js';
@@ -24,6 +25,9 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
+
+// Request tracing — generates x-request-id, logs duration
+app.use(tracing);
 
 // Better Auth handles its own body parsing — mount BEFORE express.json()
 app.all('/api/auth/*', (req, res) => {
