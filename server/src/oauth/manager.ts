@@ -45,15 +45,15 @@ function initProvider(entry: ProviderCatalogEntry): OAuthProvider | null {
 
   // Check for custom provider implementations first
   const customProviders: Record<string, () => OAuthProvider | null> = {
-    github: () => createGitHubProvider({ clientId, clientSecret, redirectUri: getRedirectUri('github') }),
-    vercel: () => createVercelProvider({ clientId, clientSecret, redirectUri: getRedirectUri('vercel') }),
-    netlify: () => createNetlifyProvider({ clientId, clientSecret, redirectUri: getRedirectUri('netlify') }),
-    google: () => createGoogleProvider({ clientId, clientSecret, redirectUri: getRedirectUri('google') }),
-    cloudflare: () => createCloudflareProvider({ clientId, clientSecret, redirectUri: getRedirectUri('cloudflare') }),
-    slack: () => createSlackProvider({ clientId, clientSecret, redirectUri: getRedirectUri('slack') }),
-    discord: () => createDiscordProvider({ clientId, clientSecret, redirectUri: getRedirectUri('discord') }),
-    notion: () => createNotionProvider({ clientId, clientSecret, redirectUri: getRedirectUri('notion') }),
-    stripe: () => createStripeProvider({ clientId, clientSecret, redirectUri: getRedirectUri('stripe') }),
+    github: () => createGitHubProvider(getRedirectUri('github')),
+    vercel: () => createVercelProvider(getRedirectUri('vercel')),
+    netlify: () => createNetlifyProvider(getRedirectUri('netlify')),
+    google: () => createGoogleProvider(getRedirectUri('google')),
+    cloudflare: () => createCloudflareProvider(getRedirectUri('cloudflare')),
+    slack: () => createSlackProvider(getRedirectUri('slack')),
+    discord: () => createDiscordProvider(getRedirectUri('discord')),
+    notion: () => createNotionProvider(getRedirectUri('notion')),
+    stripe: () => createStripeProvider(getRedirectUri('stripe')),
   };
 
   if (customProviders[entry.id]) {
