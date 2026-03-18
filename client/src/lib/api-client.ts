@@ -73,6 +73,23 @@ class ApiClient {
   async getEventReplay(projectId: string) {
     return this.request<{ events: unknown[] }>('GET', `/api/events/replay?projectId=${projectId}`);
   }
+
+  // Publish
+  async checkSlug(slug: string) {
+    return this.request<{ available: boolean; slug: string; url: string; error?: string }>('GET', `/api/publish/check-slug?slug=${encodeURIComponent(slug)}`);
+  }
+
+  async setSlug(projectId: string, slug: string) {
+    return this.request<{ slug: string; url: string }>('PUT', `/api/publish/${projectId}/slug`, { slug });
+  }
+
+  async publishProject(projectId: string) {
+    return this.request<{ published: boolean; slug: string; url: string; version: number }>('POST', `/api/publish/${projectId}/publish`);
+  }
+
+  async unpublishProject(projectId: string) {
+    return this.request<{ published: boolean }>('POST', `/api/publish/${projectId}/unpublish`);
+  }
 }
 
 export interface OAuthCatalogEntry {
@@ -89,6 +106,11 @@ export interface Project {
   ownerId: string;
   status: 'idle' | 'building' | 'complete' | 'failed';
   engineSessionId: string | null;
+  appSlug: string | null;
+  isPublished: boolean;
+  publishedAt: string | null;
+  publishedVersion: number;
+  previewUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
