@@ -11,11 +11,12 @@ import os from 'os';
 // Engine types — defined inline to avoid TypeScript resolving the engine path.
 // The actual engine is at ../../../src/engine.js but we don't import it at compile time.
 interface EngineHandle {
-  onEvent: (handler: (event: any) => void) => void;
+  onEvent: (handler: (event: any) => void) => (() => void) | void;
   sendDirective: (text: string) => Promise<void>;
   respondToQuestion: (questionId: string, answer: string) => void;
   sendCorrection: (agentId: string, text: string) => Promise<void>;
   stop: () => Promise<void>;
+  terminate: () => Promise<void>;
 }
 
 // Lazy import: engine loaded only when a build is actually started.

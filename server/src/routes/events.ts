@@ -64,12 +64,13 @@ router.get('/stream', async (req: AuthenticatedRequest, res: Response) => {
     // Subscribe to live events, skipping any that were already replayed
     // Events are persisted with auto-increment IDs, so we can compare
     let liveEventCounter = 0;
-    unsubscribe = entry.handle.onEvent((event) => {
+    const unsub = entry.handle.onEvent((event: any) => {
       liveEventCounter++;
       res.write(`id: live-${liveEventCounter}\n`);
       res.write(`event: ${event.type}\n`);
       res.write(`data: ${JSON.stringify(event)}\n\n`);
     });
+    if (typeof unsub === 'function') unsubscribe = unsub;
   }
 
   // Heartbeat every 15s to keep connection alive
