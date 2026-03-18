@@ -8,15 +8,24 @@ import { verifyProjectOwnership } from '../middleware/ownership.js';
 import path from 'path';
 import os from 'os';
 
-// Engine types — import type only (no runtime import at module load)
-type EngineHandle = import('../../../src/engine.js').EngineHandle;
+// Engine types — defined inline to avoid TypeScript resolving the engine path.
+// The actual engine is at ../../../src/engine.js but we don't import it at compile time.
+interface EngineHandle {
+  onEvent: (handler: (event: any) => void) => void;
+  sendDirective: (text: string) => Promise<void>;
+  respondToQuestion: (questionId: string, answer: string) => void;
+  sendCorrection: (agentId: string, text: string) => Promise<void>;
+  stop: () => Promise<void>;
+}
 
 // Lazy import: engine loaded only when a build is actually started.
 // This prevents the server from loading native deps (better-sqlite3, playwright)
 // at startup — they're only needed when initEngine() is called.
+// The dynamic import path is constructed to prevent TypeScript from resolving it.
+const ENGINE_PATH = '../../../src/engine.js';
 async function loadEngine() {
-  const { initEngine } = await import('../../../src/engine.js');
-  return initEngine;
+  const mod = await import(/* @vite-ignore */ ENGINE_PATH);
+  return mod.initEngine as (...args: any[]) => Promise<EngineHandle>;
 }
 
 const router = Router();
