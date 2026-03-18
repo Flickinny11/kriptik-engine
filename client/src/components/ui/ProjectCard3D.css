@@ -1,0 +1,395 @@
+/* =============================================================================
+   Premium 3D Project Card — Clean version
+   Preserves the visual style (3D monitor, flip, glow)
+   Only knows: idle | building | complete | failed
+   ============================================================================= */
+
+.project-card-container {
+    perspective: 1200px;
+    cursor: pointer;
+    width: 100%;
+    aspect-ratio: 4/3;
+    position: relative;
+    padding: 12px 16px;
+    margin: -12px -16px;
+}
+
+.project-card {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transform: rotateY(-12deg) rotateX(6deg) skewY(-1.5deg);
+}
+
+.project-card-container:hover .project-card {
+    transform: rotateY(-6deg) rotateX(3deg) skewY(-0.5deg) scale(1.03);
+}
+
+.project-card.flipped {
+    transform: rotateY(168deg) rotateX(6deg) skewY(1.5deg);
+}
+
+.project-card-container:hover .project-card.flipped {
+    transform: rotateY(174deg) rotateX(3deg) skewY(0.5deg) scale(1.03);
+}
+
+.project-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 16px;
+    overflow: visible;
+}
+
+.project-card-front { z-index: 2; }
+.project-card-back { transform: rotateY(180deg); }
+
+/* Monitor frame */
+.project-card .monitor-frame {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(145deg, #1e1e24 0%, #12121a 100%);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow:
+        0 0 40px rgba(200, 255, 100, 0.08),
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        0 12px 25px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        5px 0 0 #0a0a0c,
+        5px 5px 0 #050507,
+        0 5px 0 #0a0a0c;
+    position: relative;
+}
+
+.project-card .monitor-frame::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+}
+
+.project-card .monitor-screen {
+    flex: 1;
+    background: linear-gradient(180deg, #0a0a0f 0%, #15151d 100%);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cursor-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: background 0.3s ease;
+    z-index: 1;
+}
+
+/* Screen header */
+.project-card .screen-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    z-index: 2;
+}
+
+.project-card .header-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.project-card .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.project-card .header-title {
+    flex: 1;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: white;
+    text-transform: uppercase;
+}
+
+/* Screen content */
+.screen-content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.thumbnail-preview {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: top center;
+    filter: brightness(0.9) contrast(1.05);
+}
+
+.placeholder-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(200, 255, 100, 0.06) 0%, transparent 40%),
+        radial-gradient(ellipse at 70% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
+        linear-gradient(180deg, #0a0a0f 0%, #12121a 100%);
+    overflow: hidden;
+}
+
+/* Wireframe UI elements */
+.floating-ui {
+    position: absolute;
+    inset: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ui-element {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    animation: float-ui 4s ease-in-out infinite;
+}
+
+.nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+}
+
+.nav-logo {
+    width: 20px;
+    height: 8px;
+    background: linear-gradient(90deg, #c8ff64, #a3e635);
+    border-radius: 2px;
+}
+
+.nav-links { display: flex; gap: 8px; }
+.nav-links span { width: 24px; height: 4px; background: rgba(255, 255, 255, 0.15); border-radius: 2px; }
+
+.hero-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    animation-delay: 0.5s;
+}
+
+.hero-title { width: 70%; height: 10px; background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)); border-radius: 3px; }
+.hero-subtitle { width: 50%; height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; }
+.hero-button { width: 60px; height: 16px; margin-top: 4px; background: linear-gradient(135deg, #c8ff64, #a3e635); border-radius: 4px; box-shadow: 0 4px 12px rgba(200, 255, 100, 0.3); }
+
+.card-grid { display: flex; gap: 6px; padding: 8px; animation-delay: 1s; }
+.mini-card { flex: 1; height: 30px; background: rgba(255, 255, 255, 0.04); border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.03); }
+
+@keyframes float-ui {
+    0%, 100% { transform: translateY(0); opacity: 0.8; }
+    50% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Particles */
+.ambient-particles { position: absolute; inset: 0; pointer-events: none; }
+.particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #c8ff64;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particle-float 3s ease-in-out infinite;
+}
+
+@keyframes particle-float {
+    0%, 100% { opacity: 0; transform: translateY(10px) scale(0.5); }
+    50% { opacity: 0.6; transform: translateY(-10px) scale(1); }
+}
+
+/* Screen footer */
+.screen-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-framework, .footer-modified {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.framework-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* Monitor chin */
+.project-card .monitor-chin {
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.project-card .chin-logo {
+    width: 14px; height: 14px; border-radius: 3px;
+    background: linear-gradient(135deg, #c8ff64, #a3e635);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; color: #0a0a0a;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.project-card .chin-pulse {
+    width: 30px; height: 3px; border-radius: 2px;
+    background: linear-gradient(90deg, #c8ff64, #a3e635, #c8ff64);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Back face */
+.back-screen { display: flex; flex-direction: column; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+.stat-item { background: rgba(200,255,100,0.06); border: 1px solid rgba(200,255,100,0.12); border-radius: 8px; padding: 8px; text-align: center; }
+.stat-value { display: block; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: #c8ff64; }
+.stat-label { display: block; font-family: 'Inter', sans-serif; font-size: 8px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+.project-description { padding: 0 10px; margin-bottom: 8px; }
+.desc-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.project-description p { font-family: 'Inter', sans-serif; font-size: 10px; color: rgba(255,255,255,0.7); line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+.action-hint {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px; background: rgba(200,255,100,0.08); border-top: 1px solid rgba(200,255,100,0.15);
+    color: #c8ff64; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+}
+
+/* Ground shadow */
+.project-card-container .card-shadow {
+    position: absolute; left: 5%; right: 15%; bottom: -18px; height: 35px;
+    background: radial-gradient(ellipse 80% 100% at 40% 50%, rgba(0,0,0,0.35) 0%, transparent 60%);
+    filter: blur(12px); transform: skewX(-8deg); transition: all 0.5s ease;
+}
+.project-card-container:hover .card-shadow { bottom: -25px; opacity: 0.6; }
+
+/* =============================================================================
+   Building state — lime glow pulse
+   No phases, no mechanical messages, just a glow and pulse
+   ============================================================================= */
+
+.project-card-container.is-building { z-index: 2; }
+.project-card-container.is-building .project-card { animation: build-glow-pulse 2s ease-in-out infinite; }
+.project-card-container.is-building .monitor-frame {
+    box-shadow:
+        0 0 50px rgba(200, 255, 100, 0.2),
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        0 12px 25px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        5px 0 0 #0a0a0c, 5px 5px 0 #050507, 0 5px 0 #0a0a0c;
+}
+
+@keyframes build-glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 30px rgba(200,255,100,0.15), 0 25px 50px rgba(0,0,0,0.4);
+    }
+    50% {
+        box-shadow: 0 0 60px rgba(200,255,100,0.3), 0 0 80px rgba(200,255,100,0.1), 0 25px 50px rgba(0,0,0,0.4);
+    }
+}
+
+/* Building overlay — shows live agent activity text */
+.building-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(10,10,15,0.92), rgba(10,10,15,0.85));
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 10px; overflow: hidden; z-index: 10; border-radius: 8px;
+}
+
+.building-activity-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(200, 255, 100, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    animation: line-in 0.3s ease-out;
+    opacity: 0.5;
+}
+
+.building-activity-line:last-child {
+    opacity: 1;
+    color: #c8ff64;
+}
+
+@keyframes line-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 0.5; transform: translateY(0); }
+}
+
+.building-status-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    margin-top: 8px;
+}
+
+/* =============================================================================
+   Mobile optimization
+   ============================================================================= */
+
+@media (max-width: 768px), (hover: none) {
+    .project-card-container { perspective: 800px; }
+    .project-card { transform: rotateY(-6deg) rotateX(3deg); }
+    .project-card-container:hover .project-card { transform: rotateY(-3deg) rotateX(1.5deg) scale(1.02); }
+    .project-card.flipped { transform: rotateY(174deg) rotateX(3deg); }
+    .project-card .monitor-frame {
+        box-shadow: 0 0 20px rgba(200,255,100,0.06), 0 12px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08), 3px 3px 0 #0a0a0c;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .project-card { transform-style: flat; transform: none !important; transition: none; }
+    .project-card-container { perspective: none; }
+}

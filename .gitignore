@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.db
+*.sqlite
+.DS_Store
+stress-test-output/
+Krip-Tik-AI-Trial/
+kriptik-engine/
+.vercel/
+.claude/
+*.log

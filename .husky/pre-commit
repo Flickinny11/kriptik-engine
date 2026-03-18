@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+# Run modularity and mechanical pattern checks on staged files
+bash scripts/check-modularity.sh
+bash scripts/check-mechanical.sh

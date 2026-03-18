@@ -1,130 +1,346 @@
 # KRIPTIK ENGINE — CONSTITUTIONAL RULES
 
+> **IF YOU ARE AN AI READING THIS: Everything in this file is LAW. Not suggestion. Not guidance. LAW.**
+> **The engine in `src/` is UNTOUCHABLE unless Logan explicitly says otherwise.**
+> **If you catch yourself writing orchestration logic, switch statements, phase managers, or hardcoded agent types — STOP. You are building a mechanical system. That is forbidden.**
+
 ## WHAT THIS PROJECT IS
 
-This is the core build engine for KripTik AI, an AI app builder that constructs complete, production-ready applications from a single user prompt. It uses a central "Brain" (a queryable, mutable knowledge graph backed by PostgreSQL) and autonomous AI agents that read from and write to the Brain as they work.
+KripTik AI is an AI app builder that constructs complete, production-ready applications from a single user prompt. The **kriptik-engine** (in `src/`) is the core — a Brain-driven autonomous agent system where Claude Opus 4.6 (Lead Agent) reasons about what to build, spawns specialists dynamically, and guides them to completion. All knowledge flows through the Brain (a queryable, mutable knowledge graph backed by SQLite). Agents don't follow pipelines — they think.
 
-The Brain is the single source of truth. Agents don't follow a pipeline — they reason about what to do next by querying the Brain for what's known, what's needed, and what's been discovered. Every agent enriches the Brain as it works, so downstream work benefits from upstream learning.
-
-## ABSOLUTE PROHIBITIONS — NEVER DO THESE
-
-### 1. NO SEQUENTIAL PHASE PIPELINES
-NEVER create a system where Phase 1 must complete before Phase 2 starts, or where steps execute in a hardcoded order. The Lead Agent decides what to do next based on reasoning about the current state of the Brain. There are no "phases" — there are capabilities the Lead Agent can invoke when it determines they're needed.
-
-### 2. NO MECHANICAL ORCHESTRATION
-NEVER create coordinator/orchestrator classes that manage agent lifecycle through state machines, switch statements, or sequential function calls. The Lead Agent IS the orchestrator — it reasons about what specialists to spawn, what work to assign, and when to change course. Orchestration logic lives in the Lead Agent's reasoning, not in code.
-
-### 3. NO PRE-POPULATED TASK LISTS
-NEVER generate all tasks upfront and load them into a queue for agents to execute. Agents discover work as they build. The Lead Agent maintains a living task list in the Brain that evolves as agents make discoveries. Any agent can propose new tasks, split existing tasks, or flag tasks as unnecessary.
-
-### 4. NO HARDCODED AGENT ROLES
-NEVER define fixed agent types (frontend agent, backend agent, etc.) with predetermined capabilities. The Lead Agent decides what specialists are needed based on the specific project. A simple CRUD app might need 2 specialists. A real-time collaborative app might need 8. The team composition is dynamic and adaptive.
-
-### 5. NO SILENT AGENTS
-NEVER create agents that work in isolation without communicating discoveries. Every agent writes discoveries, constraints, and decisions to the Brain. When an agent learns something that could affect other agents' work (API has a rate limit, data model needs a new field, design pattern conflicts with accessibility), it writes that to the Brain immediately.
-
-### 6. NO VERIFICATION AS A SEPARATE PHASE
-NEVER create a post-build verification step that runs after all building is done. Verification is continuous — agents verify their own work as they go, the Lead Agent monitors the Brain for conflicts and issues, and specialized verification tools are invoked whenever the Lead Agent determines they're needed. Verification is a tool, not a phase.
-
-### 7. NO ONE-SHOT GENERATION
-NEVER generate entire files, plans, or architectures in a single AI call. Agents build incrementally — write a component, test it, discover what's needed next, adjust, continue. The plan evolves with the build.
-
-### 8. NO FIRE-AND-FORGET EVENTS
-NEVER create one-way event pipelines where agents emit events but can't receive them. All communication flows through the Brain. When the user interrupts via the UI, it writes to the Brain. When an agent makes a discovery, it writes to the Brain. All agents can read all Brain updates relevant to their domain.
-
-## ARCHITECTURAL PRINCIPLES
-
-### The Brain
-- PostgreSQL-backed knowledge graph (using existing Supabase instance)
-- Node types: intent, constraint, discovery, artifact, decision, task, status, user_directive
-- Relationship types: requires, conflicts_with, implements, refines, replaces, blocks, enables
-- Semantic query via embeddings (Qdrant) so agents can ask natural-language questions
-- Real-time subscriptions (Supabase Realtime) so the UI can show brain activity
-- Every node has: created_by (agent or user), project_id, timestamps, confidence score
-
-### Agent Runtime
-- Lead Agent: Opus 4.6 with extended thinking. Never writes code. Maintains holistic vision, decomposes work, evaluates progress against intent, makes architectural decisions, spawns/despawns specialists as needed.
-- Specialist Agents: Spawned on demand by Lead Agent. Each owns a domain (not a layer). Builds vertically — creates schema, API routes, UI components, and tests for their domain. Has access to Brain + sandbox + tools.
-- Tool Access: Agents invoke tools (verify_security, check_design, probe_api, run_tests, etc.) when they reason that they should, not on a schedule.
-- Communication: All through the Brain. No direct agent-to-agent messaging outside the Brain.
-
-### How Agents Work
-Each agent runs a loop:
-1. Query the Brain for current state relevant to my domain
-2. Reason about what to do next (using Claude's extended thinking)
-3. Take action (write code, run tests, probe an API, invoke a tool)
-4. Write discoveries/results back to the Brain
-5. Check if my current task is complete or if new information changes my approach
-6. Repeat until the Lead Agent determines my work is done
-
-This is NOT a mechanical loop with fixed iterations. The agent genuinely reasons at each step. It might decide to change approach, ask the Lead for guidance (by writing a question to the Brain), or flag a conflict it discovered.
-
-### The Lead Agent's Reasoning Loop
-The Lead Agent watches the Brain, not agent output streams. Its loop:
-1. Read current Brain state — what's known, what's been built, what's blocked, what's conflicting
-2. Evaluate progress against intent nodes — are we on track to satisfy the user's goals?
-3. Decide next actions: spawn a new specialist? redirect an existing one? run verification tools? ask the user for clarification?
-4. Act on decisions
-5. Repeat continuously until intent is satisfied
+The Brain is the single source of truth. Agents query it for context, write discoveries back to it, and other agents benefit from what was learned. The user's prompt becomes intent nodes. Competitor analysis becomes discovery nodes. API rate limits become constraint nodes. Everything the system learns persists in the Brain.
 
 ### Three Workflows, One Engine
-- **Builder**: Brain initialized from user prompt → intent analysis → competitor analysis → API probing → specialists build
-- **Fix My App**: Brain initialized from captured streaming chat context → intent extracted from broken app → specialists rebuild
-- **Import App**: Brain initialized from codebase analysis → gaps identified → user selects completions → specialists build missing pieces
+- **Builder**: User enters prompt → Brain seeded with intent → agents build the app
+- **Fix My App**: User imports broken app context → Brain seeded with errors/intent → agents rebuild
+- **Import App**: User imports codebase → Brain seeded with analysis → agents fill gaps
 
-The engine doesn't know or care which workflow triggered it. It reads the Brain and builds toward satisfying the intent nodes it finds there.
+The engine doesn't know which workflow triggered it. It reads the Brain and builds toward satisfying intent nodes.
 
-## TECH STACK
+---
 
-- Runtime: Node.js + TypeScript (strict mode)
-- Database: Supabase PostgreSQL (reuse existing KripTik instance)
-- AI: Anthropic SDK direct (claude-opus-4-6 for Lead, configurable for specialists)
-- Embeddings: Qdrant for semantic Brain queries
-- Sandbox: Modal containers for code execution
-- Streaming: SSE for UI communication
-- No frameworks for the engine itself — pure TypeScript, no Express, no Next.js. This is a library/module that will be imported into KripTik's existing backend.
+## ⛔ ABSOLUTE PROHIBITIONS — NEVER DO THESE
 
-## FILE STRUCTURE
+These are not preferences. These are hard rules. Violating any of these means you built the wrong thing.
+
+### 1. NO SEQUENTIAL PHASE PIPELINES
+NEVER create a system where Phase 1 must complete before Phase 2 starts. The Lead Agent decides what to do next by reasoning about Brain state. There are no "phases."
+
+### 2. NO MECHANICAL ORCHESTRATION
+NEVER create coordinator/orchestrator classes that manage agents through state machines, switch statements, or sequential function calls. The Lead Agent IS the orchestrator — it reasons, not follows scripts.
+
+### 3. NO PRE-POPULATED TASK LISTS
+NEVER generate all tasks upfront and put them in a queue. Agents discover work as they build. The task list in the Brain evolves with discoveries.
+
+### 4. NO HARDCODED AGENT ROLES
+NEVER define fixed agent types (frontend agent, backend agent, etc.). The Lead Agent decides what specialists are needed per-project. A CRUD app might need 2. A real-time collaborative app might need 8.
+
+### 5. NO SILENT AGENTS
+NEVER create agents that work without writing discoveries to the Brain. When an agent learns something (API rate limit, data model change, design conflict), it writes to the Brain immediately.
+
+### 6. NO VERIFICATION AS A SEPARATE PHASE
+Verification is continuous. Agents verify their own work using tools. The Lead Agent monitors the Brain for conflicts. There is no "verification phase" after building.
+
+### 7. NO ONE-SHOT GENERATION
+NEVER generate entire files, plans, or architectures in a single AI call. Agents build incrementally — write a component, test it, discover what's needed, adjust, continue.
+
+### 8. NO FIRE-AND-FORGET EVENTS
+All communication flows through the Brain. When the user interrupts, it writes to the Brain. When an agent discovers something, it writes to the Brain. All agents can read all Brain updates.
+
+### 9. NO HARDCODED REGEX FOR UI RENDERING
+NEVER use regex pattern matching to determine what to show in the streaming chat UI. The UI renders what the engine emits. Agent roles, colors, and icons are assigned dynamically at spawn time based on what the Lead Agent named the specialist — not from a predefined catalog.
+
+### 10. NO MECHANICAL PATTERNS IN THE UI
+The streaming chat, question tiles, correction prompts — none of these should be mechanical. The agents decide what questions to ask (about dependency credentials only during builds). The UI renders what agents emit. If you're writing a switch statement that maps event types to hardcoded UI components, you're doing it wrong.
+
+### 11. NO IMPORTING MECHANICAL SYSTEMS FROM THE OLD APP
+The old KripTik app at `/Volumes/Logan T7 Touch/KripTik AI_Trial_antiGravity/` has 154 systems, most mechanical. 72 are REPLACED by this engine. Only UI, auth, and OAuth workflows may be referenced — and even those must be adapted to work with the Brain-driven architecture, not imported wholesale. See `SYSTEM_SORT.md` for the full breakdown.
+
+---
+
+## THE ENGINE (`src/`) — DO NOT MODIFY WITHOUT EXPLICIT PERMISSION
+
+The engine is a ~6,200 line TypeScript library. It is complete and tested. Logan built this with extensive care. **Do not refactor, restructure, or "improve" anything in `src/` unless Logan specifically asks.**
+
+### Architecture
 
 ```
 src/
-  brain/
-    schema.ts          — Brain table definitions (Drizzle ORM)
-    brain-service.ts   — CRUD + semantic query interface for Brain nodes
-    embeddings.ts      — Embedding generation + Qdrant integration for semantic queries
-  agents/
-    runtime.ts         — Agent spawning, lifecycle, Claude API streaming
-    lead-agent.ts      — Lead Agent system prompt + reasoning loop
-    specialist.ts      — Specialist Agent base + tool access
-  tools/
-    index.ts           — Tool registry and interface definitions
-    sandbox.ts         — Modal sandbox tool (file ops, terminal, build, test)
-    verify.ts          — Verification tools (security, accessibility, design, errors)
-    analyze.ts         — Analysis tools (competitor crawl, API probe, codebase analysis)
-    vision.ts          — Vision tools (screenshot scoring, visual comparison)
-  bridge/
-    sse-emitter.ts     — SSE streaming bridge for UI consumption
-    user-input.ts      — User interrupt/directive handler → Brain writer
-  types/
-    index.ts           — Shared type definitions
-  index.ts             — Main entry point: initEngine(projectId, mode, initialContext)
+├── brain/                 SQLite knowledge graph
+│   ├── schema.ts          Drizzle ORM table definitions (nodes, edges, embeddings)
+│   ├── brain-service.ts   CRUD + semantic query interface
+│   ├── embeddings.ts      HuggingFace sentence-transformers + Qdrant integration
+│   └── template.ts        Template brain seeding (~28 constraint nodes)
+├── agents/
+│   ├── runtime.ts         Agent spawning, lifecycle, Claude API streaming, budget tracking
+│   └── prompts/
+│       ├── lead.ts        Lead Agent system prompt + reasoning loop
+│       └── specialist.ts  Specialist Agent system prompt
+├── tools/
+│   ├── index.ts           Tool registry and interface definitions
+│   ├── sandbox/           File ops, commands, dev server, screenshots (Playwright)
+│   ├── verify/            TS errors, security SAST, placeholders, intent satisfaction, full verification
+│   ├── analyze/           Intent analysis, competitor crawl, API probing, component mapping, web search
+│   ├── design/            Design references → Brain nodes
+│   └── vision/            Screenshot comparison, UI pattern extraction (stubs)
+├── providers/             LLM provider abstraction (Anthropic, OpenAI, Google, XAI)
+│   ├── router.ts          ProviderRouter — routes to appropriate provider
+│   ├── anthropic.ts       Claude API integration, streaming, extended thinking
+│   └── [others].ts        GPT-4, Gemini, Grok providers
+├── bridge/
+│   ├── sse-emitter.ts     SSE streaming bridge for UI
+│   └── user-input.ts      User directives → Brain writer
+├── config/                Model configs, service settings
+├── types/index.ts         Shared type definitions
+├── engine.ts              initEngine() entry point
+└── index.ts               Public API exports
 ```
 
-This is a SMALL codebase. The entire engine should be under 5,000 lines. Complexity lives in agent reasoning, not in code. If you find yourself writing orchestration logic, stop — you're building a mechanical system.
+### How Agents Work
+Each agent runs a reasoning loop:
+1. Query the Brain for current state relevant to my domain
+2. Reason about what to do next (extended thinking)
+3. Take action (write code, run tests, probe an API, invoke a tool)
+4. Write discoveries/results back to the Brain
+5. Check if my task is complete or if new information changes my approach
+6. Repeat until the Lead Agent determines my work is done
+
+This is NOT mechanical. The agent genuinely reasons at each step.
+
+### The Lead Agent's Loop
+Watches the Brain, not agent output streams:
+1. Read Brain state — what's known, built, blocked, conflicting
+2. Evaluate progress against intent nodes
+3. Decide next actions: spawn specialist? redirect one? run verification? ask user?
+4. Act on decisions
+5. Repeat until intent is satisfied
+
+### Tools Available to Agents
+Tools are capabilities, NOT pipeline steps. Agents call them when they reason they should.
+
+- **search_web** — Brave Search API
+- **analyze_competitors** — Fetch competitor sites, extract features/nav/pricing
+- **probe_api** — Real HTTP requests to APIs, discover auth/rate limits/response formats
+- **map_components** — Component/page/route map linked to intent satisfaction
+- **load_design_references** — Design_References.md → Brain nodes
+- **verify_errors** — tsc --noEmit
+- **check_security** — SAST surface areas for agent review
+- **check_placeholders** — 28 patterns for TODO/stubs/credential leaks
+- **evaluate_intent_satisfaction** — Project files vs intent success criteria
+- **run_full_verification** — Composite: errors + placeholders + security + intent
+- **start_dev_server** / **stop_dev_server** / **take_screenshot** — Sandbox tools
+
+---
+
+## THE SERVER (`server/`)
+
+Express.js backend. Auth via Better Auth + Drizzle ORM on PostgreSQL (Supabase).
+
+```
+server/src/
+├── routes/
+│   ├── projects.ts      Project CRUD (create, list, get, delete) — owner-scoped
+│   ├── execute.ts       Start builds — lazy-imports engine, streams SSE events
+│   ├── events.ts        SSE event stream + replay endpoint for returning users
+│   ├── oauth.ts         OAuth flow handlers + provider catalog (178 providers)
+│   └── credentials.ts   Credential vault operations
+├── middleware/
+│   ├── auth.ts          Session validation via Better Auth
+│   └── ownership.ts     Project ownership verification (user can only access own projects)
+├── oauth/
+│   ├── catalog.ts       178 OAuth provider configs with scopes and endpoints
+│   ├── manager.ts       OAuth flow orchestration
+│   ├── crypto.ts        PKCE + state generation
+│   └── types.ts         OAuth type definitions
+├── vault/               Encrypted credential storage
+├── auth.ts              Better Auth config (email/password + social providers)
+├── db.ts                PostgreSQL connection via Drizzle
+├── schema.ts            DB schema: users, sessions, accounts, projects, build_events, credentials
+└── index.ts             Express server setup, route registration
+```
+
+### Database Schema (PostgreSQL via Supabase)
+- **users** / **sessions** / **accounts** / **verification** — Better Auth managed (auth tables)
+- **projects** — id, name, description, ownerId, status, engineSessionId, brainDbPath, sandboxPath
+- **buildEvents** — id, projectId, eventType, eventData (JSONB), createdAt (append-only log for chat replay)
+- **credentials** — id, userId, projectId, service, encryptedData (AES-256-GCM)
+
+### Key Design Decisions
+- **Engine is lazy-loaded**: `execute.ts` uses `await import('../../../src/engine.js')` at build start, not at module load. This prevents native deps (better-sqlite3, playwright) from blocking server startup.
+- **Project isolation**: Every query is scoped by `ownerId` AND `projectId`. No data leaks between users or projects.
+- **Build events are append-only**: Once written, never modified. Chat replay reads them in order.
+- **OAuth catalog is static**: 178 providers defined in code. The UI checks this catalog to show "Connect" buttons when agents ask about dependencies.
+
+---
+
+## THE CLIENT (`client/`)
+
+React + Vite + Three.js + GSAP + Tailwind + Radix UI.
+
+```
+client/src/
+├── pages/
+│   ├── LoginPage.tsx      Login form + OAuth buttons
+│   ├── SignupPage.tsx      Registration form
+│   ├── Dashboard.tsx       Project cards, NLP input, create project
+│   └── Builder.tsx         Main builder — streaming chat + code editor + live preview
+├── components/
+│   ├── builder/           Builder-specific components
+│   │   ├── AgentStreamView.tsx      Top-level stream container (Feed/Lanes toggle)
+│   │   ├── UnifiedFeedView.tsx      Chronological feed — all agents interleaved
+│   │   ├── SwimLaneView.tsx         Parallel lanes — one per active agent
+│   │   ├── AgentResponseBox.tsx     Individual response box with streaming content
+│   │   ├── AgentBadge.tsx           Agent identity (color, icon, name)
+│   │   ├── AgentIconSDF.tsx         SDF-rendered agent icon (not lucide, not emoji)
+│   │   ├── BrainOrb.tsx             3D brain visualization
+│   │   ├── BrainConnector.tsx       Visual line from agent to brain during read/write
+│   │   ├── TypeAnimatedText.tsx     Typewriter streaming text animation
+│   │   ├── WarpBackground.tsx       Animated background shader
+│   │   ├── QuestionTile.tsx         Agent question display with options + OAuth Connect
+│   │   └── CorrectionPrompt.tsx     User inline correction on any response box
+│   ├── ui/                Reusable primitives (Radix-based)
+│   │   ├── ProjectCard3D.tsx        3D project card for dashboard
+│   │   ├── GenerateButton3D.tsx     3D generate button
+│   │   └── [radix wrappers]         button, card, dialog, form, input, etc.
+│   ├── layouts/           Page layout wrappers
+│   └── shaders/           GLSL fragment/vertex shaders
+├── hooks/
+│   ├── useEngineEvents.ts   SSE subscription — listen for engine events
+│   └── useAgentTracker.ts   Track active agents and state across events
+├── store/
+│   ├── useUserStore.ts      Zustand user state
+│   └── useProjectStore.ts   Zustand project state
+├── lib/
+│   ├── api-client.ts        HTTP client with auth cookies
+│   ├── api-config.ts        API endpoint config
+│   ├── auth-client.ts       Better Auth client wrapper
+│   └── utils.ts             Classname utilities
+├── App.tsx                  React Router setup
+├── main.tsx                 Entry point
+└── index.css                Tailwind + custom animations
+```
+
+### Key UI Concepts
+
+**Streaming Chat**: Two view modes (toggle at top):
+- **Unified Feed**: Single chronological stream, each agent color-coded, filter chips to isolate agents
+- **Swim Lanes**: Vertical columns per agent (max 4 visible), time flows down, cross-agent connectors
+
+**Response Boxes**: One per agent reasoning cycle (thinking → actions → tool calls → code writes until next thinking block). Boxes auto-grow as content streams. Contain: thinking block (expandable), response text (type-animated), tool calls with results, code diffs.
+
+**Agent Identity**: Colors and icons assigned dynamically when the Lead Agent spawns a specialist. The UI doesn't know in advance what agents will exist. It reacts to `agent_spawned` events and assigns visual identity from a palette.
+
+**Correction Prompt**: User clicks any response box → enters correction text → writes a contextual `user_directive` to the Brain → Lead Agent reads it and decides how to handle (spawn fix specialist, redirect existing one, write constraint for future work). Build never stops.
+
+**Question Tiles**: Agents ask questions ONLY about dependency auth credentials during builds. Questions are rendered as tiles with "Connect" buttons if an OAuth flow exists for that service. Nothing is hardcoded — the agent writes the question text, the options, and the explanations. The UI enriches the display by checking the OAuth catalog.
+
+---
+
+## DESIGN SYSTEM
+
+**READ `Design_References.md` BEFORE WRITING ANY UI CODE.** It is the ONLY source of allowed dependencies, animation techniques, and visual patterns.
+
+Key rules:
+- **NO lucide-react icons, NO emojis** — custom SDF/3D icons only
+- **NO flat CSS cards** — everything has depth, realistic shadows, photorealistic textures
+- **NO glassmorphism, NO particles** — use the actual techniques in Design_References.md
+- Dependencies: curtains.js (DOM→WebGL), GSAP + ScrollTrigger, OGL, SDF ray marching, WebGL fluid simulation, domain warping noise, displacement mapping, chromatic aberration
+- All animations 60fps minimum. Virtualize long lists. Efficient 3D rendering.
+
+---
+
+## HOW THE FULL FLOW WORKS
+
+1. User logs in → sees Dashboard with project cards
+2. User types prompt into NLP input → clicks Generate
+3. Server creates project (status: `idle`) → navigates to Builder
+4. Builder page calls `POST /api/execute` with prompt + projectId
+5. Server lazy-loads engine → calls `initEngine()` → engine starts Lead Agent
+6. Lead Agent reasons: analyze intent → research competitors → probe APIs → decide team composition → spawn specialists
+7. Engine emits SSE events → server persists to `build_events` table → pipes to frontend via SSE
+8. Frontend renders events in streaming chat (Unified Feed or Swim Lanes)
+9. Lead Agent asks user about dependency credentials (via `request_user_input` tool → Brain → SSE → QuestionTile)
+10. User clicks "Connect" → OAuth flow → credentials stored in vault → Brain notified
+11. Specialists build the app in the sandbox — writing files, running commands, verifying with tools
+12. Live UI preview shows the running app (sandbox dev server + iframe)
+13. Code editor shows generated files
+14. Lead Agent determines all intent nodes satisfied → build complete
+15. User returns later → frontend calls `GET /api/events/replay?projectId=X` → full chat history reconstructed
+
+---
+
+## MULTI-USER / MULTI-PROJECT ISOLATION
+
+This system is designed for viral traffic. Isolation is absolute:
+
+- **Every query** is scoped by `ownerId` AND `projectId`
+- **Every project** has its own Brain SQLite file, its own sandbox directory, its own Modal Volume (in production)
+- **Build events** are stored per-project in PostgreSQL — `WHERE project_id = $1`
+- **Credentials** are per-user, per-project — AES-256-GCM encrypted
+- **No endpoint** returns cross-project or cross-user data
+- **SSE streams** are project-scoped — you only receive events for your project
+- **In production**: each build runs in its own Modal container with its own mounted volume
+
+---
+
+## TECH STACK
+
+| Layer | Technology |
+|-------|-----------|
+| Engine | Node.js + TypeScript (strict), SQLite (better-sqlite3 + Drizzle), Qdrant, HuggingFace embeddings |
+| AI | Anthropic SDK (Opus 4.6 for Lead, configurable for specialists), multi-provider via ProviderRouter |
+| Server | Express.js, Better Auth, Drizzle ORM, PostgreSQL (Supabase) |
+| Client | React 18, Vite, Three.js, GSAP, curtains.js, OGL, Tailwind, Radix UI, Zustand |
+| Sandbox | Local filesystem (dev), Modal containers (production) |
+| Streaming | SSE (server-sent events) |
+| Node Version | 22 LTS (see `.nvmrc`) |
+
+---
 
 ## WHAT SUCCESS LOOKS LIKE
 
-When this engine receives a user prompt like "Build me an AI video generator app that uses Replicate for generation":
+User types: "Build me an AI video generator app that uses Replicate"
 
-1. The Lead Agent creates intent nodes in the Brain, then reasons about what it needs to know
-2. It invokes competitor analysis (tool), API probing against Replicate (tool), and inferred needs analysis — writing all discoveries to the Brain
-3. It reasons about team composition: "This needs a core video pipeline specialist, a UI specialist, and later a polish specialist"
-4. It spawns specialists who query the Brain for their domain context and start building
-5. A specialist discovers Replicate has a 25MB upload limit → writes this constraint to Brain → Lead sees it → adjusts UI specialist's context to include file size validation
-6. Specialists continuously verify their work (invoking verification tools when they reason they should)
-7. Lead monitors Brain, sees intent satisfaction trending toward complete, spawns a Polish specialist for the last 10%
-8. Polish specialist queries Brain for design references and competitor visual patterns, scores current screenshots, fixes gaps
-9. Lead determines all intent nodes are satisfied → triggers deploy
-10. Total Brain state is persisted — if user comes back to iterate, the Brain remembers everything
+1. Lead Agent creates intent nodes → reasons about what it needs to know
+2. Invokes competitor analysis, API probing against Replicate — writes discoveries to Brain
+3. Reasons about team: "Need a video pipeline specialist, UI specialist, later a polish specialist"
+4. Spawns specialists who query Brain and start building
+5. Specialist discovers Replicate has 25MB upload limit → writes constraint → Lead sees it → UI specialist gets file size validation
+6. Specialists verify their work continuously (tools, not phases)
+7. Lead sees intent satisfaction trending complete → spawns Polish specialist for last 10%
+8. Lead determines all intents satisfied → build complete
+9. Brain state persisted — user comes back, everything is there
 
 No phases. No waves. No gates. Agents reasoning their way to a complete app.
+
+---
+
+## NOTES FOR FUTURE SESSIONS
+
+### What's Been Done
+- Engine built and tested (~6,200 lines, 52 files)
+- Server with auth, project CRUD, OAuth catalog (178 providers), SSE streaming
+- Client with login, signup, dashboard, builder with premium streaming chat UI
+- Unified Feed + Swim Lane views with SDF agent icons, Brain orb, correction prompts
+- Full auth flow working (Better Auth + Supabase PostgreSQL)
+- Project creation and isolation verified
+- System sort of 154 old app systems completed (see `SYSTEM_SORT.md`)
+
+### What's NOT Done Yet
+- Anthropic API key not configured (engine can't actually build yet)
+- OAuth individual provider flows (catalog exists, flows not wired)
+- Credential vault encryption (structure exists, AES-256 not implemented)
+- Deploy tools (Vercel, GitHub) not in engine yet
+- Interaction testing tool not in engine yet
+- Fix My App / Import App capture tools not in engine yet
+- Vision tool stubs not implemented
+- Mobile responsive optimization
+
+### Critical Reminders
+- The engine in `src/` is UNTOUCHABLE without explicit permission
+- Node 22 required (see `.nvmrc`) — Node 24 causes Vite ESM deadlock
+- Server uses Express 4 (not 5) — wildcard routes use `/*` not `/*splat`
+- Engine import is LAZY in execute.ts — do not make it static or server startup blocks
+- Design_References.md is the ONLY source of allowed UI dependencies
+- Every UI element must have depth, realistic shadows — no flat CSS
+- No lucide-react, no emojis, no icon libraries — custom SDF/3D only

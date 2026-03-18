@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+# Full typecheck before push
+echo "Running TypeScript typecheck..."
+
+# Engine
+echo "  Checking engine..."
+npx tsc --noEmit -p tsconfig.json || { echo "Engine typecheck failed"; exit 1; }
+
+# Server
+echo "  Checking server..."
+cd server && npx tsc --noEmit || { echo "Server typecheck failed"; exit 1; }
+cd ..
+
+# Client
+echo "  Checking client..."
+cd client && npx tsc --noEmit || { echo "Client typecheck failed"; exit 1; }
+cd ..
+
+echo "All typechecks passed."

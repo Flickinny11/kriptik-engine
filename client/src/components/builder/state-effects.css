@@ -1,0 +1,270 @@
+/* ═══════════════════════════════════════════════════════════
+   Agent State Visual Effects
+   Chromatic aberration, heat distortion, and glow driven
+   by agent activity state. CSS-only — no extra WebGL context.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Chromatic aberration on agent under load ──
+   Creates RGB color split via stacked pseudo-elements with blend modes.
+   Subtle — only visible on active boxes, not distracting. */
+
+.state-chromatic-active {
+  position: relative;
+}
+
+.state-chromatic-active::before,
+.state-chromatic-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* Red channel shift */
+.state-chromatic-active::before {
+  box-shadow: inset 0 0 0 2000px rgba(255, 60, 60, 0.03);
+  transform: translate(1px, 0);
+  animation: chromatic-red 4s ease-in-out infinite;
+}
+
+/* Cyan channel shift */
+.state-chromatic-active::after {
+  box-shadow: inset 0 0 0 2000px rgba(60, 200, 255, 0.02);
+  transform: translate(-1px, 0);
+  animation: chromatic-cyan 4s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+.state-chromatic-active:hover::before,
+.state-chromatic-active:hover::after {
+  opacity: 1;
+}
+
+@keyframes chromatic-red {
+  0%, 100% { opacity: 0; transform: translate(0, 0); }
+  15% { opacity: 0.6; transform: translate(1.5px, -0.5px); }
+  30% { opacity: 0; transform: translate(0, 0); }
+  65% { opacity: 0.4; transform: translate(-1px, 0.5px); }
+  80% { opacity: 0; transform: translate(0, 0); }
+}
+
+@keyframes chromatic-cyan {
+  0%, 100% { opacity: 0; transform: translate(0, 0); }
+  10% { opacity: 0.5; transform: translate(-1px, 0.5px); }
+  25% { opacity: 0; transform: translate(0, 0); }
+  60% { opacity: 0.3; transform: translate(1.5px, -0.5px); }
+  75% { opacity: 0; transform: translate(0, 0); }
+}
+
+/* ── Heat distortion shimmer ──
+   Visible above actively-streaming response boxes.
+   Uses animated gradient mask to create rising heat-wave effect. */
+
+.heat-distortion {
+  position: relative;
+  overflow: visible;
+}
+
+.heat-distortion::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 10%;
+  right: 10%;
+  height: 16px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(200, 255, 100, 0.02) 30%,
+    rgba(245, 158, 11, 0.015) 60%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 20%,
+    black 80%,
+    transparent 100%
+  );
+  animation: heat-rise 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 20;
+  filter: blur(2px);
+}
+
+@keyframes heat-rise {
+  0% {
+    transform: translateY(0) scaleX(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-6px) scaleX(1.05);
+    opacity: 0.5;
+  }
+  80% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-14px) scaleX(0.95);
+    opacity: 0;
+  }
+}
+
+/* ── Error state: red ripple pulse ──
+   Expands outward from the box border on error events */
+
+.state-error-pulse {
+  position: relative;
+}
+
+.state-error-pulse::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  animation: error-ripple 1.5s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes error-ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    opacity: 0.2;
+    border-color: rgba(239, 68, 68, 0.15);
+  }
+  100% {
+    transform: scale(1.04);
+    opacity: 0;
+    border-color: transparent;
+  }
+}
+
+/* ── Spawn flash ──
+   Brief bright flash when a new agent materializes */
+
+.spawn-flash {
+  animation: spawn-burst 0.8s ease-out forwards;
+}
+
+@keyframes spawn-burst {
+  0% {
+    box-shadow: 0 0 40px var(--agent-color-glow, rgba(200,255,100,0.3));
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  30% {
+    box-shadow: 0 0 60px var(--agent-color-glow, rgba(200,255,100,0.4));
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: none;
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── Discovery glow ──
+   Warm amber glow on discovery events */
+
+.discovery-glow {
+  animation: discovery-shine 1.2s ease-out forwards;
+}
+
+@keyframes discovery-shine {
+  0% {
+    box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+  }
+  30% {
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.2), inset 0 0 15px rgba(245, 158, 11, 0.05);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+/* ── Completion celebration ──
+   Green glow with subtle scale on build complete */
+
+.complete-glow {
+  animation: complete-celebration 1.5s ease-out forwards;
+}
+
+@keyframes complete-celebration {
+  0% {
+    box-shadow: 0 0 0 rgba(34, 197, 94, 0);
+    transform: scale(1);
+  }
+  20% {
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.1);
+    transform: scale(1.01);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.1);
+    transform: scale(1);
+  }
+}
+
+/* ── Correction sent sweep ──
+   Amber light sweeps across box when user correction is submitted */
+
+.correction-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.correction-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 158, 11, 0.08),
+    rgba(245, 158, 11, 0.12),
+    rgba(245, 158, 11, 0.08),
+    transparent
+  );
+  animation: sweep-across 0.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 15;
+}
+
+@keyframes sweep-across {
+  to {
+    left: 150%;
+  }
+}
+
+/* ── Reduced motion: disable all state effects ── */
+@media (prefers-reduced-motion: reduce) {
+  .state-chromatic-active::before,
+  .state-chromatic-active::after,
+  .heat-distortion::before,
+  .state-error-pulse::before {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .spawn-flash,
+  .discovery-glow,
+  .complete-glow,
+  .correction-sweep::after {
+    animation: none !important;
+  }
+}

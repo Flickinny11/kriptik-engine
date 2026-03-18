@@ -1,0 +1,247 @@
+/* ═══════════════════════════════════════════════════════════
+   Premium Response Box — depth, material, realistic shadows
+   NOT glassmorphism. Real depth with visible thickness,
+   warm inner lighting, and perspective on hover.
+   ═══════════════════════════════════════════════════════════ */
+
+.response-box {
+  --agent-color: #c8ff64;
+  --agent-color-dim: rgba(200, 255, 100, 0.08);
+  --agent-color-glow: rgba(200, 255, 100, 0.15);
+
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+
+  /* Multi-layer shadow system — creates floating depth */
+  box-shadow:
+    /* Tight contact shadow */
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    /* Mid-range depth shadow */
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    /* Diffused ambient shadow */
+    0 12px 40px rgba(0, 0, 0, 0.15),
+    /* Inner top highlight — light source from above */
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    /* Inner glow from agent color */
+    inset 0 0 30px var(--agent-color-dim);
+
+  /* Background: not flat — subtle noise-like gradient */
+  background:
+    linear-gradient(175deg, rgba(22, 22, 28, 0.95) 0%, rgba(14, 14, 18, 0.98) 100%);
+
+  /* Thick edge illusion — left border is the agent's color */
+  border-left: 3px solid var(--agent-color);
+
+  /* Top edge — visible thickness like glass panel */
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+
+  /* Smooth transitions */
+  transition:
+    transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+    box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* 3D perspective context */
+  transform: perspective(800px) rotateX(0deg) rotateY(0deg) translateZ(0);
+  transform-style: preserve-3d;
+}
+
+/* Hover: lift + subtle 3D tilt + enhanced shadows */
+.response-box:hover {
+  transform: perspective(800px) rotateX(-0.5deg) rotateY(0.5deg) translateZ(4px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 40px var(--agent-color-dim),
+    /* Agent color glow on hover */
+    0 0 30px var(--agent-color-glow);
+}
+
+/* Active streaming state — breathing glow */
+.response-box.is-streaming {
+  animation: streaming-breathe 2s ease-in-out infinite;
+}
+
+@keyframes streaming-breathe {
+  0%, 100% {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.3),
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04),
+      inset 0 0 30px var(--agent-color-dim),
+      0 0 15px var(--agent-color-glow);
+  }
+  50% {
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.4),
+      0 6px 18px rgba(0, 0, 0, 0.3),
+      0 16px 50px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 0 40px var(--agent-color-dim),
+      0 0 35px var(--agent-color-glow);
+  }
+}
+
+/* ── Thick bottom edge — material thickness illusion ── */
+.response-box::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.02),
+    rgba(0, 0, 0, 0.4)
+  );
+  pointer-events: none;
+}
+
+/* ── Left color bar glow bleed ── */
+.response-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(
+    to right,
+    var(--agent-color-dim),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Thinking section — collapsed/expanded ── */
+.thinking-section {
+  background: rgba(139, 92, 246, 0.04);
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+.thinking-section .thinking-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.thinking-section.expanded .thinking-content {
+  max-height: 500px;
+}
+
+/* ── Tool call sub-block ── */
+.tool-block {
+  background: rgba(6, 182, 212, 0.03);
+  border: 1px solid rgba(6, 182, 212, 0.08);
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.tool-block:hover {
+  background: rgba(6, 182, 212, 0.06);
+}
+
+/* ── File write block ── */
+.file-write-block {
+  background: rgba(200, 255, 100, 0.03);
+  border: 1px solid rgba(200, 255, 100, 0.08);
+  border-radius: 6px;
+}
+
+/* ── Discovery block ── */
+.discovery-block {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.1);
+  border-radius: 6px;
+}
+
+/* ── Error block ── */
+.error-block {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+}
+
+/* ── Correction indicator ── */
+.correction-sent {
+  position: relative;
+  overflow: hidden;
+}
+
+.correction-sent::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 158, 11, 0.1),
+    transparent
+  );
+  animation: correction-sweep 1s ease-out forwards;
+}
+
+@keyframes correction-sweep {
+  to { left: 100%; }
+}
+
+/* ── Compact mode for swim lanes ── */
+.response-box.compact {
+  transform: none;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.15),
+    inset 0 0 15px var(--agent-color-dim);
+}
+
+.response-box.compact:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 0 20px var(--agent-color-dim),
+    0 0 15px var(--agent-color-glow);
+}
+
+/* ── Standalone event boxes (spawn, stop, complete) ── */
+.standalone-box {
+  border-radius: 8px;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ── Mobile: reduce 3D for performance ── */
+@media (max-width: 768px), (hover: none) {
+  .response-box {
+    transform: none;
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 0 20px var(--agent-color-dim);
+  }
+  .response-box:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .response-box,
+  .response-box:hover {
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
