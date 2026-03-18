@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, integer, timestamp, jsonb, serial, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, integer, timestamp, jsonb, serial, uniqueIndex, index } from 'drizzle-orm/pg-core';
 
 // ── Better Auth managed tables ──────────────────────────────────────
 
@@ -106,4 +106,6 @@ export const buildEvents = pgTable('build_events', {
   eventType: text('event_type').notNull(),
   eventData: jsonb('event_data').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => [
+  index('idx_build_events_project_id').on(table.projectId),
+]);

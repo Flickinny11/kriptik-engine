@@ -2,8 +2,10 @@ import { Router, type Response } from 'express';
 import { eq, and, desc } from 'drizzle-orm';
 import { v4 as uuid } from 'uuid';
 import { db } from '../db.js';
-import { projects } from '../schema.js';
+import { projects, buildEvents } from '../schema.js';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
+import { verifyProjectOwnership } from '../middleware/ownership.js';
+import { activeEngines } from './execute.js';
 
 const router = Router();
 router.use(requireAuth as any);
@@ -69,6 +71,47 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
     return;
   }
   res.json({ success: true });
+});
+
+// Get preview URL for a running build's dev server
+router.get('/:id/preview', async (req: AuthenticatedRequest, res: Response) => {
+  const project = await verifyProjectOwnership(req, req.params.id);
+  if (!project) {
+    res.status(404).json({ error: 'Project not found' });
+    return;
+  }
+
+  // Check if there's an active local engine with a dev server
+  const entry = activeEngines.get(req.params.id);
+  if (entry) {
+    // For local builds, the preview URL comes from dev server events
+    // Query the latest start_dev_server event for this project
+    const [devServerEvent] = await db.select().from(buildEvents)
+      .where(and(
+        eq(buildEvents.projectId, req.params.id),
+        eq(buildEvents.eventType, 'agent_tool_result'),
+      ))
+      .orderBy(desc(buildEvents.id))
+      .limit(20);
+
+    // Search recent events for dev server URL
+    if (devServerEvent?.eventData) {
+      const data = devServerEvent.eventData as any;
+      if (data?.data?.toolName === 'start_dev_server' && data?.data?.result?.url) {
+        res.json({ url: data.data.result.url, source: 'local' });
+        return;
+      }
+    }
+  }
+
+  // For Modal builds, check if MODAL_SPAWN_URL is set (tunnel URL would come from there)
+  // For now, return the sandbox path if project has one
+  if (project.sandboxPath) {
+    res.json({ url: null, sandboxPath: project.sandboxPath, status: project.status });
+    return;
+  }
+
+  res.json({ url: null, status: project.status });
 });
 
 export default router;
