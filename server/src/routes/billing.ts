@@ -13,7 +13,7 @@ const stripe = stripeSecretKey ? new Stripe(stripeSecretKey) : null;
 // Credit package definitions — mapped to existing Stripe topup price IDs
 const CREDIT_PACKAGES: Record<string, { credits: number; label: string; envKey: string }> = {
   topup_100:  { credits: 100,  label: '100 Credits',  envKey: 'STRIPE_TOPUP_TOPUP_100_PRICE' },
-  topup_250:  { credits: 250,  label: '250 Credits',  envKey: 'STRIPE_TOPUP_TOPUP_250_PRICE' },
+  topup_300:  { credits: 300,  label: '300 Credits',  envKey: 'STRIPE_TOPUP_TOPUP_300_PRICE' },
   topup_500:  { credits: 500,  label: '500 Credits',  envKey: 'STRIPE_TOPUP_TOPUP_500_PRICE' },
   topup_1000: { credits: 1000, label: '1,000 Credits', envKey: 'STRIPE_TOPUP_TOPUP_1000_PRICE' },
   topup_2500: { credits: 2500, label: '2,500 Credits', envKey: 'STRIPE_TOPUP_TOPUP_2500_PRICE' },
