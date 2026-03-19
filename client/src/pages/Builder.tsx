@@ -193,7 +193,9 @@ export default function Builder() {
   }
 
   const isBuilding = projectStatus === 'building' && !isComplete;
-  const isIdle = projectStatus === 'idle' && events.length === 0;
+  // Filter out system events (connected, replay_complete) when checking if idle
+  const realEvents = events.filter(e => e.type !== 'connected' && e.type !== 'replay_complete');
+  const isIdle = projectStatus === 'idle' && realEvents.length === 0;
   const canSubmit = userInput.trim() && (isBuilding || (isIdle && mode !== 'chat'));
 
   async function handleAnswer(nodeId: string, answer: string) {
