@@ -12,14 +12,6 @@
  * - Custom 3D SVG icons
  */
 
-declare module 'mouse-follower' {
-  export default class MouseFollower {
-    static registerGSAP(gsap: any): void
-    constructor(options?: Record<string, any>)
-    destroy(): void
-  }
-}
-
 import React, { useRef, useEffect, useState, Suspense, lazy, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import gsap from 'gsap'
