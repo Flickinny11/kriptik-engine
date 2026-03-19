@@ -14,6 +14,7 @@ import publishRouter from './routes/publish.js';
 import speculateRouter from './routes/speculate.js';
 import accountRouter from './routes/account.js';
 import billingRouter, { handleStripeWebhook } from './routes/billing.js';
+import migrateRouter from './routes/migrate.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -66,6 +67,7 @@ app.use('/api/publish', publishRouter);
 app.use('/api/speculate', speculateRouter);
 app.use('/api/account', accountRouter);
 app.use('/api/billing', billingRouter);
+app.use('/api/migrate', migrateRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
