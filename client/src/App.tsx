@@ -2,6 +2,7 @@ import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '@/store/useUserStore';
 import { Toaster } from 'sonner';
+import { PageErrorBoundary } from '@/components/ui/error-boundary';
 
 // Lazy load pages
 const LoginPage = React.lazy(() => import('@/pages/LoginPage'));
@@ -53,6 +54,7 @@ export default function App() {
 
   return (
     <>
+      <PageErrorBoundary>
       <Suspense fallback={<Loading />}>
         <Routes>
           {/* Auth routes — redirect to dashboard if already logged in */}
@@ -72,6 +74,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      </PageErrorBoundary>
       <Toaster theme="dark" position="bottom-right" />
     </>
   );

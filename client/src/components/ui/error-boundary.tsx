@@ -167,7 +167,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                                 </div>
 
                                 {/* Error Details (Collapsible) */}
-                                {process.env.NODE_ENV === 'development' && (
+                                {(
                                     <div>
                                         <button
                                             onClick={this.toggleDetails}
