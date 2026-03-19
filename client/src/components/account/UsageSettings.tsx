@@ -1,5 +1,6 @@
 /**
- * UsageSettings — Usage statistics, project history, credit consumption
+ * UsageSettings — Usage statistics, project history, credit consumption.
+ * Premium warm-glass design with 3D depth cards.
  */
 
 import { useEffect } from 'react';
@@ -10,19 +11,28 @@ import {
 import { useUserStore } from '@/store/useUserStore';
 import { useAccountStore } from '@/store/useAccountStore';
 
+const cardStyle: React.CSSProperties = {
+  background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(250,247,244,0.75) 100%)',
+  boxShadow: `
+    0 4px 16px rgba(0,0,0,0.06),
+    0 1px 4px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 -1px 0 rgba(0,0,0,0.02)
+  `,
+  backdropFilter: 'blur(12px) saturate(150%)',
+};
+
 export function UsageSettings() {
   const { user } = useUserStore();
   const { usage, usageLoading, fetchUsage } = useAccountStore();
 
-  useEffect(() => {
-    fetchUsage();
-  }, [fetchUsage]);
+  useEffect(() => { fetchUsage(); }, [fetchUsage]);
 
   const statusColors: Record<string, string> = {
-    complete: 'text-green-400 bg-green-500/10 border-green-500/20',
-    building: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    failed: 'text-red-400 bg-red-500/10 border-red-500/20',
-    idle: 'text-kriptik-slate bg-white/5 border-white/10',
+    complete: 'text-emerald-600 bg-emerald-50 border-emerald-200',
+    building: 'text-blue-600 bg-blue-50 border-blue-200',
+    failed: 'text-red-500 bg-red-50 border-red-200',
+    idle: 'text-[#b0a090] bg-[#f5f0eb] border-[#e0d8cf]',
   };
 
   const statusIcons: Record<string, React.ReactNode> = {
@@ -34,23 +44,23 @@ export function UsageSettings() {
 
   if (usageLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-display font-bold text-kriptik-white mb-1">Usage</h2>
-          <p className="text-sm text-kriptik-slate">Loading usage data...</p>
+          <h2 className="text-xl font-display font-bold text-[#1a1a1a] mb-1">Usage</h2>
+          <p className="text-sm text-[#8a7a6b]">Loading usage data...</p>
         </div>
         <div className="flex items-center justify-center py-12">
-          <div className="w-6 h-6 border-2 border-kriptik-lime border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 rounded-xl border-2 border-[#c25a00]/40 border-t-transparent animate-spin" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-display font-bold text-kriptik-white mb-1">Usage</h2>
-        <p className="text-sm text-kriptik-slate">Your build activity and credit consumption</p>
+        <h2 className="text-xl font-display font-bold text-[#1a1a1a] mb-1">Usage</h2>
+        <p className="text-sm text-[#8a7a6b]">Your build activity and credit consumption</p>
       </div>
 
       {/* Stats cards */}
@@ -73,27 +83,34 @@ export function UsageSettings() {
         />
       </div>
 
-      {/* Recent Projects / Build History */}
+      {/* Recent Projects */}
       <div>
-        <h3 className="text-sm font-semibold text-kriptik-silver mb-3">Recent Projects</h3>
+        <h3 className="text-sm font-semibold text-[#4a3f35] mb-3">Recent Projects</h3>
         {!usage?.recentProjects?.length ? (
-          <div className="text-center py-8 border border-dashed border-white/10 rounded-xl">
-            <p className="text-sm text-kriptik-slate">No projects yet</p>
+          <div
+            className="text-center py-8 rounded-2xl border border-dashed border-[#e0d8cf]"
+            style={{ background: 'rgba(255,255,255,0.4)' }}
+          >
+            <p className="text-sm text-[#b0a090]">No projects yet</p>
           </div>
         ) : (
           <div className="space-y-2">
             {usage.recentProjects.map((project) => (
               <div
                 key={project.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-kriptik-charcoal border border-white/5"
+                className="flex items-center justify-between p-3 rounded-xl border border-[#e8e0d8]/40 transition-all duration-300 hover:-translate-y-px"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.7), rgba(250,247,244,0.5))',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.6)',
+                }}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${statusColors[project.status] || statusColors.idle}`}>
                     {statusIcons[project.status] || statusIcons.idle}
                   </div>
                   <div>
-                    <p className="text-sm text-kriptik-white">{project.name}</p>
-                    <p className="text-xs text-kriptik-slate">
+                    <p className="text-sm text-[#1a1a1a] font-medium">{project.name}</p>
+                    <p className="text-xs text-[#b0a090]">
                       {project.createdAt
                         ? new Date(project.createdAt).toLocaleDateString('en-US', {
                             month: 'short', day: 'numeric', year: 'numeric',
@@ -102,7 +119,7 @@ export function UsageSettings() {
                     </p>
                   </div>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded border ${statusColors[project.status] || statusColors.idle}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-lg border font-medium ${statusColors[project.status] || statusColors.idle}`}>
                   {project.status}
                 </span>
               </div>
@@ -116,10 +133,24 @@ export function UsageSettings() {
 
 function StatCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: boolean }) {
   return (
-    <div className="p-4 rounded-xl bg-kriptik-charcoal border border-white/5">
-      <div className={`mb-2 ${accent ? 'text-kriptik-lime' : 'text-kriptik-silver'}`}>{icon}</div>
-      <p className={`text-xl font-mono font-bold ${accent ? 'text-kriptik-lime' : 'text-kriptik-white'}`}>{value}</p>
-      <p className="text-xs text-kriptik-slate mt-0.5">{label}</p>
+    <div
+      className="p-4 rounded-2xl border border-[#e8e0d8]/60 transition-all duration-500 hover:-translate-y-1"
+      style={{
+        ...cardStyle,
+        ...(accent ? {
+          background: 'linear-gradient(145deg, #fef3e8 0%, #fde6d0 100%)',
+          boxShadow: `
+            0 4px 16px rgba(194,90,0,0.08),
+            0 1px 4px rgba(194,90,0,0.04),
+            inset 0 1px 0 rgba(255,255,255,0.6),
+            inset 0 -1px 0 rgba(194,90,0,0.02)
+          `,
+        } : {}),
+      }}
+    >
+      <div className={`mb-2 ${accent ? 'text-[#c25a00]' : 'text-[#8a7a6b]'}`}>{icon}</div>
+      <p className={`text-xl font-mono font-bold ${accent ? 'text-[#c25a00]' : 'text-[#1a1a1a]'}`}>{value}</p>
+      <p className="text-xs text-[#b0a090] mt-0.5 font-medium">{label}</p>
     </div>
   );
 }

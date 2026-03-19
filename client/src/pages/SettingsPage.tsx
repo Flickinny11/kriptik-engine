@@ -1,9 +1,10 @@
 /**
  * SettingsPage — Full account settings page with tab navigation
  *
+ * Premium warm-glass design with off-white background, 3D depth,
+ * realistic shadows, and hover animations per Design_References.md
+ *
  * Accessible via /settings?tab=profile|billing|security|usage|preferences|danger
- * Desktop: sidebar tabs on the left + content on the right
- * Mobile: horizontal scrollable tab bar at top + content below
  */
 
 import { useState, useEffect } from 'react';
@@ -64,41 +65,51 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kriptik-black flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-kriptik-lime border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#f5f0eb] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl border-2 border-[#c25a00]/40 border-t-transparent animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-kriptik-black">
+    <div className="min-h-screen bg-[#f5f0eb]">
+      {/* Subtle warm noise texture overlay */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-noise mix-blend-multiply" />
+
       {/* Header */}
-      <header className="border-b border-white/5 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
+      <header className="relative z-10 border-b border-[#e0d8cf] bg-[#faf7f4]/80 backdrop-blur-md px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
         <button
           onClick={() => navigate('/dashboard')}
-          className="text-kriptik-silver hover:text-kriptik-white transition-colors p-1"
+          className="group relative p-2 rounded-xl text-[#8a7a6b] hover:text-[#1a1a1a] transition-all duration-300"
+          style={{
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6)',
+          }}
         >
-          <ArrowLeftIcon size={20} />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/60 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <ArrowLeftIcon size={20} className="relative z-10" />
         </button>
-        <h1 className="text-base sm:text-lg font-display font-bold text-kriptik-white">
+        <h1 className="text-base sm:text-lg font-display font-bold text-[#1a1a1a] tracking-tight">
           Account Settings
         </h1>
       </header>
 
       {/* Mobile: horizontal scrollable tab bar */}
-      <div className="md:hidden border-b border-white/5 overflow-x-auto scrollbar-hide">
-        <div className="flex min-w-max px-2 py-1">
+      <div className="md:hidden relative z-10 border-b border-[#e0d8cf] bg-[#faf7f4]/60 backdrop-blur-md overflow-x-auto scrollbar-hide">
+        <div className="flex min-w-max px-2 py-1.5">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setTab(tab.id)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap rounded-md mx-0.5 transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap rounded-lg mx-0.5 transition-all duration-300 ${
                 activeTab === tab.id
-                  ? 'bg-kriptik-lime/10 text-kriptik-lime'
+                  ? 'bg-[#1a1a1a] text-white shadow-md'
                   : tab.id === 'danger'
-                    ? 'text-kriptik-slate'
-                    : 'text-kriptik-silver'
+                    ? 'text-[#b0a090] hover:text-[#8a4a4a]'
+                    : 'text-[#8a7a6b] hover:text-[#1a1a1a] hover:bg-white/60'
               }`}
+              style={activeTab === tab.id ? {
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.08)',
+              } : undefined}
             >
               {tab.icon}
               <span>{tab.shortLabel}</span>
@@ -107,26 +118,37 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8 md:flex md:gap-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8 md:flex md:gap-8">
         {/* Desktop: Tab sidebar */}
         <nav className="hidden md:block w-56 flex-shrink-0">
           <div className="sticky top-8 space-y-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-kriptik-lime/10 text-kriptik-lime border border-kriptik-lime/20'
-                    : tab.id === 'danger'
-                      ? 'text-kriptik-slate hover:text-red-400 hover:bg-red-500/5'
-                      : 'text-kriptik-silver hover:text-kriptik-white hover:bg-white/5'
-                }`}
-              >
-                <span className={activeTab === tab.id ? 'text-kriptik-lime' : ''}>{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              const isDanger = tab.id === 'danger';
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setTab(tab.id)}
+                  className={`group w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-300 ${
+                    isActive
+                      ? 'bg-[#1a1a1a] text-white'
+                      : isDanger
+                        ? 'text-[#b0a090] hover:text-[#c44a4a] hover:bg-red-50/60'
+                        : 'text-[#6b5e50] hover:text-[#1a1a1a] hover:bg-white/70'
+                  }`}
+                  style={isActive ? {
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06)',
+                  } : {
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                  }}
+                >
+                  <span className={`transition-colors duration-300 ${isActive ? 'text-[#c8ff64]' : ''}`}>
+                    {tab.icon}
+                  </span>
+                  <span className="font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
         </nav>
 
@@ -135,7 +157,7 @@ export default function SettingsPage() {
           key={activeTab}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
           className="flex-1 min-w-0"
         >
           <ActiveComponent />

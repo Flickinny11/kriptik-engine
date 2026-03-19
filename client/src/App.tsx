@@ -8,6 +8,8 @@ import { PageErrorBoundary } from '@/components/ui/error-boundary';
 const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const LoginPage = React.lazy(() => import('@/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('@/pages/SignupPage'));
+const ForgotPasswordPage = React.lazy(() => import('@/pages/ForgotPasswordPage'));
+const ResetPasswordPage = React.lazy(() => import('@/pages/ResetPasswordPage'));
 const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
 const Builder = React.lazy(() => import('@/pages/Builder'));
 const SettingsPage = React.lazy(() => import('@/pages/SettingsPage'));
@@ -63,6 +65,8 @@ export default function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
             <Route path="/signup" element={<AuthRoute><SignupPage /></AuthRoute>} />
+            <Route path="/forgot-password" element={<AuthRoute><ForgotPasswordPage /></AuthRoute>} />
+            <Route path="/reset-password" element={<AuthRoute><ResetPasswordPage /></AuthRoute>} />
           </Route>
 
           {/* Protected app routes — require authentication */}

@@ -1,12 +1,34 @@
 /**
- * ProfileSettings — Profile management tab
- * Edit display name, slug, view email and account info.
+ * ProfileSettings — Profile management with warm-glass premium styling.
+ * Off-white cards with 3D depth, realistic shadows, and hover animations.
  */
 
 import { useState, useEffect } from 'react';
 import { UserIcon, EditIcon, CheckIcon, CloseIcon } from '@/components/ui/icons';
 import { useUserStore } from '@/store/useUserStore';
 import { toast } from 'sonner';
+
+// Shared card style for all settings
+const cardStyle: React.CSSProperties = {
+  background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(250,247,244,0.75) 100%)',
+  boxShadow: `
+    0 4px 16px rgba(0,0,0,0.06),
+    0 1px 4px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    inset 0 -1px 0 rgba(0,0,0,0.02)
+  `,
+  backdropFilter: 'blur(12px) saturate(150%)',
+};
+
+const cardHoverStyle: React.CSSProperties = {
+  ...cardStyle,
+  boxShadow: `
+    0 8px 24px rgba(0,0,0,0.08),
+    0 2px 8px rgba(0,0,0,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(0,0,0,0.02)
+  `,
+};
 
 export function ProfileSettings() {
   const { user, updateProfile, fetchProfile } = useUserStore();
@@ -16,14 +38,8 @@ export function ProfileSettings() {
   const [slug, setSlug] = useState(user?.slug || '');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
-
-  useEffect(() => {
-    setName(user?.name || '');
-    setSlug(user?.slug || '');
-  }, [user?.name, user?.slug]);
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+  useEffect(() => { setName(user?.name || ''); setSlug(user?.slug || ''); }, [user?.name, user?.slug]);
 
   const saveName = async () => {
     if (!name.trim()) return;
@@ -32,11 +48,8 @@ export function ProfileSettings() {
       await updateProfile({ name: name.trim() });
       setEditingName(false);
       toast.success('Name updated');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update name');
-    } finally {
-      setSaving(false);
-    }
+    } catch (err: any) { toast.error(err.message || 'Failed to update name'); }
+    finally { setSaving(false); }
   };
 
   const saveSlug = async () => {
@@ -46,11 +59,8 @@ export function ProfileSettings() {
       await updateProfile({ slug: slug.trim().toLowerCase() });
       setEditingSlug(false);
       toast.success('Slug updated');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update slug');
-    } finally {
-      setSaving(false);
-    }
+    } catch (err: any) { toast.error(err.message || 'Failed to update slug'); }
+    finally { setSaving(false); }
   };
 
   const initials = user?.name
@@ -58,24 +68,33 @@ export function ProfileSettings() {
     : '?';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-display font-bold text-kriptik-white mb-1">Profile</h2>
-        <p className="text-sm text-kriptik-slate">Manage your account information</p>
+        <h2 className="text-xl font-display font-bold text-[#1a1a1a] mb-1">Profile</h2>
+        <p className="text-sm text-[#8a7a6b]">Manage your account information</p>
       </div>
 
       {/* Avatar */}
-      <div className="flex items-center gap-5 p-5 rounded-xl bg-kriptik-charcoal border border-white/5">
+      <div
+        className="flex items-center gap-5 p-5 rounded-2xl border border-[#e8e0d8]/60 transition-all duration-500 hover:-translate-y-0.5"
+        style={cardStyle}
+      >
         {user?.image ? (
-          <img src={user.image} alt={user.name} className="w-16 h-16 rounded-full object-cover ring-2 ring-kriptik-lime/30" />
+          <img src={user.image} alt={user.name} className="w-16 h-16 rounded-2xl object-cover ring-2 ring-[#c25a00]/20 shadow-lg" />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-kriptik-lime/15 border border-kriptik-lime/30 flex items-center justify-center text-lg font-bold text-kriptik-lime">
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center text-lg font-bold text-[#c25a00]"
+            style={{
+              background: 'linear-gradient(135deg, #fef3e8 0%, #fde6d0 100%)',
+              boxShadow: '0 4px 12px rgba(194,90,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6)',
+            }}
+          >
             {initials}
           </div>
         )}
         <div>
-          <p className="text-sm font-semibold text-kriptik-white">{user?.name}</p>
-          <p className="text-xs text-kriptik-slate mt-0.5">Avatar upload coming soon</p>
+          <p className="text-sm font-semibold text-[#1a1a1a]">{user?.name}</p>
+          <p className="text-xs text-[#b0a090] mt-0.5">Avatar upload coming soon</p>
         </div>
       </div>
 
@@ -95,21 +114,22 @@ export function ProfileSettings() {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && saveName()}
             autoFocus
-            className="bg-kriptik-black border border-white/10 rounded-lg px-3 py-2 text-sm text-kriptik-white focus:outline-none focus:border-kriptik-lime/50 w-full max-w-xs"
+            className="bg-white border border-[#ddd3c8] rounded-xl px-3 py-2 text-sm text-[#1a1a1a] focus:outline-none focus:border-[#c25a00]/50 focus:ring-2 focus:ring-[#c25a00]/10 w-full max-w-xs transition-all duration-300"
+            style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)' }}
           />
         ) : (
-          <span className="text-sm text-kriptik-white">{user?.name}</span>
+          <span className="text-sm text-[#1a1a1a] font-medium">{user?.name}</span>
         )}
       </SettingsField>
 
       {/* Email */}
       <SettingsField label="Email" description="Your login email address">
-        <span className="text-sm text-kriptik-white">{user?.email}</span>
+        <span className="text-sm text-[#1a1a1a] font-medium">{user?.email}</span>
         {user && (
-          <span className={`ml-2 text-xs px-2 py-0.5 rounded ${
+          <span className={`ml-2 text-xs px-2 py-0.5 rounded-lg font-medium ${
             (user as any).emailVerified
-              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-              : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : 'bg-amber-50 text-amber-700 border border-amber-200'
           }`}>
             {(user as any).emailVerified ? 'Verified' : 'Unverified'}
           </span>
@@ -134,12 +154,13 @@ export function ProfileSettings() {
               onKeyDown={(e) => e.key === 'Enter' && saveSlug()}
               autoFocus
               placeholder="my-namespace"
-              className="bg-kriptik-black border border-white/10 rounded-lg px-3 py-2 text-sm text-kriptik-white font-mono focus:outline-none focus:border-kriptik-lime/50 w-48"
+              className="bg-white border border-[#ddd3c8] rounded-xl px-3 py-2 text-sm text-[#1a1a1a] font-mono focus:outline-none focus:border-[#c25a00]/50 focus:ring-2 focus:ring-[#c25a00]/10 w-48 transition-all duration-300"
+              style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.06)' }}
             />
-            <span className="text-xs text-kriptik-slate">.kriptik.app</span>
+            <span className="text-xs text-[#b0a090]">.kriptik.app</span>
           </div>
         ) : (
-          <span className="text-sm text-kriptik-white font-mono">
+          <span className="text-sm text-[#1a1a1a] font-mono font-medium">
             {user?.slug ? `${user.slug}.kriptik.app` : 'Not set'}
           </span>
         )}
@@ -147,7 +168,7 @@ export function ProfileSettings() {
 
       {/* Account created */}
       <SettingsField label="Member Since" description="When your account was created">
-        <span className="text-sm text-kriptik-white">
+        <span className="text-sm text-[#1a1a1a] font-medium">
           {user?.createdAt
             ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
             : 'Unknown'}
@@ -158,29 +179,23 @@ export function ProfileSettings() {
 }
 
 function SettingsField({
-  label,
-  description,
-  children,
-  editing,
-  onEdit,
-  onCancel,
-  onSave,
-  saving,
+  label, description, children, editing, onEdit, onCancel, onSave, saving,
 }: {
-  label: string;
-  description?: string;
-  children: React.ReactNode;
-  editing?: boolean;
-  onEdit?: () => void;
-  onCancel?: () => void;
-  onSave?: () => void;
-  saving?: boolean;
+  label: string; description?: string; children: React.ReactNode;
+  editing?: boolean; onEdit?: () => void; onCancel?: () => void; onSave?: () => void; saving?: boolean;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
-    <div className="flex items-start justify-between gap-4 p-4 rounded-xl bg-kriptik-charcoal border border-white/5">
+    <div
+      className="flex items-start justify-between gap-4 p-4 rounded-2xl border border-[#e8e0d8]/60 transition-all duration-500 hover:-translate-y-0.5"
+      style={hovered ? cardHoverStyle : cardStyle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-kriptik-silver mb-1">{label}</p>
-        {description && <p className="text-xs text-kriptik-slate mb-2">{description}</p>}
+        <p className="text-sm font-semibold text-[#4a3f35] mb-1">{label}</p>
+        {description && <p className="text-xs text-[#b0a090] mb-2">{description}</p>}
         <div className="flex items-center gap-2">{children}</div>
       </div>
       <div className="flex items-center gap-1 pt-1">
@@ -189,13 +204,15 @@ function SettingsField({
             <button
               onClick={onSave}
               disabled={saving}
-              className="p-1.5 rounded-md text-kriptik-lime hover:bg-kriptik-lime/10 transition-colors disabled:opacity-50"
+              className="p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-all duration-300 disabled:opacity-50"
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
             >
               <CheckIcon size={14} />
             </button>
             <button
               onClick={onCancel}
-              className="p-1.5 rounded-md text-kriptik-slate hover:bg-white/5 transition-colors"
+              className="p-2 rounded-xl text-[#b0a090] hover:bg-[#f0ebe5] transition-all duration-300"
+              style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
             >
               <CloseIcon size={14} />
             </button>
@@ -203,7 +220,8 @@ function SettingsField({
         ) : onEdit ? (
           <button
             onClick={onEdit}
-            className="p-1.5 rounded-md text-kriptik-slate hover:text-kriptik-white hover:bg-white/5 transition-colors"
+            className="p-2 rounded-xl text-[#b0a090] hover:text-[#1a1a1a] hover:bg-white/80 transition-all duration-300"
+            style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
           >
             <EditIcon size={14} />
           </button>
