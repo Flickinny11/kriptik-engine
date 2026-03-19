@@ -71,7 +71,7 @@ export default function Builder() {
     if (!projectId) return;
     apiClient.getProject(projectId).then(({ project }) => {
       if (project.appSlug) setPublishSlug(project.appSlug);
-      if (project.isPublished) { setIsPublished(true); setPublishedUrl(\`https://\${project.appSlug}.kriptik.app\`); }
+      if (project.isPublished) { setIsPublished(true); setPublishedUrl(`https://${project.appSlug}.kriptik.app`); }
     }).catch(() => {});
   }, [projectId]);
 
