@@ -101,20 +101,32 @@ router.post('/checkout', requireAuth as any, async (req: AuthenticatedRequest, r
 
 // ── POST /api/billing/portal ───────────────────────────────────────
 // Creates a Stripe Customer Portal session for payment method management
+// Auto-creates Stripe customer if one doesn't exist yet
 router.post('/portal', requireAuth as any, async (req: AuthenticatedRequest, res) => {
   if (!stripe) return res.status(503).json({ error: 'Stripe not configured' });
 
   try {
-    const [user] = await db.select({ stripeCustomerId: users.stripeCustomerId })
-      .from(users).where(eq(users.id, req.user!.id)).limit(1);
+    const userId = req.user!.id;
+    const userEmail = req.user!.email;
 
-    if (!user?.stripeCustomerId) {
-      return res.status(400).json({ error: 'No billing account found. Make a purchase first.' });
+    const [user] = await db.select({ stripeCustomerId: users.stripeCustomerId })
+      .from(users).where(eq(users.id, userId)).limit(1);
+
+    let customerId = user?.stripeCustomerId;
+
+    // Auto-create Stripe customer if they don't have one yet
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: userEmail,
+        metadata: { kriptikUserId: userId },
+      });
+      customerId = customer.id;
+      await db.update(users).set({ stripeCustomerId: customerId }).where(eq(users.id, userId));
     }
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
+      customer: customerId,
       return_url: `${frontendUrl}/settings?tab=billing`,
     });
 
