@@ -67,6 +67,13 @@ app.use('/api/publish', publishRouter);
 app.use('/api/speculate', speculateRouter);
 app.use('/api/account', accountRouter);
 app.use('/api/billing', billingRouter);
+// Client error reporting — captures error boundary crashes
+app.post('/api/errors/report', (req, res) => {
+  const { message, stack, componentStack, url, userAgent } = req.body || {};
+  console.error('[CLIENT ERROR]', JSON.stringify({ message, stack: stack?.slice(0, 500), componentStack: componentStack?.slice(0, 300), url, userAgent, timestamp: new Date().toISOString() }));
+  res.json({ received: true });
+});
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
