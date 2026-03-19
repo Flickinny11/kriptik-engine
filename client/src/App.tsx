@@ -9,6 +9,7 @@ const LoginPage = React.lazy(() => import('@/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('@/pages/SignupPage'));
 const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
 const Builder = React.lazy(() => import('@/pages/Builder'));
+const SettingsPage = React.lazy(() => import('@/pages/SettingsPage'));
 
 // Layouts
 const AuthLayout = React.lazy(() => import('@/components/layouts/AuthLayout'));
@@ -66,6 +67,7 @@ export default function App() {
           {/* Protected app routes — require authentication */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/builder/:projectId" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
           {/* Landing page: redirect to dashboard if logged in, login if not */}
           <Route path="/" element={<AuthRedirect />} />

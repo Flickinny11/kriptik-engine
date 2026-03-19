@@ -28,6 +28,7 @@ import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { useProjectStore } from '@/store/useProjectStore';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
 import { AgentStreamView } from '@/components/builder/AgentStreamView';
+import { AccountSlideOut } from '@/components/account/AccountSlideOut';
 
 type ActiveTab = 'preview' | 'code';
 
@@ -163,6 +164,7 @@ export default function Builder() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden', fontFamily: "'Inter', -apple-system, sans-serif" }}>
 
+      <AccountSlideOut />
       <ShaderBackground />
 
       {/* HEADER */}

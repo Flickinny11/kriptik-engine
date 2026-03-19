@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SparklesIcon, LogOutIcon, PlusIcon, XIcon } from '@/components/ui/icons';
+import { SparklesIcon, LogOutIcon, PlusIcon, XIcon, CoinsIcon } from '@/components/ui/icons';
 import { useUserStore } from '@/store/useUserStore';
 import { useProjectStore } from '@/store/useProjectStore';
 import { apiClient } from '@/lib/api-client';
 import { ProjectCard3D } from '@/components/ui/ProjectCard3D';
+import { AccountSlideOut } from '@/components/account/AccountSlideOut';
 import { v4 as uuid } from 'uuid';
 
 export default function Dashboard() {
@@ -77,12 +78,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-kriptik-black">
+      <AccountSlideOut />
+
       {/* Header */}
       <header className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-display font-bold text-kriptik-white">
+        <h1 className="text-xl font-display font-bold text-kriptik-white cursor-pointer select-none">
           Krip<span className="text-kriptik-lime">Tik</span>
         </h1>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-kriptik-charcoal border border-white/5">
+            <CoinsIcon size={12} />
+            <span className="text-xs font-mono text-kriptik-lime">{(user?.credits ?? 0).toLocaleString()}</span>
+          </div>
           <span className="text-sm text-kriptik-silver">{user?.email}</span>
           <button
             onClick={() => { logout(); navigate('/login'); }}

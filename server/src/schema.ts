@@ -11,6 +11,7 @@ export const users = pgTable('users', {
   slug: text('slug').unique(),               // user's namespace for app URLs
   credits: integer('credits').default(500),
   tier: text('tier').default('free'),
+  stripeCustomerId: text('stripe_customer_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });
@@ -109,6 +110,21 @@ export const oauthStates = pgTable('oauth_states', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+// Credit transaction ledger — tracks all credit movements
+export const creditTransactions = pgTable('credit_transactions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),             // 'purchase' | 'build_deduction' | 'bonus' | 'refund'
+  amount: integer('amount').notNull(),       // positive = credits in, negative = credits out
+  balance: integer('balance').notNull(),     // balance after this transaction
+  description: text('description'),
+  projectId: text('project_id'),
+  stripeSessionId: text('stripe_session_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_credit_transactions_user_id').on(table.userId),
+]);
 
 // Append-only log of engine SSE events — for chat replay when user returns
 export const buildEvents = pgTable('build_events', {

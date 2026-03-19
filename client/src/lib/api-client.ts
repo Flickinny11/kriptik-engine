@@ -95,6 +95,60 @@ class ApiClient {
   async speculate(text: string, projectId: string) {
     return this.request<{ speculation: unknown; reason?: string; model?: string }>('POST', '/api/speculate', { text, projectId });
   }
+
+  // Account
+  async getProfile() {
+    return this.request<{ profile: UserProfile }>('GET', '/api/account/profile');
+  }
+
+  async updateProfile(data: { name?: string; image?: string; slug?: string }) {
+    return this.request<{ profile: UserProfile }>('PUT', '/api/account/profile', data);
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    return this.request<{ success: boolean }>('PUT', '/api/account/password', { currentPassword, newPassword });
+  }
+
+  async getSessions() {
+    return this.request<{ sessions: SessionInfo[] }>('GET', '/api/account/sessions');
+  }
+
+  async revokeSession(sessionId: string) {
+    return this.request<{ success: boolean }>('DELETE', `/api/account/sessions/${sessionId}`);
+  }
+
+  async getUsage() {
+    return this.request<{ usage: UsageData }>('GET', '/api/account/usage');
+  }
+
+  async getOAuthConnections() {
+    return this.request<{ connections: OAuthConnection[] }>('GET', '/api/account/oauth-connections');
+  }
+
+  async deleteAccount() {
+    return this.request<{ success: boolean }>('DELETE', '/api/account');
+  }
+
+  // Billing
+  async getBillingBalance() {
+    return this.request<{ credits: number; tier: string }>('GET', '/api/billing/balance');
+  }
+
+  async getCreditPackages() {
+    return this.request<{ packages: CreditPackage[] }>('GET', '/api/billing/packages');
+  }
+
+  async createCheckout(packageId: string) {
+    return this.request<{ url: string }>('POST', '/api/billing/checkout', { packageId });
+  }
+
+  async createPortalSession() {
+    return this.request<{ url: string }>('POST', '/api/billing/portal');
+  }
+
+  async getBillingHistory() {
+    return this.request<{ transactions: CreditTransaction[] }>('GET', '/api/billing/history');
+  }
 }
 
 export interface OAuthCatalogEntry {
@@ -118,6 +172,65 @@ export interface Project {
   previewUrl: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  image: string | null;
+  slug: string | null;
+  credits: number;
+  tier: string;
+  emailVerified: boolean;
+  createdAt: string;
+}
+
+export interface SessionInfo {
+  id: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+  expiresAt: string;
+  isCurrent: boolean;
+}
+
+export interface UsageData {
+  totalProjects: number;
+  totalCreditsUsed: number;
+  recentProjects: Array<{
+    id: string;
+    name: string;
+    status: string;
+    createdAt: string;
+  }>;
+  transactions: CreditTransaction[];
+}
+
+export interface OAuthConnection {
+  id: string;
+  providerId: string;
+  accountId: string;
+  createdAt: string;
+}
+
+export interface CreditPackage {
+  id: string;
+  credits: number;
+  label: string;
+  available: boolean;
+}
+
+export interface CreditTransaction {
+  id: string;
+  userId: string;
+  type: string;
+  amount: number;
+  balance: number;
+  description: string | null;
+  projectId: string | null;
+  stripeSessionId: string | null;
+  createdAt: string;
 }
 
 export const apiClient = new ApiClient();

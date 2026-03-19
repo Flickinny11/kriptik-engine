@@ -12,6 +12,8 @@ import oauthRouter from './routes/oauth.js';
 import credentialsRouter from './routes/credentials.js';
 import publishRouter from './routes/publish.js';
 import speculateRouter from './routes/speculate.js';
+import accountRouter from './routes/account.js';
+import billingRouter, { handleStripeWebhook } from './routes/billing.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +44,12 @@ app.all('/api/auth/*', (req, res) => {
   return toNodeHandler(auth)(req, res);
 });
 
+// Stripe webhook needs raw body for signature verification — BEFORE express.json()
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+  (req as any).rawBody = req.body;
+  handleStripeWebhook(req, res);
+});
+
 // JSON body parsing for everything else
 app.use(express.json({ limit: '10mb' }));
 
@@ -56,6 +64,8 @@ app.use('/api/oauth', oauthRouter);
 app.use('/api/credentials', credentialsRouter);
 app.use('/api/publish', publishRouter);
 app.use('/api/speculate', speculateRouter);
+app.use('/api/account', accountRouter);
+app.use('/api/billing', billingRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {
