@@ -329,7 +329,11 @@ export default function Builder() {
                   <span className="publish-url-input__prefix">https://</span>
                   <input
                     value={publishSlug}
-                    onChange={(e) => setPublishSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                    onChange={(e) => {
+                      const allowed = 'abcdefghijklmnopqrstuvwxyz0123456789-';
+                      const cleaned = Array.from(e.target.value.toLowerCase()).filter(c => allowed.includes(c)).join('');
+                      setPublishSlug(cleaned);
+                    }}
                     placeholder="my-app"
                   />
                   <span className="publish-url-input__suffix">.kriptik.app</span>
