@@ -1,17 +1,21 @@
 /**
- * Builder Page — Primary AI development environment
+ * Builder Page — Premium AI Development Environment
  *
- * Layout: Chat (left ~25%) | Preview/Code (right ~75%)
- * Header: Logo + project name | View tabs (Preview/Code) | Publish + Settings
+ * Layout: Streaming chat (left ~25%, resizable) | Preview/Code (right ~75%)
+ * Header: Logo + project name | Preview/Code tabs | Publish + Settings
  *
- * Streams agent events via SSE from the Brain-driven engine.
- * No mechanical patterns — agents emit events, UI renders them.
+ * Streaming chat uses AgentStreamView (Unified Feed / Swim Lanes)
+ * which was built with custom SDF icons, agent badges, brain connectors.
+ * No mechanical patterns — agents emit events, UI renders them dynamically.
+ *
+ * Styling: Design_References.md driven — photorealistic depth, 3D shadows,
+ * GSAP animations, custom GLSL-inspired gradients. No flat CSS.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { motion, AnimatePresence } from 'framer-motion';
+import gsap from 'gsap';
 import {
   ArrowLeftIcon, SendIcon, SquareIcon, LoadingIcon, SparklesIcon,
   GlobeIcon, CheckIcon, CloseIcon, ExternalLinkIcon,
@@ -23,6 +27,7 @@ import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { useProjectStore } from '@/store/useProjectStore';
 import { AgentStreamView } from '@/components/builder/AgentStreamView';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
+import './builder.css';
 
 type ActiveTab = 'preview' | 'code';
 
@@ -31,6 +36,7 @@ export default function Builder() {
   const location = useLocation();
   const navigate = useNavigate();
   const initialPrompt = (location.state as any)?.initialPrompt as string | undefined;
+  const headerRef = useRef<HTMLElement>(null);
 
   const [sseReady, setSseReady] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -41,7 +47,7 @@ export default function Builder() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('preview');
   const { updateProjectStatus } = useProjectStore();
 
-  // Publish state
+  // Publish
   const [showPublish, setShowPublish] = useState(false);
   const [publishSlug, setPublishSlug] = useState('');
   const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
@@ -49,48 +55,42 @@ export default function Builder() {
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // Speculative AI analysis while typing
+  // Speculative AI
   const { speculation, isAnalyzing } = useSpeculation(
-    projectStatus === 'idle' ? userInput : '',
-    projectId || null,
+    projectStatus === 'idle' ? userInput : '', projectId || null,
   );
 
-  // Fetch OAuth catalog
-  useEffect(() => {
-    apiClient.getOAuthCatalog().then(r => setOauthCatalog(r.providers)).catch(() => {});
-  }, []);
+  // ─── EFFECTS ─────────────────────────────────────────────
 
-  // Load publish state
+  useEffect(() => { apiClient.getOAuthCatalog().then(r => setOauthCatalog(r.providers)).catch(() => {}); }, []);
+
   useEffect(() => {
     if (!projectId) return;
     apiClient.getProject(projectId).then(({ project }) => {
       if (project.appSlug) setPublishSlug(project.appSlug);
-      if (project.isPublished) {
-        setIsPublished(true);
-        setPublishedUrl(`https://${project.appSlug}.kriptik.app`);
-      }
+      if (project.isPublished) { setIsPublished(true); setPublishedUrl(`https://${project.appSlug}.kriptik.app`); }
     }).catch(() => {});
   }, [projectId]);
 
-  // Slug availability check
   useEffect(() => {
     if (!publishSlug || publishSlug.length < 3) { setSlugStatus('idle'); return; }
     setSlugStatus('checking');
-    const timer = setTimeout(async () => {
-      try {
-        const result = await apiClient.checkSlug(publishSlug);
-        setSlugStatus(result.available ? 'available' : 'taken');
-      } catch { setSlugStatus('invalid'); }
+    const t = setTimeout(async () => {
+      try { const r = await apiClient.checkSlug(publishSlug); setSlugStatus(r.available ? 'available' : 'taken'); }
+      catch { setSlugStatus('invalid'); }
     }, 500);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
   }, [publishSlug]);
 
-  // SSE
-  const { events, isConnected, isComplete, disconnect } = useEngineEvents(
-    sseReady ? projectId! : null
-  );
+  // GSAP header entrance
+  useEffect(() => {
+    if (headerRef.current) {
+      gsap.fromTo(headerRef.current, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' });
+    }
+  }, []);
 
-  // Mount: handle Flow A (with prompt) and Flow B (no prompt)
+  const { events, isConnected, isComplete, disconnect } = useEngineEvents(sseReady ? projectId! : null);
+
   useEffect(() => {
     if (!projectId) return;
     if (initialPrompt) {
@@ -104,7 +104,6 @@ export default function Builder() {
     }
   }, [projectId]);
 
-  // Watch events for dev server URL and completion
   useEffect(() => {
     for (const event of events) {
       if (event.type === 'agent_tool_result' && event.data.toolName === 'start_dev_server') {
@@ -115,24 +114,23 @@ export default function Builder() {
     }
   }, [events]);
 
-  // Input handlers
+  // ─── HANDLERS ────────────────────────────────────────────
+
   async function handleSubmit() {
     if (!userInput.trim() || !projectId) return;
     if (projectStatus === 'idle') {
-      try {
-        await apiClient.startBuild(projectId, userInput.trim());
-        setProjectStatus('building'); updateProjectStatus(projectId, 'building'); setSseReady(true); setUserInput('');
-      } catch (err) { console.error('Failed to start build:', err); }
+      try { await apiClient.startBuild(projectId, userInput.trim()); setProjectStatus('building'); updateProjectStatus(projectId, 'building'); setSseReady(true); setUserInput(''); }
+      catch (err) { console.error('Build start failed:', err); }
     } else if (projectStatus === 'building') {
       try { await apiClient.sendDirective(projectId, userInput.trim()); setUserInput(''); }
-      catch (err) { console.error('Failed to send directive:', err); }
+      catch (err) { console.error('Directive failed:', err); }
     }
   }
 
   async function handleStop() {
     if (!projectId) return;
     try { await apiClient.stopBuild(projectId); disconnect(); setProjectStatus('idle'); updateProjectStatus(projectId, 'idle'); }
-    catch (err) { console.error('Failed to stop build:', err); }
+    catch (err) { console.error('Stop failed:', err); }
   }
 
   async function handlePublish() {
@@ -140,8 +138,8 @@ export default function Builder() {
     setIsPublishing(true);
     try {
       if (publishSlug && slugStatus === 'available') await apiClient.setSlug(projectId, publishSlug);
-      const result = await apiClient.publishProject(projectId);
-      setPublishedUrl(result.url); setPublishSlug(result.slug); setIsPublished(true);
+      const r = await apiClient.publishProject(projectId);
+      setPublishedUrl(r.url); setPublishSlug(r.slug); setIsPublished(true);
     } catch (err) { console.error('Publish failed:', err); }
     finally { setIsPublishing(false); }
   }
@@ -155,7 +153,7 @@ export default function Builder() {
   async function handleAnswer(nodeId: string, answer: string) {
     if (!projectId) return;
     try { await apiClient.respondToQuestion(projectId, nodeId, answer); }
-    catch (err) { console.error('Failed to send answer:', err); }
+    catch (err) { console.error('Answer failed:', err); }
   }
 
   const isBuilding = projectStatus === 'building' && !isComplete;
@@ -163,50 +161,36 @@ export default function Builder() {
   const isIdle = projectStatus === 'idle' && realEvents.length === 0;
   const canSubmit = userInput.trim() && (isBuilding || isIdle);
 
-  // ─── RENDER ────────────────────────────────────────────────────────
+  // ─── RENDER ──────────────────────────────────────────────
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0d0d0d 100%)' }}>
+    <div className="builder-root">
 
       {/* ═══ HEADER ═══ */}
-      <header
-        className="h-14 px-4 flex items-center justify-between shrink-0 z-10"
-        style={{
-          background: 'linear-gradient(145deg, rgba(20,20,25,0.98) 0%, rgba(15,15,20,0.99) 100%)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '0 4px 30px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
-        }}
-      >
-        {/* Left: nav + project name */}
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dashboard')} className="text-zinc-500 hover:text-white transition-colors">
-            <ArrowLeftIcon size={18} />
+      <header ref={headerRef} className="builder-header">
+        <div className="builder-header__left">
+          <button className="action-btn--icon" onClick={() => navigate('/dashboard')}>
+            <ArrowLeftIcon size={17} />
           </button>
-          <div className="w-px h-6 bg-white/10" />
-          <span className="text-sm font-semibold text-white truncate max-w-[240px]">
+          <div className="builder-header__divider" />
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {projectName || initialPrompt?.slice(0, 50) || 'New Project'}
           </span>
           {isBuilding && (
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-              Building
+            <span className="build-status">
+              <span className="build-status__dot build-status__dot--building" />
+              <span style={{ color: '#34d399' }}>Building</span>
             </span>
           )}
-          {isComplete && <span className="text-xs text-emerald-400 font-medium">Complete</span>}
+          {isComplete && <span style={{ fontSize: 11, fontWeight: 500, color: '#34d399' }}>Complete</span>}
         </div>
 
-        {/* Center: view tabs */}
-        <div className="flex items-center gap-1">
+        <div className="builder-header__center">
           {(['preview', 'code'] as ActiveTab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                activeTab === tab
-                  ? 'bg-amber-500/15 text-amber-200 border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.15)]'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
+              className={`tab-btn ${activeTab === tab ? 'tab-btn--active' : ''}`}
             >
               {tab === 'preview' ? <EyeIcon size={14} /> : <CodeIcon size={14} />}
               {tab === 'preview' ? 'Preview' : 'Code'}
@@ -214,54 +198,51 @@ export default function Builder() {
           ))}
         </div>
 
-        {/* Right: actions */}
-        <div className="flex items-center gap-2">
+        <div className="builder-header__right">
           {isBuilding && (
-            <button onClick={handleStop} className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-500/10" title="Stop build">
-              <SquareIcon size={15} />
+            <button className="action-btn--stop" onClick={handleStop} title="Stop build">
+              <SquareIcon size={14} />
             </button>
           )}
           <button
             onClick={() => setShowPublish(!showPublish)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-              isPublished
-                ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
-                : 'bg-white/5 text-zinc-300 border border-white/10 hover:bg-white/10 hover:text-white'
-            }`}
+            className={isPublished ? 'action-btn action-btn--published' : 'action-btn action-btn--publish'}
           >
             <GlobeIcon size={13} />
             {isPublished ? 'Published' : 'Publish'}
           </button>
-          <button className="text-zinc-500 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5" title="Settings">
-            <SettingsIcon size={16} />
+          <button className="action-btn--icon" title="Settings">
+            <SettingsIcon size={15} />
           </button>
         </div>
       </header>
 
-      {/* ═══ MAIN CONTENT ═══ */}
-      <PanelGroup direction="horizontal" className="flex-1">
+      {/* ═══ MAIN PANELS ═══ */}
+      <PanelGroup direction="horizontal" style={{ flex: 1 }}>
 
-        {/* ─── LEFT: STREAMING CHAT (25%) ─── */}
+        {/* ─── LEFT: STREAMING CHAT ─── */}
         <Panel defaultSize={25} minSize={18} maxSize={40}>
-          <div className="h-full flex flex-col m-1.5 rounded-2xl overflow-hidden" style={{
-            background: 'linear-gradient(145deg, rgba(18,18,22,0.95) 0%, rgba(14,14,18,0.98) 100%)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
-          }}>
-            {/* Chat content */}
-            <div className="flex-1 overflow-y-auto">
+          <div className="glass-panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+
+            {/* Stream content */}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
               {isIdle ? (
-                <div className="flex-1 flex items-center justify-center p-6 h-full">
-                  <div className="text-center max-w-xs">
-                    <SparklesIcon size={28} className="text-amber-500/40 mx-auto mb-3" />
-                    <h3 className="text-base font-semibold text-white mb-1.5">What do you want to build?</h3>
-                    <p className="text-xs text-zinc-500 leading-relaxed">
+                <div className="empty-state">
+                  <div className="empty-state__content">
+                    <SparklesIcon size={26} className="empty-state__icon" />
+                    <div className="empty-state__title">What do you want to build?</div>
+                    <div className="empty-state__text">
                       Describe your app below. The agents will reason about architecture, research APIs, and build it.
-                    </p>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <AgentStreamView events={events} projectId={projectId!} oauthCatalog={oauthCatalog} onAnswer={handleAnswer} />
+                <AgentStreamView
+                  events={events}
+                  projectId={projectId!}
+                  oauthCatalog={oauthCatalog}
+                  onAnswer={handleAnswer}
+                />
               )}
             </div>
 
@@ -271,22 +252,18 @@ export default function Builder() {
             )}
 
             {/* Input */}
-            <div className="p-3 border-t border-white/5">
-              <div className="flex gap-2">
+            <div className="chat-input-area">
+              <div className="chat-input-row">
                 <input
+                  className="chat-input"
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && canSubmit && handleSubmit()}
                   placeholder={isIdle ? 'Describe your app...' : isBuilding ? 'Send a directive...' : 'Build complete'}
                   disabled={isComplete}
-                  className="flex-1 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500/30 focus:ring-1 focus:ring-amber-500/10 disabled:opacity-40 transition-all"
                 />
-                <button
-                  onClick={handleSubmit}
-                  disabled={!canSubmit}
-                  className="bg-amber-500/15 text-amber-300 px-3 py-2.5 rounded-xl hover:bg-amber-500/25 disabled:opacity-20 transition-all border border-amber-500/20"
-                >
-                  <SendIcon size={15} />
+                <button className="chat-send-btn" onClick={handleSubmit} disabled={!canSubmit}>
+                  <SendIcon size={14} />
                 </button>
               </div>
             </div>
@@ -294,143 +271,99 @@ export default function Builder() {
         </Panel>
 
         {/* Resize handle */}
-        <PanelResizeHandle className="w-[3px] hover:bg-amber-500/30 transition-colors" />
+        <PanelResizeHandle className="resize-handle" />
 
-        {/* ─── RIGHT: PREVIEW / CODE (75%) ─── */}
+        {/* ─── RIGHT: PREVIEW / CODE ─── */}
         <Panel defaultSize={75} minSize={50}>
-          <div className="h-full m-1.5 rounded-2xl overflow-hidden" style={{
-            background: 'linear-gradient(145deg, rgba(18,18,22,0.95) 0%, rgba(14,14,18,0.98) 100%)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.03)',
-          }}>
+          <div className="glass-panel" style={{ height: '100%' }}>
             {activeTab === 'preview' ? (
-              /* Live Preview */
               previewUrl ? (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title="App Preview"
-                  sandbox="allow-scripts allow-forms allow-popups"
-                />
+                <iframe src={previewUrl} className="preview-iframe" title="App Preview" sandbox="allow-scripts allow-forms allow-popups" />
               ) : (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-zinc-600 text-sm mb-2">
+                <div className="preview-placeholder">
+                  <div style={{ textAlign: 'center' }}>
+                    <div className="preview-placeholder__text">
                       {isBuilding ? 'Preview will appear when the dev server starts...' :
                        isComplete ? 'Build complete — preview available' :
                        'Live preview appears here during build'}
                     </div>
-                    {isBuilding && <LoadingIcon size={20} className="animate-spin text-amber-500/40 mx-auto" />}
+                    {isBuilding && <LoadingIcon size={18} className="empty-state__icon" style={{ marginTop: 8 }} />}
                   </div>
                 </div>
               )
             ) : (
-              /* Code Editor placeholder — will be replaced with Monaco */
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <CodeIcon size={32} className="text-zinc-700 mx-auto mb-3" />
-                  <div className="text-zinc-500 text-sm">Code editor will show generated files here</div>
-                  <div className="text-zinc-700 text-xs mt-1">Files are written to the project sandbox in real-time</div>
-                </div>
+              <div className="code-placeholder">
+                <CodeIcon size={28} className="code-placeholder__icon" />
+                <div className="code-placeholder__title">Code editor — generated files appear here</div>
+                <div className="code-placeholder__sub">Files are written to the sandbox in real-time</div>
               </div>
             )}
           </div>
         </Panel>
       </PanelGroup>
 
-      {/* ═══ PUBLISH DIALOG ═══ */}
-      <AnimatePresence>
-        {showPublish && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-start justify-end p-4 pt-16"
-          >
-            <div className="absolute inset-0 bg-black/50" onClick={() => setShowPublish(false)} />
-            <motion.div
-              initial={{ opacity: 0, x: 20, scale: 0.97 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 20, scale: 0.97 }}
-              className="relative w-96 rounded-2xl overflow-hidden"
-              style={{
-                background: 'linear-gradient(145deg, rgba(22,22,28,0.98) 0%, rgba(16,16,20,0.99) 100%)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 8px 32px rgba(0,0,0,0.3)',
-              }}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-white/5">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <GlobeIcon size={15} /> Publish App
-                </h3>
-                <button onClick={() => setShowPublish(false)} className="text-zinc-600 hover:text-white transition-colors">
-                  <CloseIcon size={15} />
-                </button>
+      {/* ═══ PUBLISH PANEL ═══ */}
+      {showPublish && (
+        <div className="publish-backdrop">
+          <div className="publish-backdrop__bg" onClick={() => setShowPublish(false)} />
+          <div className="publish-panel">
+            <div className="publish-panel__header">
+              <span className="publish-panel__title"><GlobeIcon size={14} /> Publish App</span>
+              <button className="action-btn--icon" onClick={() => setShowPublish(false)}><CloseIcon size={14} /></button>
+            </div>
+            <div className="publish-panel__body">
+              {isPublished && publishedUrl && (
+                <div className="live-badge">
+                  <span className="live-badge__dot" />
+                  <span style={{ fontSize: 11, fontWeight: 500, color: '#34d399' }}>Live</span>
+                  <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 12, color: '#fbbf24', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none' }}>
+                    {publishedUrl.replace('https://', '')} <ExternalLinkIcon size={10} />
+                  </a>
+                </div>
+              )}
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 500, color: 'rgba(161,161,170,0.6)', marginBottom: 6, display: 'block' }}>App URL</label>
+                <div className="publish-url-input">
+                  <span className="publish-url-input__prefix">https://</span>
+                  <input
+                    value={publishSlug}
+                    onChange={(e) => setPublishSlug(e.target.value.toLowerCase().replaceAll(/[^a-z0-9-]/g, ''))}
+                    placeholder="my-app"
+                  />
+                  <span className="publish-url-input__suffix">.kriptik.app</span>
+                </div>
+                <div className={`slug-status slug-status--${slugStatus}`}>
+                  {slugStatus === 'checking' && <><LoadingIcon size={10} /> Checking...</>}
+                  {slugStatus === 'available' && <><CheckIcon size={10} /> Available</>}
+                  {slugStatus === 'taken' && 'Already taken'}
+                  {slugStatus === 'invalid' && 'Invalid'}
+                </div>
               </div>
 
-              <div className="p-4 space-y-4">
-                {isPublished && publishedUrl && (
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckIcon size={13} className="text-emerald-400" />
-                      <span className="text-xs font-medium text-emerald-400">Live</span>
-                    </div>
-                    <a href={publishedUrl} target="_blank" rel="noopener noreferrer"
-                      className="text-sm text-amber-300 hover:underline flex items-center gap-1">
-                      {publishedUrl.replace('https://', '')} <ExternalLinkIcon size={11} />
-                    </a>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-xs font-medium text-zinc-400 mb-1.5 block">App URL</label>
-                  <div className="flex items-center bg-black/30 border border-white/8 rounded-xl overflow-hidden focus-within:border-amber-500/30">
-                    <span className="text-xs text-zinc-600 px-3 py-2.5 bg-white/3 border-r border-white/8 select-none">https://</span>
-                    <input
-                      value={publishSlug}
-                      onChange={(e) => setPublishSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                      placeholder="my-app"
-                      className="flex-1 bg-transparent px-2 py-2.5 text-sm text-white placeholder:text-zinc-700 focus:outline-none min-w-0"
-                    />
-                    <span className="text-xs text-zinc-600 px-3 py-2.5 bg-white/3 border-l border-white/8 select-none">.kriptik.app</span>
-                  </div>
-                  <div className="mt-1.5 h-4">
-                    {slugStatus === 'checking' && <span className="text-xs text-zinc-500 flex items-center gap-1"><LoadingIcon size={10} className="animate-spin" /> Checking...</span>}
-                    {slugStatus === 'available' && <span className="text-xs text-emerald-400 flex items-center gap-1"><CheckIcon size={10} /> Available</span>}
-                    {slugStatus === 'taken' && <span className="text-xs text-red-400">Already taken</span>}
-                    {slugStatus === 'invalid' && <span className="text-xs text-red-400">Invalid</span>}
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  {isPublished ? (
-                    <>
-                      <button onClick={handlePublish} disabled={isPublishing || (slugStatus !== 'available' && slugStatus !== 'idle')}
-                        className="flex-1 bg-amber-500/15 text-amber-300 text-sm font-medium py-2.5 rounded-xl hover:bg-amber-500/25 disabled:opacity-30 transition-all border border-amber-500/20">
-                        {isPublishing ? 'Updating...' : 'Update'}
-                      </button>
-                      <button onClick={handleUnpublish}
-                        className="px-4 text-red-400 text-sm font-medium py-2.5 rounded-xl hover:bg-red-500/10 transition-all">
-                        Unpublish
-                      </button>
-                    </>
-                  ) : (
-                    <button onClick={handlePublish} disabled={isPublishing || slugStatus === 'taken' || slugStatus === 'invalid'}
-                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-black text-sm font-semibold py-2.5 rounded-xl hover:from-amber-400 hover:to-orange-400 disabled:opacity-30 transition-all">
-                      {isPublishing ? 'Publishing...' : 'Publish to kriptik.app'}
+              <div style={{ display: 'flex', gap: 8 }}>
+                {isPublished ? (
+                  <>
+                    <button className="publish-cta publish-cta--update" onClick={handlePublish}
+                      disabled={isPublishing || (slugStatus !== 'available' && slugStatus !== 'idle')}>
+                      {isPublishing ? 'Updating...' : 'Update'}
                     </button>
-                  )}
-                </div>
-
-                <p className="text-xs text-zinc-600 leading-relaxed">
-                  Your app will be accessible at the URL above. Changing the URL replaces the old one.
-                </p>
+                    <button className="publish-cta publish-cta--unpublish" onClick={handleUnpublish}>Unpublish</button>
+                  </>
+                ) : (
+                  <button className="publish-cta publish-cta--primary" onClick={handlePublish}
+                    disabled={isPublishing || slugStatus === 'taken' || slugStatus === 'invalid'}>
+                    {isPublishing ? 'Publishing...' : 'Publish to kriptik.app'}
+                  </button>
+                )}
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              <p className="publish-note">Your app will be live at this URL. Changing the URL replaces the old one.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
