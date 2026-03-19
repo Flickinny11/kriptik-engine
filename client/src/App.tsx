@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { PageErrorBoundary } from '@/components/ui/error-boundary';
 
 // Lazy load pages
+const LandingPage = React.lazy(() => import('@/pages/LandingPage'));
 const LoginPage = React.lazy(() => import('@/pages/LoginPage'));
 const SignupPage = React.lazy(() => import('@/pages/SignupPage'));
 const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
@@ -69,8 +70,8 @@ export default function App() {
           <Route path="/builder/:projectId" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
 
-          {/* Landing page: redirect to dashboard if logged in, login if not */}
-          <Route path="/" element={<AuthRedirect />} />
+          {/* Landing page */}
+          <Route path="/" element={<LandingPage />} />
 
           {/* All other routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
