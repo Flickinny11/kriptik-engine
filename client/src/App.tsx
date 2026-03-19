@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '@/store/useUserStore';
 import { Toaster } from 'sonner';
 
@@ -20,6 +20,30 @@ function Loading() {
   );
 }
 
+/**
+ * Route protection — redirects to login if not authenticated.
+ * Shows loading spinner while session is being checked.
+ */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useUserStore();
+  const location = useLocation();
+
+  if (isLoading) return <Loading />;
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
+  return <>{children}</>;
+}
+
+/**
+ * Auth route — redirects to dashboard if already authenticated.
+ */
+function AuthRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useUserStore();
+
+  if (isLoading) return <Loading />;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   const initialize = useUserStore(s => s.initialize);
 
@@ -31,21 +55,30 @@ export default function App() {
     <>
       <Suspense fallback={<Loading />}>
         <Routes>
-          {/* Auth routes */}
+          {/* Auth routes — redirect to dashboard if already logged in */}
           <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<AuthRoute><LoginPage /></AuthRoute>} />
+            <Route path="/signup" element={<AuthRoute><SignupPage /></AuthRoute>} />
           </Route>
 
-          {/* App routes */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/builder/:projectId" element={<Builder />} />
+          {/* Protected app routes — require authentication */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/builder/:projectId" element={<ProtectedRoute><Builder /></ProtectedRoute>} />
 
-          {/* Default redirect */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Landing page: redirect to dashboard if logged in, login if not */}
+          <Route path="/" element={<AuthRedirect />} />
+
+          {/* All other routes */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
       <Toaster theme="dark" position="bottom-right" />
     </>
   );
+}
+
+function AuthRedirect() {
+  const { isAuthenticated, isLoading } = useUserStore();
+  if (isLoading) return <Loading />;
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 }
