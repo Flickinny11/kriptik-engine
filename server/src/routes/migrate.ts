@@ -9,8 +9,9 @@ import { db } from '../db.js';
 const router = Router();
 
 router.post('/run', async (_req, res) => {
+  // Use Stripe secret key as auth — it's a known production secret
   const secret = _req.headers['x-migration-secret'];
-  if (secret !== process.env.BETTER_AUTH_SECRET) {
+  if (secret !== process.env.STRIPE_SECRET_KEY) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
