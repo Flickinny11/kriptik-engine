@@ -1,20 +1,17 @@
 /**
- * ShaderBackground — Fullscreen OGL background with animated domain-warping noise
+ * ShaderBackground — Fullscreen OGL background with animated fbm noise
  *
- * Covers the entire viewport behind all content. Creates an organic,
- * slowly evolving surface that replaces flat #0a0a0a backgrounds.
- *
+ * Covers viewport behind all content. Organic, slowly evolving surface.
  * Design_References.md: OGL + domain warping noise + film grain
  */
 
 import { useEffect, useRef } from 'react';
-import { Renderer, Program, Mesh, Triangle } from 'ogl';
 
-const FRAGMENT = `
+const FRAG = /* glsl */ `
 precision highp float;
-
 uniform float uTime;
 uniform vec2 uResolution;
+varying vec2 vUv;
 
 vec3 hash33(vec3 p) {
   p = vec3(dot(p,vec3(127.1,311.7,74.7)), dot(p,vec3(269.5,183.3,246.1)), dot(p,vec3(113.5,271.9,124.6)));
@@ -36,27 +33,23 @@ float fbm(vec3 p) {
 }
 
 void main() {
-  vec2 uv = gl_FragCoord.xy / uResolution;
-
-  // Very slow domain warp for living background
   float t = uTime * 0.02;
-  vec3 p = vec3(uv * 1.5, t);
+  vec3 p = vec3(vUv * 1.5, t);
   float n = fbm(p + fbm(p + fbm(p + t)));
-
-  // Deep dark color range — barely visible movement
   vec3 dark = vec3(0.028, 0.025, 0.035);
   vec3 mid = vec3(0.05, 0.045, 0.06);
   vec3 color = mix(dark, mid, n * 0.5 + 0.5);
-
-  // Radial falloff — darker at edges
-  float vignette = 1.0 - 0.35 * pow(length(uv - 0.5) * 1.4, 2.0);
-  color *= vignette;
-
+  color *= 1.0 - 0.35 * pow(length(vUv - 0.5) * 1.4, 2.0);
   gl_FragColor = vec4(color, 1.0);
 }
 `;
 
-const VERTEX = `attribute vec2 position; void main() { gl_Position = vec4(position, 0, 1); }`;
+const VERT = /* glsl */ `
+attribute vec2 position;
+attribute vec2 uv;
+varying vec2 vUv;
+void main() { vUv = uv; gl_Position = vec4(position, 0, 1); }
+`;
 
 export function ShaderBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -66,52 +59,55 @@ export function ShaderBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const renderer = new Renderer({ canvas, alpha: false, antialias: false, dpr: Math.min(window.devicePixelRatio, 1) });
-    const gl = renderer.gl;
-    const geometry = new Triangle(gl);
-    const program = new Program(gl, {
-      vertex: VERTEX,
-      fragment: FRAGMENT,
-      uniforms: {
-        uTime: { value: 0 },
-        uResolution: { value: [canvas.width, canvas.height] },
-      },
-    });
-    const mesh = new Mesh(gl, { geometry, program });
+    import('ogl').then(({ Renderer, Program, Mesh, Triangle }) => {
+      const renderer = new Renderer({ canvas, alpha: false, antialias: false, dpr: Math.min(window.devicePixelRatio, 1) });
+      const gl = renderer.gl;
 
-    function resize() {
       renderer.setSize(window.innerWidth, window.innerHeight);
-      program.uniforms.uResolution.value = [window.innerWidth * renderer.dpr, window.innerHeight * renderer.dpr];
-    }
-    resize();
-    window.addEventListener('resize', resize);
 
-    const start = performance.now();
-    function render(time: number) {
-      program.uniforms.uTime.value = (time - start) * 0.001;
-      renderer.render({ scene: mesh });
+      const geometry = new Triangle(gl);
+      const program = new Program(gl, {
+        vertex: VERT,
+        fragment: FRAG,
+        uniforms: {
+          uTime: { value: 0 },
+          uResolution: { value: [window.innerWidth, window.innerHeight] },
+        },
+      });
+      const mesh = new Mesh(gl, { geometry, program });
+
+      const onResize = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        program.uniforms.uResolution.value = [window.innerWidth * renderer.dpr, window.innerHeight * renderer.dpr];
+      };
+      window.addEventListener('resize', onResize);
+
+      const start = performance.now();
+      const render = (time: number) => {
+        program.uniforms.uTime.value = (time - start) * 0.001;
+        renderer.render({ scene: mesh });
+        animRef.current = requestAnimationFrame(render);
+      };
       animRef.current = requestAnimationFrame(render);
-    }
-    animRef.current = requestAnimationFrame(render);
+
+      (canvas as any).__cleanup = () => {
+        cancelAnimationFrame(animRef.current);
+        window.removeEventListener('resize', onResize);
+        gl.getExtension('WEBGL_lose_context')?.loseContext();
+      };
+    });
 
     return () => {
       cancelAnimationFrame(animRef.current);
-      window.removeEventListener('resize', resize);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      const cleanup = (canvasRef.current as any)?.__cleanup;
+      if (cleanup) cleanup();
     };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-        pointerEvents: 'none',
-      }}
+      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
     />
   );
 }
