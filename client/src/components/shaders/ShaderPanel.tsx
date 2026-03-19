@@ -8,7 +8,7 @@
  * Reference: https://github.com/oframe/ogl/blob/master/examples/triangle-screen-shader.html
  */
 
-import { useEffect, useRef, type ReactNode, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 
 // Domain warping noise fragment shader
 const FRAG = /* glsl */ `
@@ -88,6 +88,7 @@ export function ShaderPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number>(0);
   const initRef = useRef(false);
+  const [shaderReady, setShaderReady] = useState(false);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -140,9 +141,11 @@ export function ShaderPanel({
         observer.observe(container);
 
         const startTime = performance.now();
+        let firstFrame = true;
         const render = (time: number) => {
           program.uniforms.uTime.value = (time - startTime) * 0.001;
           renderer.render({ scene: mesh });
+          if (firstFrame) { firstFrame = false; setShaderReady(true); }
           animRef.current = requestAnimationFrame(render);
         };
         animRef.current = requestAnimationFrame(render);
@@ -169,11 +172,11 @@ export function ShaderPanel({
     <div
       ref={containerRef}
       className={className}
-      style={{ position: 'relative', overflow: 'hidden', borderRadius, ...style }}
+      style={{ position: 'relative', overflow: 'hidden', borderRadius, background: '#0c0c10', ...style }}
     >
       <canvas
         ref={canvasRef}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', borderRadius: 'inherit', pointerEvents: 'none' }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', borderRadius: 'inherit', pointerEvents: 'none', opacity: shaderReady ? 1 : 0 }}
       />
       {/* Edge highlight for 3D depth */}
       <div style={{

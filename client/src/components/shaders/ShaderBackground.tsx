@@ -5,7 +5,7 @@
  * Design_References.md: OGL + domain warping noise + film grain
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const FRAG = /* glsl */ `
 precision highp float;
@@ -54,6 +54,7 @@ void main() { vUv = uv; gl_Position = vec4(position, 0, 1); }
 export function ShaderBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -83,9 +84,11 @@ export function ShaderBackground() {
       window.addEventListener('resize', onResize);
 
       const start = performance.now();
+      let firstFrame = true;
       const render = (time: number) => {
         program.uniforms.uTime.value = (time - start) * 0.001;
         renderer.render({ scene: mesh });
+        if (firstFrame) { firstFrame = false; setReady(true); }
         animRef.current = requestAnimationFrame(render);
       };
       animRef.current = requestAnimationFrame(render);
@@ -107,7 +110,7 @@ export function ShaderBackground() {
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }}
+      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none', opacity: ready ? 1 : 0, transition: 'opacity 0.3s' }}
     />
   );
 }
