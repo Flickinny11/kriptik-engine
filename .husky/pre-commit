@@ -3,3 +3,5 @@
 # Run modularity and mechanical pattern checks on staged files
 bash scripts/check-modularity.sh
 bash scripts/check-mechanical.sh
+# Warn if frozen auth files are modified (social login spec)
+bash scripts/check-auth-freeze.sh

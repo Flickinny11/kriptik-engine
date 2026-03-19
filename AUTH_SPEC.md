@@ -302,22 +302,41 @@ SSE event streams are project-scoped. When a client connects to the SSE endpoint
 
 ---
 
-## 8. SOCIAL PROVIDERS (Login/Signup)
+## 8. SOCIAL PROVIDERS (Login/Signup) — FROZEN CONFIGURATION
 
-Social login providers are configured via environment variables. Better Auth handles the full OAuth flow for sign-in/sign-up.
+> **THIS SECTION IS FROZEN.** Social login is working in production as of 2026-03-19.
+> Do NOT change env var names, callback URLs, trustedOrigins, or the flow described here.
+> If a CI check fires a warning about social auth files being modified, READ THIS FIRST.
 
-### Currently Supported
+### Production Configuration (VERIFIED WORKING)
 
-| Provider | Env Vars Required |
-|----------|-------------------|
-| GitHub | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` |
-| Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
+| Setting | Value | Notes |
+|---------|-------|-------|
+| `BETTER_AUTH_URL` | `https://api.kriptik.app` | Determines OAuth callback redirect_uri base |
+| `FRONTEND_URL` | `https://kriptik.app` | Added to trustedOrigins; used as callbackURL base |
+| `COOKIE_DOMAIN` | `.kriptik.app` | Cross-subdomain cookies (covers kriptik.app AND api.kriptik.app) |
+| Google `redirect_uri` | `https://api.kriptik.app/api/auth/callback/google` | Must match Google Cloud Console |
+| GitHub `redirect_uri` | `https://api.kriptik.app/api/auth/callback/github` | Must match GitHub OAuth App settings |
+| Google `client_id` | `176326592484-dulikeh7gtakrd9468s9knk4pv0phcm3.apps.googleusercontent.com` | From Vercel env |
+| GitHub `client_id` | `Ov23li8VPam8BbRZNBpB` | From Vercel env |
 
-### Configuration Pattern
+### Why These Specific Values
 
-Social providers are conditionally included in the Better Auth config using spread syntax. If the env vars are not set, the provider is not registered:
+The 403 bug on 2026-03-19 was caused by `FRONTEND_URL` having the WRONG value (inherited from the old app — probably `https://kriptik-ai-opus-build.vercel.app`). Better Auth builds `trustedOrigins` from `FRONTEND_URL`. When the browser at `https://kriptik.app` sent `Origin: https://kriptik.app`, the server rejected it because that origin wasn't trusted.
+
+**Fix:** Deleted old encrypted env vars and recreated as plaintext with correct values. Redeployed backend.
+
+### Currently Supported Providers
+
+| Provider | Env Vars | Callback URL |
+|----------|----------|-------------|
+| GitHub | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | `https://api.kriptik.app/api/auth/callback/github` |
+| Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `https://api.kriptik.app/api/auth/callback/google` |
+
+### Configuration Pattern (DO NOT CHANGE)
 
 ```typescript
+// server/src/auth.ts — conditional spread (provider only registered if env vars exist)
 socialProviders: {
   ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET ? {
     github: {
@@ -325,33 +344,58 @@ socialProviders: {
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
     },
   } : {}),
+  ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    },
+  } : {}),
 },
+
+// trustedOrigins — MUST include https://kriptik.app
+trustedOrigins: [
+  'http://localhost:5173',
+  'http://localhost:3001',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+],
 ```
+
+### OAuth Callback Flow (VERIFIED WORKING)
+
+1. User at `kriptik.app` clicks "Sign in with Google/GitHub"
+2. Client calls `authClient.signIn.social({ provider, callbackURL: 'https://kriptik.app/dashboard' })`
+3. POST goes to `kriptik.app/api/auth/sign-in/social` (same-origin via Vercel rewrite → `api.kriptik.app`)
+4. Better Auth validates `Origin: https://kriptik.app` against `trustedOrigins` (includes `FRONTEND_URL`)
+5. Returns redirect URL to Google/GitHub with `redirect_uri=https://api.kriptik.app/api/auth/callback/{provider}`
+6. Browser navigates to OAuth provider (top-level navigation — always allowed by ITP)
+7. User authorizes
+8. Provider redirects to `https://api.kriptik.app/api/auth/callback/{provider}` (top-level navigation)
+9. Better Auth creates session, sets cookies with `domain: .kriptik.app` (top-level → ITP allows)
+10. Redirects to `https://kriptik.app/dashboard`
+11. Dashboard calls `getSession()` → `GET /api/auth/get-session` (same-origin → cookie sent)
+12. User is authenticated
+
+### What Breaks This Flow
+
+| Change | Result |
+|--------|--------|
+| `FRONTEND_URL` wrong or missing | `trustedOrigins` doesn't include `kriptik.app` → 403 on social login |
+| `BETTER_AUTH_URL` wrong | `redirect_uri` points to wrong domain → OAuth provider rejects callback |
+| `COOKIE_DOMAIN` wrong or missing | Cookies don't cover both domains → session lost after OAuth redirect |
+| `sameSite` changed to `none` | Safari ITP blocks cookies → users appear logged out |
+| Frontend `vercel.json` missing `/api/*` rewrite | All API calls return SPA HTML → nothing works |
+| Google/GitHub OAuth App callback URL mismatch | Provider returns "redirect_uri_mismatch" error |
 
 ### Adding New Social Providers
 
-To add a new social login provider (e.g., Discord, Apple):
-
-1. Set `{PROVIDER}_CLIENT_ID` and `{PROVIDER}_CLIENT_SECRET` env vars
-2. Add the provider to the `socialProviders` object in `server/src/auth.ts` using the same conditional spread pattern
-3. Add the corresponding sign-in function in `client/src/lib/auth-client.ts`
-4. Add the OAuth button to the login/signup pages
-5. Test on Safari and iOS Safari before deploying to production
-
-### OAuth Callback Flow (Social Login)
-
-1. User clicks "Sign in with GitHub/Google"
-2. Client calls `authClient.signIn.social({ provider, callbackURL })`
-3. Request goes to `/api/auth/sign-in/social` (same-origin via Vercel rewrite)
-4. Better Auth returns redirect URL to OAuth provider
-5. Browser navigates to provider (top-level navigation — always allowed by ITP)
-6. User authorizes
-7. Provider redirects to `api.kriptik.app/api/auth/callback/{provider}`
-8. Better Auth sets session cookie with `domain: .kriptik.app` (top-level navigation — allowed by ITP)
-9. Redirect to `kriptik.app/dashboard`
-10. Dashboard fetches `/api/auth/session` (same-origin — cookie sent)
-
-This flow works on Safari and iOS because every cookie-setting operation happens during a top-level navigation, not a cross-origin subrequest.
+1. Register OAuth app with provider, set callback URL: `https://api.kriptik.app/api/auth/callback/{provider}`
+2. Set `{PROVIDER}_CLIENT_ID` and `{PROVIDER}_CLIENT_SECRET` in Vercel backend env vars
+3. Add conditional spread to `socialProviders` in `server/src/auth.ts`
+4. Add `signInWith{Provider}` function in `client/src/lib/auth-client.ts`
+5. Add button to login/signup pages
+6. **Test on Safari and iOS Safari before deploying to production**
+7. **Redeploy backend** (env vars only take effect on new deployments)
+8. Update this section of AUTH_SPEC.md with the new provider's details
 
 ---
 
