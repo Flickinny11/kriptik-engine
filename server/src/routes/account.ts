@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { eq, sql, count } from 'drizzle-orm';
+import { eq, sql, count, and } from 'drizzle-orm';
 import { db } from '../db.js';
 import { users, projects, session, account, creditTransactions, buildEvents } from '../schema.js';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
@@ -158,8 +158,9 @@ router.delete('/sessions/:sessionId', async (req: AuthenticatedRequest, res) => 
       return res.status(400).json({ error: 'Cannot revoke current session. Use logout instead.' });
     }
 
+    // Scope delete to current user's sessions only (security)
     await db.delete(session)
-      .where(eq(session.id, sessionId));
+      .where(and(eq(session.id, sessionId), eq(session.userId, req.user!.id)));
 
     res.json({ success: true });
   } catch (err) {
@@ -179,9 +180,9 @@ router.get('/usage', async (req: AuthenticatedRequest, res) => {
       .from(projects)
       .where(eq(projects.ownerId, userId));
 
-    // Total credits used (sum of negative transactions)
+    // Total credits used (sum of negative transactions only — deductions)
     const [creditsUsed] = await db.select({
-      total: sql<number>`COALESCE(SUM(ABS(${creditTransactions.amount})), 0)`,
+      total: sql<number>`COALESCE(SUM(ABS(${creditTransactions.amount})) FILTER (WHERE ${creditTransactions.amount} < 0), 0)`,
     }).from(creditTransactions)
       .where(eq(creditTransactions.userId, userId));
 

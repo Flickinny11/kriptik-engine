@@ -73,8 +73,8 @@ export function BillingSettings() {
       </div>
 
       {/* Credit Balance */}
-      <div className="p-6 rounded-xl bg-kriptik-charcoal border border-white/5">
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-4 sm:p-6 rounded-xl bg-kriptik-charcoal border border-white/5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-kriptik-lime/15 border border-kriptik-lime/30 flex items-center justify-center">
               <CoinsIcon size={20} />
@@ -125,7 +125,7 @@ export function BillingSettings() {
 
       {/* Payment Management */}
       <div className="p-4 rounded-xl bg-kriptik-charcoal border border-white/5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-kriptik-silver">Payment Methods</p>
             <p className="text-xs text-kriptik-slate mt-0.5">Manage cards and billing info via Stripe</p>
@@ -133,7 +133,7 @@ export function BillingSettings() {
           <button
             onClick={handlePortal}
             disabled={portalLoading}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-kriptik-silver hover:text-kriptik-white bg-kriptik-black border border-white/10 rounded-lg hover:border-white/20 transition-all disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 text-sm text-kriptik-silver hover:text-kriptik-white bg-kriptik-black border border-white/10 rounded-lg hover:border-white/20 transition-all disabled:opacity-50 w-full sm:w-auto"
           >
             <CreditCardIcon size={14} />
             <span>{portalLoading ? 'Opening...' : 'Manage'}</span>

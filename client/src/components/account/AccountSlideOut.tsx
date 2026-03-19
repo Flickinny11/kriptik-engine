@@ -1,10 +1,9 @@
 /**
- * AccountSlideOut — Hover-triggered slide-out navigation panel
+ * AccountSlideOut — Hover/touch-triggered slide-out navigation panel
  *
- * Activated by hovering over the KripTik logo area (top-left) or
- * a narrow invisible trigger strip on the left edge. Slides in from
- * the left with a spring animation. Contains user info, credit balance,
- * and navigation links to /settings tabs.
+ * Desktop: Activated by hovering over a trigger strip on the left edge.
+ * Mobile: Tap the hamburger menu button that replaces the trigger strip.
+ * Slides in from the left with a spring animation.
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   UserIcon, CoinsIcon, ShieldIcon, ActivityIcon,
-  SettingsIcon, LogOutIcon, ChevronRightIcon,
+  SettingsIcon, LogOutIcon, ChevronRightIcon, MenuIcon,
 } from '@/components/ui/icons';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -32,10 +31,17 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AccountSlideOut() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, logout } = useUserStore();
+
+  // Detect touch device on mount
+  useEffect(() => {
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    setIsTouchDevice(isTouch);
+  }, []);
 
   const cancelClose = useCallback(() => {
     if (closeTimerRef.current) {
@@ -72,6 +78,16 @@ export function AccountSlideOut() {
     };
   }, []);
 
+  // Close on escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen]);
+
   // User initials for avatar fallback
   const initials = user?.name
     ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -79,13 +95,26 @@ export function AccountSlideOut() {
 
   return (
     <>
-      {/* Hover trigger zone — invisible strip on the left edge */}
-      <div
-        className="fixed left-0 top-0 w-[60px] h-full z-40"
-        onMouseEnter={handleOpen}
-        onMouseLeave={scheduleClose}
-        style={{ pointerEvents: isOpen ? 'none' : 'auto' }}
-      />
+      {/* Desktop: hover trigger zone — invisible strip on the left edge */}
+      {!isTouchDevice && (
+        <div
+          className="fixed left-0 top-0 w-[60px] h-full z-40 hidden md:block"
+          onMouseEnter={handleOpen}
+          onMouseLeave={scheduleClose}
+          style={{ pointerEvents: isOpen ? 'none' : 'auto' }}
+        />
+      )}
+
+      {/* Mobile: fixed menu button */}
+      {isTouchDevice && !isOpen && (
+        <button
+          onClick={handleOpen}
+          className="fixed top-3 left-3 z-40 w-10 h-10 flex items-center justify-center rounded-lg bg-kriptik-charcoal/90 border border-white/10 md:hidden"
+          aria-label="Open menu"
+        >
+          <MenuIcon size={18} />
+        </button>
+      )}
 
       <AnimatePresence>
         {isOpen && (
@@ -100,19 +129,19 @@ export function AccountSlideOut() {
               onClick={() => setIsOpen(false)}
             />
 
-            {/* Panel */}
+            {/* Panel — narrower on mobile */}
             <motion.div
               ref={panelRef}
               initial={{ x: -320 }}
               animate={{ x: 0 }}
               exit={{ x: -320 }}
               transition={{ type: 'spring', stiffness: 400, damping: 35, mass: 0.8 }}
-              className="fixed left-0 top-0 bottom-0 z-50 w-[320px] bg-kriptik-charcoal border-r border-white/10 flex flex-col shadow-2xl shadow-black/60"
-              onMouseEnter={cancelClose}
-              onMouseLeave={scheduleClose}
+              className="fixed left-0 top-0 bottom-0 z-50 w-[280px] sm:w-[320px] bg-kriptik-charcoal border-r border-white/10 flex flex-col shadow-2xl shadow-black/60"
+              onMouseEnter={!isTouchDevice ? cancelClose : undefined}
+              onMouseLeave={!isTouchDevice ? scheduleClose : undefined}
             >
               {/* User header */}
-              <div className="p-5 border-b border-white/5">
+              <div className="p-4 sm:p-5 border-b border-white/5">
                 <div className="flex items-center gap-3 mb-3">
                   {user?.image ? (
                     <img
@@ -149,7 +178,7 @@ export function AccountSlideOut() {
                   <button
                     key={item.tab}
                     onClick={() => handleNavigate(item.tab)}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-sm text-kriptik-silver hover:text-kriptik-white hover:bg-white/5 transition-colors group"
+                    className="w-full flex items-center gap-3 px-4 sm:px-5 py-3 text-sm text-kriptik-silver hover:text-kriptik-white hover:bg-white/5 active:bg-white/10 transition-colors group"
                   >
                     <span className="text-kriptik-slate group-hover:text-kriptik-lime transition-colors">
                       {item.icon}
@@ -161,7 +190,7 @@ export function AccountSlideOut() {
               </nav>
 
               {/* Tier badge + separator */}
-              <div className="px-5 py-3 border-t border-white/5">
+              <div className="px-4 sm:px-5 py-3 border-t border-white/5">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-kriptik-slate">Current Plan</span>
                   <span className="text-xs font-semibold text-kriptik-lime uppercase tracking-wider px-2 py-0.5 rounded bg-kriptik-lime/10 border border-kriptik-lime/20">
@@ -172,7 +201,7 @@ export function AccountSlideOut() {
                 {/* Logout */}
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-kriptik-slate hover:text-red-400 hover:bg-red-500/5 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-kriptik-slate hover:text-red-400 hover:bg-red-500/5 active:bg-red-500/10 rounded-lg transition-colors"
                 >
                   <LogOutIcon size={16} />
                   <span>Log out</span>

@@ -2,7 +2,8 @@
  * SettingsPage — Full account settings page with tab navigation
  *
  * Accessible via /settings?tab=profile|billing|security|usage|preferences|danger
- * Uses Radix-style tab navigation with URL query params for deep linking.
+ * Desktop: sidebar tabs on the left + content on the right
+ * Mobile: horizontal scrollable tab bar at top + content below
  */
 
 import { useState, useEffect } from 'react';
@@ -23,16 +24,17 @@ import { DangerZoneSettings } from '@/components/account/DangerZoneSettings';
 interface TabDef {
   id: string;
   label: string;
+  shortLabel: string;
   icon: React.ReactNode;
 }
 
 const TABS: TabDef[] = [
-  { id: 'profile', label: 'Profile', icon: <UserIcon size={16} /> },
-  { id: 'billing', label: 'Billing & Credits', icon: <CoinsIcon size={16} /> },
-  { id: 'security', label: 'Security', icon: <ShieldIcon size={16} /> },
-  { id: 'usage', label: 'Usage', icon: <ActivityIcon size={16} /> },
-  { id: 'preferences', label: 'Preferences', icon: <SettingsIcon size={16} /> },
-  { id: 'danger', label: 'Danger Zone', icon: <AlertTriangleIcon size={16} /> },
+  { id: 'profile', label: 'Profile', shortLabel: 'Profile', icon: <UserIcon size={16} /> },
+  { id: 'billing', label: 'Billing & Credits', shortLabel: 'Billing', icon: <CoinsIcon size={16} /> },
+  { id: 'security', label: 'Security', shortLabel: 'Security', icon: <ShieldIcon size={16} /> },
+  { id: 'usage', label: 'Usage', shortLabel: 'Usage', icon: <ActivityIcon size={16} /> },
+  { id: 'preferences', label: 'Preferences', shortLabel: 'Prefs', icon: <SettingsIcon size={16} /> },
+  { id: 'danger', label: 'Danger Zone', shortLabel: 'Danger', icon: <AlertTriangleIcon size={16} /> },
 ];
 
 const TAB_COMPONENTS: Record<string, React.FC> = {
@@ -71,21 +73,43 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-kriptik-black">
       {/* Header */}
-      <header className="border-b border-white/5 px-6 py-4 flex items-center gap-4">
+      <header className="border-b border-white/5 px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 sm:gap-4">
         <button
           onClick={() => navigate('/dashboard')}
-          className="text-kriptik-silver hover:text-kriptik-white transition-colors"
+          className="text-kriptik-silver hover:text-kriptik-white transition-colors p-1"
         >
           <ArrowLeftIcon size={20} />
         </button>
-        <h1 className="text-lg font-display font-bold text-kriptik-white">
+        <h1 className="text-base sm:text-lg font-display font-bold text-kriptik-white">
           Account Settings
         </h1>
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 flex gap-8">
-        {/* Tab sidebar */}
-        <nav className="w-56 flex-shrink-0">
+      {/* Mobile: horizontal scrollable tab bar */}
+      <div className="md:hidden border-b border-white/5 overflow-x-auto scrollbar-hide">
+        <div className="flex min-w-max px-2 py-1">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap rounded-md mx-0.5 transition-all ${
+                activeTab === tab.id
+                  ? 'bg-kriptik-lime/10 text-kriptik-lime'
+                  : tab.id === 'danger'
+                    ? 'text-kriptik-slate'
+                    : 'text-kriptik-silver'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.shortLabel}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8 md:flex md:gap-8">
+        {/* Desktop: Tab sidebar */}
+        <nav className="hidden md:block w-56 flex-shrink-0">
           <div className="sticky top-8 space-y-1">
             {TABS.map((tab) => (
               <button

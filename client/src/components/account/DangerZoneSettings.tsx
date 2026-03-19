@@ -40,8 +40,8 @@ export function DangerZoneSettings() {
       </div>
 
       {/* Export Data */}
-      <div className="p-5 rounded-xl bg-kriptik-charcoal border border-red-500/10">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-5 rounded-xl bg-kriptik-charcoal border border-red-500/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <DownloadIcon size={16} />
@@ -51,7 +51,7 @@ export function DangerZoneSettings() {
           </div>
           <button
             disabled
-            className="px-4 py-2 text-sm text-kriptik-slate bg-kriptik-black border border-white/5 rounded-lg cursor-not-allowed"
+            className="px-4 py-2 text-sm text-kriptik-slate bg-kriptik-black border border-white/5 rounded-lg cursor-not-allowed w-full sm:w-auto"
           >
             Coming Soon
           </button>
@@ -82,7 +82,7 @@ export function DangerZoneSettings() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
             onClick={() => setShowDeleteConfirm(false)}
           >
             <motion.div

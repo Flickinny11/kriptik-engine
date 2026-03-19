@@ -84,7 +84,7 @@ export function SecuritySettings() {
           <LockIcon size={16} />
           <h3 className="text-sm font-semibold text-kriptik-silver">Change Password</h3>
         </div>
-        <div className="space-y-3 max-w-sm">
+        <div className="space-y-3 max-w-full sm:max-w-sm">
           <input
             type="password"
             placeholder="Current password"
@@ -177,7 +177,7 @@ export function SecuritySettings() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-kriptik-slate mt-0.5 truncate max-w-xs" title={ua}>
+                    <p className="text-xs text-kriptik-slate mt-0.5 truncate max-w-[200px] sm:max-w-xs" title={ua}>
                       {shortUa}
                     </p>
                     <p className="text-xs text-kriptik-slate">

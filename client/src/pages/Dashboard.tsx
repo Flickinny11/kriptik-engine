@@ -81,16 +81,16 @@ export default function Dashboard() {
       <AccountSlideOut />
 
       {/* Header */}
-      <header className="border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-display font-bold text-kriptik-white cursor-pointer select-none">
+      <header className="border-b border-white/5 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+        <h1 className="text-lg sm:text-xl font-display font-bold text-kriptik-white cursor-pointer select-none ml-10 md:ml-0">
           Krip<span className="text-kriptik-lime">Tik</span>
         </h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-kriptik-charcoal border border-white/5">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-md bg-kriptik-charcoal border border-white/5">
             <CoinsIcon size={12} />
             <span className="text-xs font-mono text-kriptik-lime">{(user?.credits ?? 0).toLocaleString()}</span>
           </div>
-          <span className="text-sm text-kriptik-silver">{user?.email}</span>
+          <span className="text-sm text-kriptik-silver hidden sm:inline">{user?.email}</span>
           <button
             onClick={() => { logout(); navigate('/login'); }}
             className="text-kriptik-silver hover:text-kriptik-white transition-colors"
