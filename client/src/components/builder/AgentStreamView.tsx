@@ -1,12 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, lazy, Suspense } from 'react';
 import type { EngineEvent } from '@/hooks/useEngineEvents';
 import type { OAuthCatalogEntry } from '@/lib/api-client';
 import { useAgentTracker } from '@/hooks/useAgentTracker';
 import { UnifiedFeedView } from './UnifiedFeedView';
 import { SwimLaneView } from './SwimLaneView';
-import { BrainOrb } from './BrainOrb';
-import { BrainConnectors } from './BrainConnector';
-import { WarpBackground } from './WarpBackground';
+
+// BrainOrb, BrainConnector, WarpBackground use Three.js + OGL at module level.
+// Lazy import so they load asynchronously without blocking the streaming chat.
+const BrainOrb = lazy(() => import('./BrainOrb').then(m => ({ default: m.BrainOrb })));
+const BrainConnectors = lazy(() => import('./BrainConnector').then(m => ({ default: m.BrainConnectors })));
+const WarpBackground = lazy(() => import('./WarpBackground').then(m => ({ default: m.WarpBackground })));
 
 type ViewMode = 'feed' | 'lanes';
 
@@ -57,18 +60,22 @@ export function AgentStreamView({
   return (
     <div className="h-full flex flex-col relative">
       {/* Domain-warped background — organic noise that responds to agent activity */}
-      <WarpBackground agentCount={agents.size} buildActive={buildActive} />
+      <Suspense fallback={null}>
+        <WarpBackground agentCount={agents.size} buildActive={buildActive} />
+      </Suspense>
 
       {/* Top bar: Brain + view toggle */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 shrink-0 relative z-10">
         <div className="flex items-center gap-3">
           {/* SDF Brain visualization */}
-          <BrainOrb
-            activity={brainState.activity}
-            readPulse={brainState.readPulse}
-            writePulse={brainState.writePulse}
-            size={48}
-          />
+          <Suspense fallback={<div style={{ width: 48, height: 48 }} />}>
+            <BrainOrb
+              activity={brainState.activity}
+              readPulse={brainState.readPulse}
+              writePulse={brainState.writePulse}
+              size={48}
+            />
+          </Suspense>
           <div>
             <span className="text-[10px] font-mono text-kriptik-silver uppercase tracking-widest">
               {agents.size} agent{agents.size !== 1 ? 's' : ''} · {events.length} events
@@ -99,10 +106,12 @@ export function AgentStreamView({
       {/* Brain-to-agent energy connectors */}
       {buildActive && agents.size > 0 && (
         <div className="h-12 relative shrink-0 z-10">
-          <BrainConnectors
-            agents={agents as any}
-            recentEvents={events.slice(-15)}
-          />
+          <Suspense fallback={null}>
+            <BrainConnectors
+              agents={agents as any}
+              recentEvents={events.slice(-15)}
+            />
+          </Suspense>
         </div>
       )}
 

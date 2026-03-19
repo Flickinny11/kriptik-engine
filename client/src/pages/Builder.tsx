@@ -12,7 +12,7 @@
  * must not block initial Builder render.
  */
 
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import gsap from 'gsap';
@@ -27,11 +27,7 @@ import { useSpeculation } from '@/hooks/useSpeculation';
 import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { useProjectStore } from '@/store/useProjectStore';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
-
-// Lazy import — AgentStreamView pulls Three.js + OGL via BrainOrb/WarpBackground
-const AgentStreamView = lazy(() =>
-  import('@/components/builder/AgentStreamView').then(m => ({ default: m.AgentStreamView }))
-);
+import { AgentStreamView } from '@/components/builder/AgentStreamView';
 
 type ActiveTab = 'preview' | 'code';
 
@@ -211,9 +207,7 @@ export default function Builder() {
                   </div>
                 </div>
               ) : (
-                <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><LoadingIcon size={20} style={{ color: 'rgba(251,191,36,0.3)' }} /></div>}>
-                  <AgentStreamView events={events} projectId={projectId!} oauthCatalog={oauthCatalog} onAnswer={handleAnswer} />
-                </Suspense>
+                <AgentStreamView events={events} projectId={projectId!} oauthCatalog={oauthCatalog} onAnswer={handleAnswer} />
               )}
             </div>
             {isIdle && (speculation || isAnalyzing) && <SpeculativePlan speculation={speculation} isAnalyzing={isAnalyzing} />}
