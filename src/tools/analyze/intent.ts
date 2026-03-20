@@ -2,7 +2,7 @@
  * analyze_intent tool — Deep intent extraction with inferred needs.
  */
 
-import type { ToolDefinition } from '../../agents/runtime.js';
+import type { ToolDefinition, ToolContext } from '../../agents/runtime.js';
 import { createLLMJSON } from './helpers.js';
 import type { ProviderRouter } from '../../providers/router.js';
 
@@ -20,7 +20,7 @@ export function createIntentTool(router: ProviderRouter): ToolDefinition {
       },
       required: ['prompt'],
     },
-    execute: async (params) => {
+    execute: async (params, ctx) => {
       const system = `You are analyzing a user's app request. Your job is to identify not just what they asked for, but everything they DIDN'T ask for that they would expect in a production app of this type. Think about it from the perspective of someone who would actually USE this app daily.
 
 For example: if a user says "build an AI video generator app", they explicitly want video generation. But they ALSO need: a media player to watch generated videos, a download button, a share button, a generation queue with progress indicators, a library of previously generated videos, proper loading states during generation, error handling when generation fails, the ability to cancel in-progress generations, storage management, and format/resolution options. They need the prompt input to auto-resize. They need the generate button to show a loading state. They need thumbnail previews in the library.
@@ -63,9 +63,27 @@ Return a JSON object with this EXACT structure:
 
 Be EXHAUSTIVE with inferred_needs. This is the most important part. A typical commercial app request should have 15-30 inferred needs.`;
 
+      // Include relevant past experience if available in the Brain
+      let experienceContext = '';
+      try {
+        const experienceNodes = ctx.brain.getNodesByType(ctx.projectId, 'experience');
+        if (experienceNodes.length > 0) {
+          const expSummaries = experienceNodes
+            .slice(0, 10)
+            .map((n) => {
+              const c = n.content as Record<string, unknown>;
+              return `- ${n.title}: ${typeof c.description === 'string' ? c.description : JSON.stringify(c)}`;
+            })
+            .join('\n');
+          experienceContext = `\n\nRelevant past build experience (advisory — use judgment):\n${expSummaries}`;
+        }
+      } catch {
+        // Non-blocking
+      }
+
       const userMsg = params.existing_context
-        ? `User prompt: ${params.prompt}\n\nExisting brain context:\n${params.existing_context}`
-        : `User prompt: ${params.prompt}`;
+        ? `User prompt: ${params.prompt}\n\nExisting brain context:\n${params.existing_context}${experienceContext}`
+        : `User prompt: ${params.prompt}${experienceContext}`;
 
       const { parsed, raw, usage } = await llmJSON(system, userMsg);
       if (!parsed) return { error: 'Could not parse intent analysis', rawAnalysis: raw };

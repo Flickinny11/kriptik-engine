@@ -13,6 +13,25 @@
  * or request_user_input tools. Those are Lead-only.
  */
 
+function formatExperienceSection(experiences: SpecialistExperience[]): string {
+  const items = experiences
+    .map((exp) => {
+      const desc = typeof exp.content?.description === 'string'
+        ? exp.content.description
+        : JSON.stringify(exp.content);
+      return `- **${exp.title}** (strength: ${exp.strength.toFixed(2)}, type: ${exp.experienceType})\n  ${desc}`;
+    })
+    .join('\n');
+
+  return `\n## Relevant Experience from Past Builds
+
+The following learnings were retrieved from KripTik's global experience memory. These are advisory — use your judgment about whether they apply to this specific build.
+
+${items}
+
+These experiences reflect what worked (or didn't) in previous builds. Consider them as domain knowledge, but don't follow them blindly — every build has different requirements.`;
+}
+
 export interface SpecialistConfig {
   role: string;
   domainDescription: string;
@@ -20,10 +39,18 @@ export interface SpecialistConfig {
   model?: string;
 }
 
+export interface SpecialistExperience {
+  title: string;
+  content: Record<string, unknown>;
+  strength: number;
+  experienceType: string;
+}
+
 export function buildSpecialistSystemPrompt(opts: {
   projectId: string;
   role: string;
   domainDescription: string;
+  relevantExperiences?: SpecialistExperience[];
 }): string {
   return `You are a specialist agent working on a software project. Your role: ${opts.role}
 
@@ -84,6 +111,8 @@ Your code should look like it was written by a senior frontend developer with st
 
 When writing to the Brain, use project_id: ${opts.projectId}
 Your agent role identifier for created_by fields: your session ID (provided via tool context)
+
+${opts.relevantExperiences?.length ? formatExperienceSection(opts.relevantExperiences) : ''}
 
 ## Important
 

@@ -14,6 +14,7 @@ export const NODE_TYPES = [
   'api_contract',
   'error',
   'resolution',
+  'experience',
 ] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
 

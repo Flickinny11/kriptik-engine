@@ -290,7 +290,7 @@ This system is designed for viral traffic. Isolation is absolute:
 | Engine | Node.js + TypeScript (strict), SQLite (better-sqlite3 + Drizzle), Qdrant, HuggingFace embeddings |
 | AI | Anthropic SDK (Opus 4.6 for Lead, configurable for specialists), multi-provider via ProviderRouter |
 | Server | Express.js, Better Auth, Drizzle ORM, PostgreSQL (Supabase) |
-| Client | React 18, Vite, Three.js, GSAP, curtains.js, OGL, Tailwind, Radix UI, Zustand |
+| Client | React 19, Vite, Three.js, GSAP, curtains.js, OGL, Tailwind, Radix UI, Zustand |
 | Sandbox | Local filesystem (dev), Modal containers (production) |
 | Streaming | SSE (server-sent events) |
 | Node Version | 22 LTS (see `.nvmrc`) |
@@ -396,4 +396,71 @@ New billing system needs:
 - `@types/*` and `typescript` must be in server `dependencies` (not devDeps) for Vercel builds
 - Server TypeScript must NOT import engine paths directly — use inline types + opaque dynamic import
 - Modal image needs `tsx` installed locally in `/app` (not just globally)
-- Client uses `@react-three/drei@10.7.7` which needs `--legacy-peer-deps` for React 18
+- Client uses React 19 + `@react-three/fiber@9` + `@react-three/drei@10.7.7` (all React 19 native)
+
+---
+
+## Continuous Learning Engine (Component 28)
+
+The learning engine makes every build smarter than the last. It extracts learnings from completed builds, stores them in a global experience memory, retrieves relevant experience at build time, and strengthens pathways that produce good outcomes.
+
+### Data Flow
+
+```
+Build Starts → ExperienceRetriever queries global memory → writes experience Brain nodes
+     ↓
+Agents reason with experience nodes (advisory, not prescriptive)
+     ↓
+Build Completes → ExperienceExtractor sends Brain data to LLM for reflection
+     ↓
+LLM extracts structured learnings → GlobalMemoryService.writeExperience()
+     ↓
+ExperienceReinforcer evaluates build outcome → strengthens/weakens used experiences
+     ↓
+ExperienceMetrics emits observability data via SSE
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/brain/global-memory.ts` | Qdrant multi-vector collection (`kriptik_experience`) with 4 named vectors (semantic, domain, outcome, user_intent). Spreading activation queries with convergence scoring. |
+| `src/brain/experience-extractor.ts` | Post-build LLM reflection using cost-effective model (Sonnet). Extracts pattern successes, failures, recovery patterns, user preferences, tool effectiveness, design decisions, integration insights. |
+| `src/brain/experience-retriever.ts` | Build-start experience recall. Multi-signal query, diversification, writes as `experience` type Brain nodes. Runs BEFORE first agent reasoning iteration. |
+| `src/brain/experience-reinforcer.ts` | Pathway strengthening/weakening based on build outcomes. Successful builds reinforce used experiences (diminishing returns). Failed builds weaken them (never to zero). Periodic decay every 10 builds. |
+| `src/brain/experience-tracker.ts` | Monitors agent-experience interactions during builds. Tracks consulting, following, and diverging from experience nodes. |
+| `src/brain/experience-metrics.ts` | Observability: strength distribution, domain coverage, model readiness assessment, build quality trends. |
+
+### Experience Node Schema
+
+Each experience has 4 embedding dimensions in Qdrant (384-dim each):
+- `semantic` — general meaning
+- `domain` — technical domain (frameworks, integrations)
+- `outcome` — success/failure/recovery context
+- `user_intent` — what the user was trying to accomplish
+
+Convergence scoring: results appearing across more dimensions score dramatically higher.
+
+Strength formula: `convergenceScore = (dimensionsHit / totalSearched) × avgSimilarity × strengthWeight`
+Where `strengthWeight = strength × (1 + log(reinforcements + 1)) / (1 + log(contradictions + 1))`
+
+### What NOT to Do
+
+- **Do not make the learning engine mechanical.** The LLM decides what to learn, not hardcoded rules.
+- **Do not force agents to follow experience.** Experience is advisory knowledge, not commands.
+- **Do not hardcode what constitutes a "good" or "bad" learning.** The LLM evaluates significance.
+- **Do not make experience retrieval blocking if it fails.** All experience operations are wrapped in try/catch.
+- **Do not modify the reinforcement formulas without understanding the math.** Diminishing returns on reinforcement and never-zero weakening are intentional.
+
+### SSE Event Types Added
+
+- `experience_extracted` — emitted after post-build extraction with learning count
+- `experience_metrics` — emitted at build start and after reinforcement with observability data
+
+### Session Continuity
+
+Use `scripts/session-continuity.sh` to save state before context degradation:
+```bash
+bash scripts/session-continuity.sh "Phase N" "Summary of what was done"
+```
+Then commit, push, and start a new session. Resume by reading CLAUDE.md, docs/INTEGRATION_MAP.md, and /tmp/kriptik-session-handoff.md.

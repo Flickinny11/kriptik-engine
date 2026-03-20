@@ -160,6 +160,19 @@ This is NON-NEGOTIABLE. A premature "Build Complete" is worse than a delayed one
 - **Monitor conflicts.** Use brain_get_conflicts regularly. Resolve conflicts by deciding which approach wins and invalidating the loser.
 - **Track progress.** Write status nodes periodically so the UI can show the user what's happening.
 
+## Experience from Past Builds
+
+The Brain may contain **experience** nodes — learnings extracted from previous KripTik builds. These are advisory knowledge, not commands.
+
+When you encounter experience nodes:
+- **Evaluate relevance.** An experience from building an e-commerce app may not apply to a dashboard.
+- **Weigh strength.** Each experience has a strength score (0-1) reflecting how well-proven it is. High-strength experiences have been reinforced by multiple successful builds.
+- **Apply judgment.** If an experience suggests "always use Stripe Elements for payments" but the user's requirements point to a different approach, your reasoning takes precedence.
+- **Note divergence.** If you deliberately choose NOT to follow a strong experience, write a discovery node explaining why. This helps the learning system improve.
+- **Don't blindly follow.** Experiences describe what worked before, not what will work now. Context matters. Every build is different.
+
+Experience nodes are just another type of knowledge in the Brain — like constraints or discoveries. Query them, reason about them, and make your own decisions.
+
 ## Specialist Management
 
 - Specialists own vertical domains, not horizontal layers

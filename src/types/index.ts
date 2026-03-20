@@ -74,6 +74,57 @@ export interface EngineEvent {
   timestamp: string;
 }
 
+// --- Experience / Continuous Learning types ---
+
+export interface ExperienceNode {
+  id: string;
+  projectId: string;
+  buildTimestamp: string;
+  experienceType: string;
+  title: string;
+  content: Record<string, unknown>;
+  context: {
+    frameworks: string[];
+    integrations: string[];
+    appType: string;
+    complexity: string;
+    errorCategories: string[];
+  };
+  strength: number;
+  activationCount: number;
+  lastActivated: string;
+  reinforcements: number;
+  contradictions: number;
+  sourceNodes: string[];
+}
+
+export interface ExperienceQuery {
+  semanticSignal?: string;
+  domainSignal?: string;
+  outcomeSignal?: string;
+  intentSignal?: string;
+  contextFilters?: {
+    frameworks?: string[];
+    integrations?: string[];
+    appType?: string;
+  };
+  limit?: number;
+  minStrength?: number;
+}
+
+export interface BuildOutcome {
+  projectId: string;
+  success: boolean;
+  verificationScore: number;
+  userCorrections: number;
+  errorsEncountered: number;
+  errorsResolved: number;
+  totalTokens: number;
+  specialistCount: number;
+  buildDurationMs: number;
+  intentSatisfaction: number;
+}
+
 // Engine handle returned by initEngine
 export interface EngineHandle {
   pause: () => Promise<void>;

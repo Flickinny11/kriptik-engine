@@ -14,6 +14,12 @@ export { BrainService } from './brain/brain-service.js';
 export { createEmbeddingService } from './brain/embeddings.js';
 export type { EmbeddingService } from './brain/embeddings.js';
 export { seedTemplateBrain } from './brain/template.js';
+export { GlobalMemoryService } from './brain/global-memory.js';
+export { ExperienceExtractor } from './brain/experience-extractor.js';
+export { ExperienceRetriever } from './brain/experience-retriever.js';
+export { ExperienceReinforcer } from './brain/experience-reinforcer.js';
+export { ExperienceTracker } from './brain/experience-tracker.js';
+export { ExperienceMetrics } from './brain/experience-metrics.js';
 export * from './types/index.js';
 export * from './brain/schema.js';
 

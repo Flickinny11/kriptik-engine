@@ -34,7 +34,9 @@ export type SSEEventType =
   | 'brain_conflict_detected'
   | 'user_input_requested'
   | 'build_progress'
-  | 'build_complete';
+  | 'build_complete'
+  | 'experience_extracted'
+  | 'experience_metrics';
 
 export interface SSEEvent {
   id: string;
@@ -131,6 +133,18 @@ export class SSEEmitter extends EventEmitter {
           sessionId: d.sessionId,
           estimatedTokens: d.estimatedTokens,
         });
+        break;
+      }
+
+      case 'experience_extracted': {
+        const d = event.data as Record<string, unknown>;
+        this.emit_sse('experience_extracted', d);
+        break;
+      }
+
+      case 'experience_metrics': {
+        const d = event.data as Record<string, unknown>;
+        this.emit_sse('experience_metrics', d);
         break;
       }
     }

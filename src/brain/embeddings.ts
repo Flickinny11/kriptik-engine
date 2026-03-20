@@ -6,6 +6,7 @@ const VECTOR_SIZE = 384;
 
 export interface EmbeddingService {
   generateEmbedding(text: string): Promise<number[]>;
+  generateEmbeddingBatch(texts: string[]): Promise<number[][]>;
   ensureCollection(collectionName: string): Promise<void>;
   upsertVector(
     collectionName: string,
@@ -47,6 +48,20 @@ export function createEmbeddingService(opts: {
     });
     // featureExtraction returns number[] for single input
     return result as number[];
+  }
+
+  async function generateEmbeddingBatch(texts: string[]): Promise<number[][]> {
+    // HuggingFace featureExtraction supports batch inputs
+    const truncated = texts.map((t) => t.slice(0, 500));
+    const results = await Promise.all(
+      truncated.map((text) =>
+        hf.featureExtraction({
+          model: EMBEDDING_MODEL,
+          inputs: text,
+        }),
+      ),
+    );
+    return results as number[][];
   }
 
   async function ensureCollection(collectionName: string): Promise<void> {
@@ -118,6 +133,7 @@ export function createEmbeddingService(opts: {
 
   return {
     generateEmbedding,
+    generateEmbeddingBatch,
     ensureCollection,
     upsertVector,
     searchVectors,

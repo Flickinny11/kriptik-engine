@@ -9,6 +9,8 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test:brain": "tsx src/brain/brain-service.test.ts",
+    "test": "vitest run",
+    "test:experience": "vitest run src/brain/__tests__/",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push"
   },
@@ -29,6 +31,7 @@
     "@types/uuid": "^10.0.0",
     "drizzle-kit": "^0.30.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
   }
 }

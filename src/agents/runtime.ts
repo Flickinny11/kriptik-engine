@@ -4,7 +4,7 @@ import { BrainService } from '../brain/brain-service.js';
 import { agentSessions } from '../brain/schema.js';
 import type { AgentSession, EngineConfig, EngineEvent } from '../types/index.js';
 import { buildLeadSystemPrompt } from './prompts/lead.js';
-import { buildSpecialistSystemPrompt, type SpecialistConfig } from './prompts/specialist.js';
+import { buildSpecialistSystemPrompt, type SpecialistConfig, type SpecialistExperience } from './prompts/specialist.js';
 import { MODELS, THINKING, CONTEXT } from '../config/index.js';
 import { ProviderRouter } from '../providers/router.js';
 import type { LLMMessage, LLMContentBlock, LLMTool } from '../providers/types.js';
@@ -749,10 +749,48 @@ export class AgentRuntime {
     const model = config.model ?? MODELS.SPECIALIST_DEFAULT;
     const session = await this.createSession(config.role, model, config.spawnedBy);
 
+    // Query Brain for experience nodes relevant to this specialist's domain
+    let relevantExperiences: SpecialistExperience[] | undefined;
+    try {
+      const experienceNodes = this.brain.getNodesByType(this.projectId, 'experience');
+      if (experienceNodes.length > 0) {
+        // Filter to top 5 most relevant using a simple keyword match on domain
+        const domainLower = config.domainDescription.toLowerCase();
+        const scored = experienceNodes
+          .map((node) => {
+            const content = node.content as Record<string, unknown>;
+            const title = (node.title || '').toLowerCase();
+            const frameworks = (content.frameworks as string[]) || [];
+            const integrations = (content.integrations as string[]) || [];
+            const allTerms = [title, ...frameworks, ...integrations].join(' ');
+
+            // Simple relevance score: count domain keyword overlaps
+            const domainWords = domainLower.split(/\s+/).filter((w) => w.length > 3);
+            const hits = domainWords.filter((w) => allTerms.includes(w)).length;
+            return { node, content, score: hits };
+          })
+          .filter((s) => s.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5);
+
+        if (scored.length > 0) {
+          relevantExperiences = scored.map((s) => ({
+            title: s.node.title.replace('[Past Experience] ', ''),
+            content: (s.content.description as Record<string, unknown>) || s.content,
+            strength: (s.content.strength as number) || s.node.confidence,
+            experienceType: (s.content.experienceType as string) || 'discovery',
+          }));
+        }
+      }
+    } catch {
+      // Non-blocking — if experience query fails, proceed without it
+    }
+
     const systemPrompt = buildSpecialistSystemPrompt({
       projectId: this.projectId,
       role: config.role,
       domainDescription: config.domainDescription,
+      relevantExperiences,
     });
 
     // Brain tools + requested tools (or ALL registered tools if none specified)
