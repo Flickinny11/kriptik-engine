@@ -37,7 +37,7 @@ export function KriptikLogo({
             viewBox="0 0 100 100"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))' }}
+            style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3)) drop-shadow(0 0 8px rgba(200,255,100,0.15))' }}
         >
             <defs>
                 {/* Sphere gradient - dark with subtle texture */}
