@@ -11,6 +11,7 @@
 
 import { useRef, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 /* ═══════════════════════════════════════════
@@ -278,8 +279,8 @@ vec3 shade(vec3 ro, vec3 rd, vec2 uv) {
 
     // ── Combine lighting ──
     vec3 diffuse = baseColor * (diff1 * 0.5 + diff2 * 0.3 + diff3 * 0.2);
-    vec3 specular = vec3(1.0, 0.98, 0.95) * (spec1 * 0.5 + spec2 * 0.25 + spec3 * 0.3);
-    vec3 rim = mix(LIME, CYAN, fresnel) * fresnelRim * 0.55;
+    vec3 specular = vec3(1.0, 0.98, 0.95) * (spec1 * 0.65 + spec2 * 0.35 + spec3 * 0.45);
+    vec3 rim = mix(LIME, CYAN, fresnel) * fresnelRim * 0.7;
     vec3 ambient = baseColor * 0.06;
 
     col = (diffuse + ambient) * ao + specular + rim + sssColor;
@@ -399,6 +400,9 @@ export default function Hero3D() {
       performance={{ min: 0.5 }}
     >
       <MetaballPlane />
+      <EffectComposer multisampling={0}>
+        <Bloom intensity={1.5} luminanceThreshold={0.55} luminanceSmoothing={0.3} mipmapBlur />
+      </EffectComposer>
     </Canvas>
   )
 }
