@@ -1,34 +1,33 @@
 /**
- * KripTik AI Landing Page
+ * KripTik AI Landing Page — Immersive Scroll Experience
  *
- * Immersive experience using:
- * - React Three Fiber + postprocessing (Hero 3D scene)
- * - GSAP ScrollTrigger (scroll storytelling, 3D side-entry animations)
- * - Lenis (smooth scrolling)
- * - react-vfx (shader text effects)
- * - mouse-follower (custom cursor)
- * - simplex-noise (procedural animation)
- * - Brand icons (real platform logos)
- * - Custom 3D SVG icons
+ * No flat cards. No article layouts. Pure 3D experience.
+ *
+ * - Ray-marched SDF metaball hero (Hero3D)
+ * - GSAP ScrollTrigger pinned scroll storytelling
+ * - Lenis smooth scroll synced with ScrollTrigger
+ * - react-vfx shader text effects
+ * - mouse-follower custom cursor
+ * - Real KriptikLogo (black sphere + orbital rings)
+ * - Colored platform icons in 3D carousel
+ * - Full-width immersive sections with parallax
+ * - Per-character 3D text reveals
+ * - Magnetic glow CTA buttons
  */
 
-import React, { useRef, useEffect, useState, Suspense, lazy, useCallback } from 'react'
+import React, { useRef, useEffect, Suspense, lazy, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { VFXProvider, VFXSpan } from 'react-vfx'
 import { useUserStore } from '@/store/useUserStore'
+import { KriptikLogo } from '@/components/ui/KriptikLogo'
 import {
   VercelIcon, NetlifyIcon, AWSIcon, CloudflareIcon, SupabaseIcon,
   GitHubIcon, GoogleIcon, StripeIcon, SlackIcon, DiscordIcon,
   HuggingFaceIcon, OpenAIIcon, AnthropicIcon,
 } from '@/components/ui/icons'
-import {
-  KriptikLogo, PhoneIcon3D, AppStoreIcon3D, CodeBracketIcon3D, BrowserIcon3D,
-  WrenchIcon3D, PuzzleIcon3D, NeuralIcon3D, RocketIcon3D, CloudDeployIcon3D,
-  SleepIcon3D, NotifIcon3D,
-} from '@/components/landing/LandingIcons'
 import LandingAuth from '@/components/landing/LandingAuth'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -42,56 +41,51 @@ const Hero3D = lazy(() => import('@/components/landing/Hero3D'))
 const BUILD_TYPES = ['Mobile Apps', 'iOS Apps', 'Software', 'Web Apps'] as const
 
 const PLATFORMS = [
-  { name: 'Vercel', Icon: VercelIcon },
-  { name: 'Netlify', Icon: NetlifyIcon },
-  { name: 'AWS', Icon: AWSIcon },
-  { name: 'Cloudflare', Icon: CloudflareIcon },
-  { name: 'Supabase', Icon: SupabaseIcon },
-  { name: 'GitHub', Icon: GitHubIcon },
-  { name: 'Stripe', Icon: StripeIcon },
-  { name: 'Slack', Icon: SlackIcon },
-  { name: 'Discord', Icon: DiscordIcon },
-  { name: 'Google', Icon: GoogleIcon },
-  { name: 'HuggingFace', Icon: HuggingFaceIcon },
-  { name: 'OpenAI', Icon: OpenAIIcon },
-  { name: 'Anthropic', Icon: AnthropicIcon },
-]
-
-const BUILDS = [
-  { title: 'Mobile App', desc: 'Full-stack mobile applications with native performance and beautiful UI.', Icon: PhoneIcon3D, dir: 'left' as const },
-  { title: 'iOS', desc: 'Native iOS applications with Swift, SwiftUI, and polished App Store-ready design.', Icon: AppStoreIcon3D, dir: 'right' as const },
-  { title: 'Software', desc: 'Desktop and server-side applications with enterprise-grade architecture.', Icon: CodeBracketIcon3D, dir: 'left' as const },
-  { title: 'Webapp', desc: 'Modern, responsive web applications with cutting-edge frameworks.', Icon: BrowserIcon3D, dir: 'right' as const },
-]
-
-const CAPABILITIES = [
-  { title: 'Fix My App', desc: 'Bring your broken project. We diagnose issues and ship the fix.', Icon: WrenchIcon3D },
-  { title: 'Komplete My App', desc: 'Got a half-finished app? We will ship the rest — fast.', Icon: PuzzleIcon3D },
-  { title: 'Train & Fine-Tune', desc: 'Custom AI models tuned to your specific use case and data.', Icon: NeuralIcon3D },
+  { name: 'Vercel', Icon: VercelIcon, color: '#fff' },
+  { name: 'Netlify', Icon: NetlifyIcon, color: '#00c7b7' },
+  { name: 'AWS', Icon: AWSIcon, color: '#ff9900' },
+  { name: 'Cloudflare', Icon: CloudflareIcon, color: '#f38020' },
+  { name: 'Supabase', Icon: SupabaseIcon, color: '#3ecf8e' },
+  { name: 'GitHub', Icon: GitHubIcon, color: '#fff' },
+  { name: 'Stripe', Icon: StripeIcon, color: '#635bff' },
+  { name: 'Slack', Icon: SlackIcon, color: '#e01e5a' },
+  { name: 'Discord', Icon: DiscordIcon, color: '#5865f2' },
+  { name: 'Google', Icon: GoogleIcon, color: '#4285f4' },
+  { name: 'HuggingFace', Icon: HuggingFaceIcon, color: '#ffbd45' },
+  { name: 'OpenAI', Icon: OpenAIIcon, color: '#fff' },
+  { name: 'Anthropic', Icon: AnthropicIcon, color: '#d4a27f' },
 ]
 
 /* ═══════════════════════════════════════════
-   UTILITY COMPONENTS
+   UTILITY: SPLIT CHARACTERS FOR GSAP
    ═══════════════════════════════════════════ */
 
-function SplitChars({ text, className }: { text: string; className?: string }) {
+function SplitWords({ text, className }: { text: string; className?: string }) {
+  const words = text.split(' ')
   return (
     <>
-      {text.split('').map((char, i) => (
-        <span
-          key={i}
-          className={`hero-char inline-block ${className || ''}`}
-          style={char === ' ' ? { width: '0.3em' } : undefined}
-        >
-          {char === ' ' ? '\u00A0' : char}
+      {words.map((word, wi) => (
+        <span key={wi} className="inline-block mr-[0.25em]">
+          {word.split('').map((char, ci) => (
+            <span
+              key={ci}
+              className={`hero-char inline-block ${className || ''}`}
+            >
+              {char}
+            </span>
+          ))}
         </span>
       ))}
     </>
   )
 }
 
+/* ═══════════════════════════════════════════
+   ROTATING TEXT
+   ═══════════════════════════════════════════ */
+
 function RotatingText({ items }: { items: readonly string[] }) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
     const els = containerRef.current?.children
@@ -102,12 +96,12 @@ function RotatingText({ items }: { items: readonly string[] }) {
     Array.from(els).forEach((el, i) => {
       tl.fromTo(
         el,
-        { y: '110%', opacity: 0, rotateX: -60 },
-        { y: '0%', opacity: 1, rotateX: 0, duration: 0.6, ease: 'expo.out' },
+        { y: '120%', opacity: 0, rotateX: -90, scale: 0.8 },
+        { y: '0%', opacity: 1, rotateX: 0, scale: 1, duration: 0.7, ease: 'expo.out' },
         i * 2.5
       ).to(
         el,
-        { y: '-110%', opacity: 0, rotateX: 60, duration: 0.5, ease: 'expo.in' },
+        { y: '-120%', opacity: 0, rotateX: 90, scale: 0.8, duration: 0.5, ease: 'expo.in' },
         i * 2.5 + 2
       )
     })
@@ -116,10 +110,17 @@ function RotatingText({ items }: { items: readonly string[] }) {
   }, [items])
 
   return (
-    <span className="inline-block relative overflow-hidden align-bottom" style={{ height: '1.2em', width: '280px' }}>
-      <span ref={containerRef as any}>
+    <span
+      className="inline-block relative overflow-hidden align-bottom"
+      style={{ height: '1.3em', minWidth: '260px' }}
+    >
+      <span ref={containerRef} style={{ perspective: '600px' }}>
         {items.map((item) => (
-          <span key={item} className="absolute inset-0 flex items-center justify-start" style={{ perspective: '600px' }}>
+          <span
+            key={item}
+            className="absolute inset-0 flex items-center justify-center text-kriptik-lime"
+            style={{ transformStyle: 'preserve-3d' }}
+          >
             {item}
           </span>
         ))}
@@ -129,20 +130,20 @@ function RotatingText({ items }: { items: readonly string[] }) {
 }
 
 /* ═══════════════════════════════════════════
-   PLATFORM 3D CAROUSEL
+   3D PLATFORM CAROUSEL — COLORED ICONS + GLOW
    ═══════════════════════════════════════════ */
 
 function PlatformCarousel() {
   const ringRef = useRef<HTMLDivElement>(null)
   const count = PLATFORMS.length
   const angleStep = 360 / count
-  const radius = 320
+  const radius = 340
 
   useEffect(() => {
     if (!ringRef.current) return
     const anim = gsap.to(ringRef.current, {
       rotateY: 360,
-      duration: 35,
+      duration: 30,
       repeat: -1,
       ease: 'none',
     })
@@ -150,7 +151,7 @@ function PlatformCarousel() {
   }, [])
 
   return (
-    <div className="relative mx-auto" style={{ perspective: '1200px', height: '260px', width: '200px' }}>
+    <div className="relative mx-auto" style={{ perspective: '1400px', height: '300px', width: '240px' }}>
       <div
         ref={ringRef}
         className="absolute inset-0 flex items-center justify-center"
@@ -159,33 +160,33 @@ function PlatformCarousel() {
         {PLATFORMS.map((p, i) => (
           <div
             key={p.name}
-            className="absolute flex flex-col items-center gap-2"
+            className="absolute flex flex-col items-center gap-3"
             style={{
               transform: `rotateY(${angleStep * i}deg) translateZ(${radius}px)`,
               backfaceVisibility: 'hidden',
             }}
           >
-            <div className="w-14 h-14 bg-white/[0.06] backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/[0.08] shadow-lg">
-              <div className="brightness-0 invert opacity-70">
-                <p.Icon size={28} />
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center border transition-all duration-500"
+              style={{
+                background: `${p.color}10`,
+                borderColor: `${p.color}30`,
+                boxShadow: `0 0 20px ${p.color}15, inset 0 0 10px ${p.color}08`,
+              }}
+            >
+              <div style={{ filter: `drop-shadow(0 0 6px ${p.color}40)` }}>
+                <p.Icon size={30} />
               </div>
             </div>
-            <span className="text-[11px] text-zinc-500 font-medium whitespace-nowrap">{p.name}</span>
+            <span
+              className="text-xs font-semibold whitespace-nowrap"
+              style={{ color: p.color, opacity: 0.8 }}
+            >
+              {p.name}
+            </span>
           </div>
         ))}
       </div>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════
-   GLASS CARD
-   ═══════════════════════════════════════════ */
-
-function GlassCard({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={`bg-white/[0.03] backdrop-blur-2xl border border-white/[0.06] rounded-3xl shadow-glass ${className}`}>
-      {children}
     </div>
   )
 }
@@ -199,7 +200,6 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const { isAuthenticated, isLoading } = useUserStore()
 
-  // Redirect authenticated users
   useEffect(() => {
     if (!isLoading && isAuthenticated) navigate('/dashboard', { replace: true })
   }, [isAuthenticated, isLoading, navigate])
@@ -213,7 +213,6 @@ export default function LandingPage() {
     })
 
     lenis.on('scroll', ScrollTrigger.update)
-
     const tickerCb = (time: number) => { lenis.raf(time * 1000) }
     gsap.ticker.add(tickerCb)
     gsap.ticker.lagSmoothing(0)
@@ -224,157 +223,197 @@ export default function LandingPage() {
     }
   }, [])
 
-  /* ─── mouse-follower Cursor ─── */
+  /* ─── mouse-follower ─── */
   useEffect(() => {
     if (typeof window === 'undefined' || window.innerWidth < 768) return
-
     let cursor: any = null
-    const initCursor = async () => {
+    const init = async () => {
       try {
         const MF = (await import('mouse-follower')).default
         MF.registerGSAP(gsap)
-        cursor = new MF({
-          speed: 0.55,
-          ease: 'expo.out',
-          skewing: 3,
-          skewingText: 2,
-          skewingIcon: 2,
-        })
-      } catch (e) {
-        // mouse-follower optional — page works without it
-      }
+        cursor = new MF({ speed: 0.55, ease: 'expo.out', skewing: 3, skewingText: 2 })
+      } catch {}
     }
-    initCursor()
-
+    init()
     return () => { cursor?.destroy() }
   }, [])
 
-  /* ─── GSAP ScrollTrigger Animations ─── */
+  /* ─── GSAP ScrollTrigger — Immersive Animations ─── */
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // Hero character reveal
+
+      // ── Hero entrance ──
       gsap.from('.hero-char', {
-        y: 100,
-        rotateX: -80,
+        y: 80,
+        rotateX: -90,
         opacity: 0,
-        stagger: 0.035,
-        duration: 1.4,
+        stagger: 0.03,
+        duration: 1.6,
+        ease: 'expo.out',
+        delay: 0.4,
+      })
+
+      gsap.from('.hero-sub', {
+        y: 50,
+        opacity: 0,
+        duration: 1.2,
+        ease: 'expo.out',
+        delay: 1.0,
+      })
+
+      gsap.from('.hero-cta-btn', {
+        y: 40,
+        opacity: 0,
+        scale: 0.9,
+        stagger: 0.15,
+        duration: 1,
+        ease: 'expo.out',
+        delay: 1.4,
+      })
+
+      // ── Pinned Builds Section — full-screen scroll-through ──
+      const buildItems = gsap.utils.toArray<HTMLElement>('.build-item')
+      if (buildItems.length > 0) {
+        const buildTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: '.builds-pinned',
+            pin: true,
+            scrub: 1,
+            end: () => `+=${window.innerHeight * buildItems.length}`,
+          },
+        })
+
+        buildItems.forEach((item, i) => {
+          // Each build type zooms in from behind with 3D perspective
+          buildTl.fromTo(
+            item,
+            {
+              scale: 0.3,
+              z: -800,
+              opacity: 0,
+              rotateY: i % 2 === 0 ? -25 : 25,
+            },
+            {
+              scale: 1,
+              z: 0,
+              opacity: 1,
+              rotateY: 0,
+              duration: 1,
+              ease: 'power3.out',
+            },
+            i * 1.8
+          )
+
+          // Hold then zoom past the camera
+          if (i < buildItems.length - 1) {
+            buildTl.to(
+              item,
+              {
+                scale: 2.5,
+                z: 600,
+                opacity: 0,
+                duration: 0.8,
+                ease: 'power3.in',
+              },
+              i * 1.8 + 1.3
+            )
+          }
+        })
+      }
+
+      // ── Capabilities — staggered text reveal with parallax ──
+      const capItems = gsap.utils.toArray<HTMLElement>('.cap-item')
+      capItems.forEach((item, i) => {
+        gsap.from(item, {
+          scrollTrigger: {
+            trigger: item,
+            start: 'top 80%',
+            toggleActions: 'play none none reverse',
+          },
+          x: i % 2 === 0 ? -300 : 300,
+          rotateY: i % 2 === 0 ? -15 : 15,
+          opacity: 0,
+          duration: 1.4,
+          ease: 'expo.out',
+        })
+      })
+
+      // ── Quality section — scale up from deep ──
+      gsap.from('.quality-text', {
+        scrollTrigger: {
+          trigger: '.quality-section',
+          start: 'top 65%',
+        },
+        scale: 0.4,
+        opacity: 0,
+        y: 100,
+        duration: 1.5,
+        ease: 'expo.out',
+      })
+
+      gsap.from('.quality-sub', {
+        scrollTrigger: {
+          trigger: '.quality-section',
+          start: 'top 55%',
+        },
+        y: 60,
+        opacity: 0,
+        duration: 1.2,
         ease: 'expo.out',
         delay: 0.3,
       })
 
-      gsap.from('.hero-sub', {
-        y: 40,
-        opacity: 0,
-        duration: 1,
-        ease: 'expo.out',
-        delay: 0.8,
-      })
-
-      gsap.from('.hero-cta', {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        ease: 'expo.out',
-        delay: 1.2,
-      })
-
-      // Builds section — cards from alternating sides with 3D perspective
-      const buildCards = gsap.utils.toArray<HTMLElement>('.build-card')
-      buildCards.forEach((card, i) => {
-        const fromLeft = i % 2 === 0
-        gsap.from(card, {
+      // ── Freedom — parallax text blocks ──
+      gsap.utils.toArray<HTMLElement>('.freedom-text').forEach((el, i) => {
+        gsap.from(el, {
           scrollTrigger: {
-            trigger: card,
-            start: 'top 85%',
-            toggleActions: 'play none none reverse',
+            trigger: el,
+            start: 'top 80%',
+            scrub: 1,
           },
-          x: fromLeft ? -280 : 280,
-          rotateY: fromLeft ? -30 : 30,
+          y: 120 + i * 40,
           opacity: 0,
-          duration: 1.2,
-          ease: 'expo.out',
-          delay: i * 0.08,
         })
       })
 
-      // Capabilities — scale up
-      gsap.from('.cap-card', {
+      // ── Ship section — zoom from infinity ──
+      gsap.from('.ship-title', {
         scrollTrigger: {
-          trigger: '.capabilities-section',
-          start: 'top 75%',
+          trigger: '.ship-section',
+          start: 'top 70%',
         },
-        scale: 0.8,
-        y: 60,
+        scale: 0.2,
         opacity: 0,
-        duration: 1,
-        stagger: 0.15,
+        duration: 1.8,
         ease: 'expo.out',
       })
 
-      // Quality section
-      gsap.from('.quality-content', {
+      gsap.from('.ship-carousel', {
         scrollTrigger: {
-          trigger: '.quality-section',
+          trigger: '.ship-section',
+          start: 'top 50%',
+        },
+        rotateX: 45,
+        y: 200,
+        opacity: 0,
+        duration: 1.5,
+        ease: 'expo.out',
+      })
+
+      // ── Auth ──
+      gsap.from('.auth-card', {
+        scrollTrigger: {
+          trigger: '.auth-section',
           start: 'top 70%',
         },
-        scale: 0.85,
+        y: 80,
+        scale: 0.9,
+        rotateX: -10,
         opacity: 0,
         duration: 1.2,
         ease: 'expo.out',
       })
 
-      // Freedom section — staggered blocks
-      gsap.from('.freedom-block', {
-        scrollTrigger: {
-          trigger: '.freedom-section',
-          start: 'top 75%',
-        },
-        x: -200,
-        rotateY: -20,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.2,
-        ease: 'expo.out',
-      })
-
-      // Ship section
-      gsap.from('.ship-content', {
-        scrollTrigger: {
-          trigger: '.ship-section',
-          start: 'top 70%',
-        },
-        y: 80,
-        opacity: 0,
-        duration: 1,
-        ease: 'expo.out',
-      })
-
-      // Auth section
-      gsap.from('.auth-card', {
-        scrollTrigger: {
-          trigger: '.auth-section',
-          start: 'top 75%',
-        },
-        y: 60,
-        scale: 0.95,
-        opacity: 0,
-        duration: 1,
-        ease: 'expo.out',
-      })
-
-      // Footer
-      gsap.from('.footer-item', {
-        scrollTrigger: {
-          trigger: '.landing-footer',
-          start: 'top 90%',
-        },
-        y: -40,
-        opacity: 0,
-        duration: 0.8,
-        stagger: 0.06,
-        ease: 'elastic.out(1, 0.6)',
-      })
     }, containerRef)
 
     return () => ctx.revert()
@@ -395,308 +434,411 @@ export default function LandingPage() {
   return (
     <div ref={containerRef} className="bg-kriptik-black text-kriptik-white overflow-x-hidden">
 
-      {/* ═══ NAVIGATION ═══ */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl bg-kriptik-black/70 border-b border-white/[0.04]">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3" data-cursor="-pointer">
-            <KriptikLogo />
-            <span className="font-display font-bold text-lg tracking-tight">KripTik</span>
+      {/* ═══════════════════════════════════════
+          NAVIGATION — Real KriptikLogo + Glow CTA
+          ═══════════════════════════════════════ */}
+      <nav className="fixed top-0 left-0 right-0 z-50">
+        <div
+          className="mx-auto max-w-7xl px-6 h-20 flex items-center justify-between"
+          style={{
+            background: 'linear-gradient(180deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.7) 70%, transparent 100%)',
+          }}
+        >
+          <div className="flex items-center gap-3" data-cursor="-pointer" data-cursor-stick>
+            <KriptikLogo size="sm" animated={false} />
+            <span className="font-display font-bold text-lg tracking-tight text-white">
+              KripTik<span className="text-zinc-500">AI</span>
+            </span>
           </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-zinc-500">
-            <button onClick={() => scrollTo('builds')} className="hover:text-white transition-colors" data-cursor-text="View">Features</button>
-            <button onClick={() => scrollTo('capabilities')} className="hover:text-white transition-colors" data-cursor-text="View">Capabilities</button>
-            <button onClick={() => scrollTo('ship')} className="hover:text-white transition-colors" data-cursor-text="View">Deploy</button>
+
+          <div className="hidden md:flex items-center gap-10 text-sm font-medium">
+            {['Features', 'Capabilities', 'Deploy'].map((label) => (
+              <button
+                key={label}
+                onClick={() => scrollTo(label.toLowerCase())}
+                className="text-zinc-400 hover:text-white transition-colors duration-300 relative group"
+                data-cursor-text="View"
+              >
+                {label}
+                <span className="absolute -bottom-1 left-0 w-0 h-px bg-kriptik-lime group-hover:w-full transition-all duration-300" />
+              </button>
+            ))}
           </div>
+
           <button
             onClick={() => scrollTo('auth')}
-            className="bg-kriptik-lime text-kriptik-black px-5 py-2.5 rounded-xl text-sm font-bold hover:brightness-110 transition-all duration-200"
+            className="relative px-6 py-2.5 rounded-xl font-bold text-sm text-kriptik-black overflow-hidden group"
             data-cursor="-pointer"
+            data-cursor-stick
+            style={{
+              background: 'linear-gradient(135deg, #c8ff64, #a0e050)',
+              boxShadow: '0 0 30px rgba(200,255,100,0.3), 0 0 60px rgba(200,255,100,0.1)',
+            }}
           >
-            Get Started
+            <span className="relative z-10">Get Started</span>
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+              style={{ background: 'linear-gradient(135deg, #a0e050, #06b6d4)' }}
+            />
           </button>
         </div>
       </nav>
 
-      {/* ═══ HERO SECTION ═══ */}
-      <section className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      {/* ═══════════════════════════════════════
+          HERO — SDF Metaballs + 3D Text Reveal
+          ═══════════════════════════════════════ */}
+      <section className="hero-section relative h-screen flex items-center justify-center overflow-hidden">
         <Suspense fallback={null}>
           <Hero3D />
         </Suspense>
 
-        {/* Gradient overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-kriptik-black/40 via-transparent to-kriptik-black/80 z-[1]" />
-
-        <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
+        {/* Text overlay — properly sized, full width */}
+        <div
+          className="relative z-10 w-full px-6 text-center"
+          style={{ perspective: '1000px' }}
+        >
           <h1
-            className="font-creative font-extrabold tracking-tighter leading-[0.85]"
+            className="font-creative font-black tracking-tighter leading-none"
             style={{
-              fontSize: 'clamp(3rem, 10vw, 8rem)',
-              textShadow: '0 0 80px rgba(200,255,100,0.25), 0 0 40px rgba(200,255,100,0.1)',
-              perspective: '800px',
+              fontSize: 'clamp(2.8rem, 7vw, 6.5rem)',
+              textShadow: '0 0 120px rgba(200,255,100,0.35), 0 4px 20px rgba(0,0,0,0.8)',
+              transformStyle: 'preserve-3d',
             }}
           >
-            <SplitChars text="One Prompt = Done" />
+            <VFXProvider>
+              <VFXSpan shader="rgbShift">
+                One Prompt = Done
+              </VFXSpan>
+            </VFXProvider>
           </h1>
 
-          <div className="hero-sub mt-8">
-            <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              The AI engine that turns your idea into a production-ready application.
+          <div className="hero-sub mt-8 max-w-3xl mx-auto">
+            <p className="text-lg md:text-2xl text-zinc-300 leading-relaxed font-light">
+              The AI engine that turns your idea into
+              <br className="hidden sm:block" />
+              a <span className="font-bold text-white">production-ready application</span>.
             </p>
-            <p className="mt-5 text-xl md:text-2xl font-display font-bold text-kriptik-lime">
+            <p className="mt-6 text-xl md:text-3xl font-display font-bold">
               KripTik builds{' '}
               <RotatingText items={BUILD_TYPES} />
             </p>
           </div>
 
-          <div className="hero-cta mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="hero-cta mt-12 flex flex-col sm:flex-row gap-5 justify-center items-center">
             <button
               onClick={() => scrollTo('auth')}
-              className="px-8 py-4 bg-kriptik-lime text-kriptik-black rounded-2xl font-bold text-lg hover:brightness-110 hover:scale-[1.02] transition-all duration-300 shadow-glow-lime"
+              className="hero-cta-btn relative px-10 py-5 rounded-2xl font-bold text-lg text-kriptik-black overflow-hidden group"
               data-cursor="-pointer"
+              data-cursor-stick
+              style={{
+                background: 'linear-gradient(135deg, #c8ff64, #b0f040)',
+                boxShadow: '0 0 50px rgba(200,255,100,0.4), 0 0 100px rgba(200,255,100,0.15), inset 0 1px 0 rgba(255,255,255,0.3)',
+              }}
             >
-              Start Building
+              <span className="relative z-10">Start Building</span>
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700"
+                style={{ background: 'linear-gradient(135deg, #b0f040, #06b6d4)' }}
+              />
             </button>
             <button
-              onClick={() => scrollTo('builds')}
-              className="px-8 py-4 bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] text-white rounded-2xl font-semibold text-lg hover:bg-white/[0.1] transition-all duration-300"
+              onClick={() => scrollTo('features')}
+              className="hero-cta-btn px-10 py-5 rounded-2xl font-semibold text-lg text-white border border-white/10 hover:border-white/30 transition-all duration-500 group"
               data-cursor="-pointer"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 0 30px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.06)',
+              }}
             >
-              See What We Build
+              <span className="group-hover:text-kriptik-lime transition-colors duration-500">
+                Explore
+              </span>
             </button>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
-          <div className="w-6 h-10 border-2 border-white/20 rounded-full flex items-start justify-center p-1.5">
-            <div className="w-1.5 h-2.5 bg-kriptik-lime/60 rounded-full animate-bounce-subtle" />
-          </div>
-        </div>
       </section>
 
-      {/* ═══ WHAT WE BUILD ═══ */}
-      <section id="builds" className="builds-section relative py-32 px-6" style={{ perspective: '1200px' }}>
-        <div className="max-w-6xl mx-auto">
-          <h2 className="font-display text-display-sm md:text-display-md font-bold text-center mb-6 tracking-tight">
-            Build Anything
-          </h2>
-          <p className="text-zinc-500 text-center mb-16 max-w-xl mx-auto text-lg">
-            From mobile to web, from MVP to enterprise — one prompt is all it takes.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {BUILDS.map((b, i) => (
-              <div
-                key={b.title}
-                className="build-card"
-                data-direction={b.dir}
+      {/* ═══════════════════════════════════════
+          BUILDS — Pinned Scroll-Through Experience
+          Each build type zooms through the camera
+          ═══════════════════════════════════════ */}
+      <section
+        id="features"
+        className="builds-pinned relative h-screen overflow-hidden"
+        style={{ perspective: '1200px' }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center">
+          {[
+            { title: 'Mobile Apps', sub: 'Native performance. Beautiful UI. Full-stack.', color: '#c8ff64' },
+            { title: 'iOS Apps', sub: 'Swift, SwiftUI. App Store-ready from day one.', color: '#06b6d4' },
+            { title: 'Software', sub: 'Desktop and server-side. Enterprise architecture.', color: '#f59e0b' },
+            { title: 'Web Apps', sub: 'Modern frameworks. Responsive. Production-grade.', color: '#c8ff64' },
+          ].map((b) => (
+            <div
+              key={b.title}
+              className="build-item absolute inset-0 flex flex-col items-center justify-center px-8"
+              style={{ transformStyle: 'preserve-3d', willChange: 'transform, opacity' }}
+            >
+              <h2
+                className="font-creative font-black tracking-tighter text-center"
                 style={{
-                  transformOrigin: b.dir === 'left' ? 'right center' : 'left center',
-                  willChange: 'transform, opacity',
+                  fontSize: 'clamp(3rem, 10vw, 9rem)',
+                  color: b.color,
+                  textShadow: `0 0 80px ${b.color}40, 0 0 160px ${b.color}15`,
+                  lineHeight: 0.9,
                 }}
               >
-                <GlassCard className="p-8 h-full hover:bg-white/[0.05] hover:border-white/[0.12] transition-all duration-500 group">
-                  <div className="mb-5 transform group-hover:scale-110 transition-transform duration-500">
-                    <b.Icon size={56} />
-                  </div>
-                  <h3 className="font-display text-2xl font-bold mb-2 text-kriptik-lime">{b.title}</h3>
-                  <p className="text-zinc-400 leading-relaxed">{b.desc}</p>
-                </GlassCard>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ CAPABILITIES ═══ */}
-      <section id="capabilities" className="capabilities-section relative py-32 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="font-display text-display-sm md:text-display-md font-bold text-center mb-6 tracking-tight">
-            More Than Building
-          </h2>
-          <p className="text-zinc-500 text-center mb-16 max-w-xl mx-auto text-lg">
-            Fix, complete, or enhance — KripTik handles the full lifecycle.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {CAPABILITIES.map((c) => (
-              <div key={c.title} className="cap-card" style={{ willChange: 'transform, opacity' }}>
-                <GlassCard className="p-8 text-center h-full hover:bg-white/[0.05] hover:border-kriptik-lime/20 transition-all duration-500 group">
-                  <div className="flex justify-center mb-5 transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
-                    <c.Icon size={64} />
-                  </div>
-                  <h3 className="font-display text-xl font-bold mb-3">{c.title}</h3>
-                  <p className="text-zinc-400 leading-relaxed text-sm">{c.desc}</p>
-                </GlassCard>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ NOT AI SLOP ═══ */}
-      <section className="quality-section relative py-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-kriptik-lime/[0.02] to-transparent" />
-        <div className="quality-content max-w-4xl mx-auto text-center relative z-10">
-          <VFXProvider>
-            <h2 className="font-creative font-extrabold tracking-tight mb-8 text-kriptik-lime" style={{ fontSize: 'clamp(2rem, 6vw, 5rem)', lineHeight: 1 }}>
-              <VFXSpan shader="rgbShift">Design That Sets You Apart</VFXSpan>
-            </h2>
-          </VFXProvider>
-          <p className="text-xl md:text-2xl text-zinc-300 leading-relaxed max-w-3xl mx-auto mb-6">
-            Our proprietary tech creates UI designs that are{' '}
-            <span className="text-kriptik-lime font-bold">significantly better than any app builder on the planet</span>.
-          </p>
-          <p className="text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-            Custom. Intentional. Production-grade. Not template-driven. Not cookie-cutter.{' '}
-            <span className="font-bold text-white">Not AI slop.</span>
-          </p>
-        </div>
-      </section>
-
-      {/* ═══ PRODUCTION READY + DEPLOY FREEDOM ═══ */}
-      <section className="freedom-section relative py-32 px-6" style={{ perspective: '1000px' }}>
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="freedom-block" style={{ willChange: 'transform, opacity', transformOrigin: 'right center' }}>
-            <GlassCard className="p-10 md:p-14 flex flex-col md:flex-row items-start gap-8">
-              <div className="shrink-0">
-                <RocketIcon3D size={72} />
-              </div>
-              <div>
-                <h3 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-                  One Prompt.{' '}
-                  <span className="text-kriptik-lime">Production Ready.</span>
-                </h3>
-                <p className="text-zinc-400 text-lg leading-relaxed">
-                  Not a demo. Not a prototype. A fully deployed, production-ready application
-                  from a single prompt. Real databases, real APIs, real deployment.
-                </p>
-              </div>
-            </GlassCard>
-          </div>
-
-          <div className="freedom-block" style={{ willChange: 'transform, opacity', transformOrigin: 'right center' }}>
-            <GlassCard className="p-10 md:p-14 flex flex-col md:flex-row items-start gap-8">
-              <div className="shrink-0">
-                <CloudDeployIcon3D size={72} />
-              </div>
-              <div>
-                <h3 className="font-display text-3xl md:text-4xl font-bold mb-4 tracking-tight">
-                  Your Code.{' '}
-                  <span className="text-kriptik-lime">Your Platforms.</span>
-                </h3>
-                <p className="text-zinc-400 text-lg leading-relaxed">
-                  Our deployment pipeline does not keep you on KripTik. We deploy your frontend
-                  and backend to any external platform you choose. When you are done building,
-                  your app is truly yours — no lock-in, no strings attached.
-                </p>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══ SHIP IN YOUR SLEEP ═══ */}
-      <section id="ship" className="ship-section relative py-32 px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-kriptik-lime/[0.015] to-transparent" />
-        <div className="ship-content max-w-5xl mx-auto text-center relative z-10">
-          <div className="flex justify-center mb-6">
-            <SleepIcon3D size={80} />
-          </div>
-          <h2
-            className="font-creative font-extrabold tracking-tight mb-6"
-            style={{
-              fontSize: 'clamp(2rem, 6vw, 4.5rem)',
-              lineHeight: 1,
-              textShadow: '0 0 60px rgba(200,255,100,0.2)',
-            }}
-          >
-            Ship Software In Your Sleep
-          </h2>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto mb-6 leading-relaxed">
-            KripTik works while you rest. Get notified via{' '}
-            <span className="text-kriptik-lime font-semibold">email</span>,{' '}
-            <span className="text-kriptik-lime font-semibold">SMS</span>, and{' '}
-            <span className="text-kriptik-lime font-semibold">Slack</span>{' '}
-            when anything needs your attention.
-          </p>
-          <div className="flex justify-center gap-4 mb-16">
-            <NotifIcon3D size={40} />
-            <NotifIcon3D size={40} />
-            <NotifIcon3D size={40} />
-          </div>
-
-          <p className="text-sm text-zinc-600 uppercase tracking-widest mb-8 font-medium">
-            Integrates with the platforms you love
-          </p>
-
-          <PlatformCarousel />
-        </div>
-      </section>
-
-      {/* ═══ AUTH SECTION ═══ */}
-      <LandingAuth />
-
-      {/* ═══ FOOTER ═══ */}
-      <footer className="landing-footer relative border-t border-white/[0.04] py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-            <div className="footer-item col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-4">
-                <KriptikLogo size={28} />
-                <span className="font-display font-bold text-lg">KripTik AI</span>
-              </div>
-              <p className="text-zinc-500 text-sm leading-relaxed">
-                The AI engine that builds production-ready software from a single prompt.
+                {b.title}
+              </h2>
+              <p className="mt-6 text-xl md:text-2xl text-zinc-400 font-light text-center max-w-xl">
+                {b.sub}
               </p>
             </div>
-            <div className="footer-item">
-              <h4 className="font-display font-semibold text-sm mb-4 text-zinc-300">Product</h4>
-              <ul className="space-y-2.5 text-sm text-zinc-500">
-                <li><button onClick={() => scrollTo('builds')} className="hover:text-white transition-colors">Features</button></li>
-                <li><button onClick={() => scrollTo('capabilities')} className="hover:text-white transition-colors">Capabilities</button></li>
-                <li><button onClick={() => scrollTo('ship')} className="hover:text-white transition-colors">Integrations</button></li>
-                <li><Link to="/login" className="hover:text-white transition-colors">Sign In</Link></li>
-              </ul>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          CAPABILITIES — Asymmetric Parallax Reveals
+          ═══════════════════════════════════════ */}
+      <section id="capabilities" className="relative py-40 px-6" style={{ perspective: '1000px' }}>
+        <div className="max-w-6xl mx-auto space-y-40">
+          {[
+            {
+              title: 'Fix My App',
+              desc: 'Bring your broken project. We diagnose the issues, find the root causes, and ship the fix. Not a patch — a real solution.',
+              align: 'left' as const,
+              color: '#f59e0b',
+            },
+            {
+              title: 'Komplete My App',
+              desc: 'Got a half-finished app sitting in a repo? Hand it over. We analyze the architecture and ship the rest — fast.',
+              align: 'right' as const,
+              color: '#06b6d4',
+            },
+            {
+              title: 'Train & Fine-Tune',
+              desc: 'Custom AI models tuned to your specific use case and data. From fine-tuning to deployment.',
+              align: 'left' as const,
+              color: '#c8ff64',
+            },
+          ].map((cap) => (
+            <div
+              key={cap.title}
+              className={`cap-item ${cap.align === 'right' ? 'ml-auto text-right' : 'mr-auto text-left'}`}
+              style={{
+                maxWidth: '700px',
+                willChange: 'transform, opacity',
+                transformOrigin: cap.align === 'left' ? 'right center' : 'left center',
+              }}
+            >
+              <h3
+                className="font-creative font-black tracking-tight"
+                style={{
+                  fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+                  color: cap.color,
+                  textShadow: `0 0 60px ${cap.color}30`,
+                  lineHeight: 1,
+                }}
+              >
+                {cap.title}
+              </h3>
+              <p className="mt-6 text-lg md:text-xl text-zinc-400 leading-relaxed font-light">
+                {cap.desc}
+              </p>
+              <div
+                className="mt-8 h-px w-24"
+                style={{
+                  background: `linear-gradient(90deg, ${cap.color}, transparent)`,
+                  marginLeft: cap.align === 'right' ? 'auto' : undefined,
+                }}
+              />
             </div>
-            <div className="footer-item">
-              <h4 className="font-display font-semibold text-sm mb-4 text-zinc-300">Company</h4>
-              <ul className="space-y-2.5 text-sm text-zinc-500">
-                <li><span className="hover:text-white transition-colors cursor-pointer">About</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer">Blog</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer">Careers</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer">Contact</span></li>
-              </ul>
-            </div>
-            <div className="footer-item">
-              <h4 className="font-display font-semibold text-sm mb-4 text-zinc-300">Legal</h4>
-              <ul className="space-y-2.5 text-sm text-zinc-500">
-                <li><span className="hover:text-white transition-colors cursor-pointer">Terms of Service</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer">Privacy Policy</span></li>
-                <li><span className="hover:text-white transition-colors cursor-pointer">Security</span></li>
-              </ul>
-            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          QUALITY — "Not AI Slop" with VFX Shader
+          ═══════════════════════════════════════ */}
+      <section className="quality-section relative py-48 px-6 overflow-hidden">
+        {/* Radial glow background */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(200,255,100,0.04) 0%, transparent 70%)',
+          }}
+        />
+
+        <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <div className="quality-text" style={{ willChange: 'transform, opacity' }}>
+            <VFXProvider>
+              <h2
+                className="font-creative font-black text-kriptik-lime tracking-tight"
+                style={{
+                  fontSize: 'clamp(2.5rem, 8vw, 7rem)',
+                  lineHeight: 0.95,
+                  textShadow: '0 0 100px rgba(200,255,100,0.3), 0 0 200px rgba(200,255,100,0.1)',
+                }}
+              >
+                <VFXSpan shader="rgbShift">Not AI Slop.</VFXSpan>
+              </h2>
+            </VFXProvider>
           </div>
 
-          <div className="footer-item flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/[0.04]">
-            <p className="text-zinc-600 text-sm">&copy; {new Date().getFullYear()} KripTik AI. All rights reserved.</p>
-            <div className="flex items-center gap-5 mt-4 md:mt-0">
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-white transition-colors">
-                <div className="brightness-0 invert opacity-40 hover:opacity-100 transition-opacity">
-                  <GitHubIcon size={20} />
+          <div className="quality-sub mt-10 space-y-6">
+            <p className="text-2xl md:text-3xl text-zinc-200 leading-relaxed font-light max-w-3xl mx-auto">
+              Our proprietary tech creates designs that are{' '}
+              <span className="font-bold text-white">significantly better</span>{' '}
+              than any app builder on the planet.
+            </p>
+            <p className="text-lg text-zinc-500 max-w-2xl mx-auto">
+              Custom. Intentional. Production-grade.
+              Not template-driven. Not cookie-cutter.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          FREEDOM — Production Ready + Your Platforms
+          Full-width text with parallax scroll
+          ═══════════════════════════════════════ */}
+      <section id="deploy" className="relative py-48 px-6">
+        <div className="max-w-5xl mx-auto space-y-32">
+          <div className="freedom-text" style={{ willChange: 'transform, opacity' }}>
+            <h3
+              className="font-creative font-black tracking-tight"
+              style={{
+                fontSize: 'clamp(2rem, 6vw, 5rem)',
+                lineHeight: 1,
+                background: 'linear-gradient(135deg, #c8ff64 0%, #06b6d4 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              One Prompt.
+              <br />
+              Production Ready.
+            </h3>
+            <p className="mt-8 text-xl text-zinc-400 leading-relaxed max-w-2xl font-light">
+              Not a demo. Not a prototype. A fully deployed, production-ready
+              application from a single prompt. Real databases, real APIs,
+              real infrastructure.
+            </p>
+          </div>
+
+          <div className="freedom-text" style={{ willChange: 'transform, opacity' }}>
+            <h3
+              className="font-creative font-black tracking-tight"
+              style={{
+                fontSize: 'clamp(2rem, 6vw, 5rem)',
+                lineHeight: 1,
+                background: 'linear-gradient(135deg, #f59e0b 0%, #c8ff64 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              Your Code.
+              <br />
+              Your Platforms.
+            </h3>
+            <p className="mt-8 text-xl text-zinc-400 leading-relaxed max-w-2xl font-light">
+              We deploy to any platform you choose. When you are done building,
+              your app is truly yours — no lock-in, no strings attached.
+              Complete source code ownership.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          SHIP IN YOUR SLEEP + PLATFORM CAROUSEL
+          ═══════════════════════════════════════ */}
+      <section className="ship-section relative py-48 px-6 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse 70% 50% at 50% 40%, rgba(6,182,212,0.04) 0%, transparent 70%)',
+          }}
+        />
+
+        <div className="relative z-10 text-center max-w-5xl mx-auto">
+          <div className="ship-title" style={{ willChange: 'transform, opacity' }}>
+            <h2
+              className="font-creative font-black tracking-tight"
+              style={{
+                fontSize: 'clamp(2.5rem, 7vw, 6rem)',
+                lineHeight: 0.95,
+                background: 'linear-gradient(135deg, #f59e0b, #c8ff64, #06b6d4)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: 'none',
+              }}
+            >
+              Ship Software
+              <br />
+              In Your Sleep
+            </h2>
+            <p className="mt-8 text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-light">
+              KripTik works while you rest. Get notified via{' '}
+              <span className="text-kriptik-lime font-semibold">email</span>,{' '}
+              <span className="text-cyan-400 font-semibold">SMS</span>, and{' '}
+              <span className="text-amber-400 font-semibold">Slack</span>{' '}
+              when anything needs your attention.
+            </p>
+          </div>
+
+          <div className="ship-carousel mt-20" style={{ willChange: 'transform, opacity' }}>
+            <p className="text-xs text-zinc-600 uppercase tracking-[0.25em] mb-10 font-medium">
+              Integrates with the platforms you love
+            </p>
+            <PlatformCarousel />
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════
+          AUTH
+          ═══════════════════════════════════════ */}
+      <LandingAuth />
+
+      {/* ═══════════════════════════════════════
+          FOOTER — Minimal
+          ═══════════════════════════════════════ */}
+      <footer className="relative border-t border-white/[0.04] py-16 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <KriptikLogo size="sm" animated={false} />
+            <span className="font-display font-bold text-sm text-zinc-400">
+              KripTik AI &copy; {new Date().getFullYear()}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-8 text-sm text-zinc-600">
+            <Link to="/login" className="hover:text-white transition-colors">Sign In</Link>
+            <span className="cursor-pointer hover:text-white transition-colors">Terms</span>
+            <span className="cursor-pointer hover:text-white transition-colors">Privacy</span>
+          </div>
+
+          <div className="flex items-center gap-5">
+            {[
+              { Icon: GitHubIcon, href: 'https://github.com' },
+              { Icon: DiscordIcon, href: 'https://discord.com' },
+            ].map(({ Icon, href }, i) => (
+              <a
+                key={i}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="opacity-30 hover:opacity-100 transition-opacity"
+              >
+                <div className="brightness-0 invert">
+                  <Icon size={18} />
                 </div>
               </a>
-              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-white transition-colors">
-                <div className="brightness-0 invert opacity-40 hover:opacity-100 transition-opacity">
-                  <DiscordIcon size={20} />
-                </div>
-              </a>
-              <a href="https://slack.com" target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-white transition-colors">
-                <div className="brightness-0 invert opacity-40 hover:opacity-100 transition-opacity">
-                  <SlackIcon size={20} />
-                </div>
-              </a>
-            </div>
+            ))}
           </div>
         </div>
       </footer>
