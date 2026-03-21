@@ -1,8 +1,9 @@
 /** KripTik AI Landing Page — Immersive Experience
- * R3F, OGL, GSAP, Lenis, react-vfx, mouse-follower, simplex-noise, Canvas2D */
+ * R3F, OGL, GSAP, Lenis, react-vfx, mouse-follower, curtains.js, rapier2d, gl-noise, framer-motion */
 
 import { useRef, useEffect, Suspense, lazy, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
@@ -13,8 +14,7 @@ import { GitHubIcon, DiscordIcon } from '@/components/ui/icons'
 import LandingAuth from '@/components/landing/LandingAuth'
 import {
   SHADER_LIQUID_WARP, SHADER_ELECTRIC, SHADER_HOLOGRAM, SHADER_NEURAL,
-  BUILD_TYPES, BUILD_DATA, CAPABILITIES, DEPLOY_FEATURES, QUALITY_BARS,
-  RotatingBuildType, PlatformCarousel,
+  BUILD_TYPES, BUILD_DATA, QUALITY_BARS, RotatingBuildType,
 } from '@/components/landing/LandingComponents'
 import { useLandingAnimations } from '@/components/landing/useLandingAnimations'
 
@@ -25,6 +25,10 @@ const NoiseField = lazy(() => import('@/components/landing/NoiseField'))
 const CodeRain = lazy(() => import('@/components/landing/CodeRain'))
 const BrainOrbit3D = lazy(() => import('@/components/landing/BrainOrbit3D'))
 const FluidCanvas = lazy(() => import('@/components/landing/FluidCanvas'))
+const PhysicsLogos = lazy(() => import('@/components/landing/PhysicsLogos'))
+const CurtainsPlane = lazy(() => import('@/components/landing/CurtainsPlane'))
+const DeployGrid = lazy(() => import('@/components/landing/DeployGrid'))
+const CapabilityCards = lazy(() => import('@/components/landing/CapabilityCards'))
 
 /* ═══════════════════════════════════════════
    BRAIN STATS — real numbers from the engine
@@ -133,8 +137,10 @@ export default function LandingPage() {
               </button>
             ))}
           </div>
-          <button onClick={() => scrollTo('auth')}
+          <motion.button onClick={() => scrollTo('auth')}
             className="relative px-7 py-2.5 rounded-xl font-bold text-sm text-kriptik-black overflow-hidden group"
+            whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             data-cursor="-pointer" data-cursor-stick
             style={{
               background: 'linear-gradient(135deg, #c8ff64, #a8e848)',
@@ -143,7 +149,7 @@ export default function LandingPage() {
             <span className="relative z-10">Get Started</span>
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               style={{ background: 'linear-gradient(135deg, #a8e848, #06b6d4)' }} />
-          </button>
+          </motion.button>
         </div>
       </nav>
 
@@ -173,8 +179,11 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="hero-cta-group mt-14 flex flex-col sm:flex-row gap-5 justify-center items-center">
-            <button onClick={() => scrollTo('auth')}
+            <motion.button onClick={() => scrollTo('auth')}
               className="relative px-12 py-5 rounded-2xl font-bold text-lg text-kriptik-black overflow-hidden group"
+              whileHover={{ scale: 1.06, y: -3 }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               data-cursor="-pointer" data-cursor-stick
               style={{
                 background: 'linear-gradient(135deg, #c8ff64, #b0f040)',
@@ -183,13 +192,16 @@ export default function LandingPage() {
               <span className="relative z-10 tracking-wide">Start Building</span>
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700"
                 style={{ background: 'linear-gradient(135deg, #b0f040, #06b6d4)' }} />
-            </button>
-            <button onClick={() => scrollTo('intelligence')}
+            </motion.button>
+            <motion.button onClick={() => scrollTo('intelligence')}
               className="px-12 py-5 rounded-2xl font-semibold text-lg text-white border border-white/10 hover:border-white/25 transition-all duration-500 group"
+              whileHover={{ scale: 1.06, y: -3, borderColor: 'rgba(200,255,100,0.3)' }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               data-cursor="-pointer"
               style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(20px)' }}>
               <span className="group-hover:text-kriptik-lime transition-colors duration-500">Explore</span>
-            </button>
+            </motion.button>
           </div>
         </div>
         <div className="scroll-indicator absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-3">
@@ -280,66 +292,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ CAPABILITIES — Fix / Komplete / Train (OGL Fluid + rich cards) ═══ */}
+      {/* ═══ CAPABILITIES — Fix / Komplete / Train (OGL Fluid + framer-motion cards) ═══ */}
       <section id="capabilities" className="relative py-48 px-6 overflow-hidden"
         style={{ perspective: '1200px' }}>
-        <Suspense fallback={null}>
-          <FluidCanvas opacity={0.35} />
-        </Suspense>
+        <Suspense fallback={null}><FluidCanvas opacity={0.35} /></Suspense>
         <Suspense fallback={null}>
           <NoiseField opacity={0.03} speed={0.0002} scale={0.006} color={[6, 182, 212]} />
         </Suspense>
-        <div className="relative z-10 max-w-6xl mx-auto space-y-32">
-          {CAPABILITIES.map((cap) => (
-            <div key={cap.title}
-              className={`cap-item ${cap.align === 'right' ? 'ml-auto' : 'mr-auto'}`}
-              style={{
-                maxWidth: '800px', willChange: 'transform, opacity',
-                transformOrigin: cap.align === 'left' ? 'right center' : 'left center',
-              }}>
-              {/* Animated gradient border card */}
-              <div className="relative group">
-                <div className="absolute -inset-[1px] rounded-3xl overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity duration-700">
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: `conic-gradient(from 0deg, ${cap.color}30, transparent 40%, ${cap.color}15, transparent 80%, ${cap.color}30)`,
-                    animation: 'spin 14s linear infinite',
-                  }} />
-                </div>
-                <div className="relative rounded-3xl bg-kriptik-black/80 backdrop-blur-xl border border-white/[0.04] p-10 md:p-14"
-                  style={{ textAlign: cap.align }}>
-                  {/* Glow orb icon */}
-                  <div className="mb-8 inline-flex items-center justify-center w-16 h-16 rounded-2xl"
-                    style={{
-                      background: `linear-gradient(135deg, ${cap.color}12, transparent)`,
-                      boxShadow: `0 0 40px ${cap.color}15, inset 0 0 20px ${cap.color}08`,
-                    }}>
-                    <div className="w-6 h-6 rounded-full animate-pulse"
-                      style={{ background: cap.color, boxShadow: `0 0 20px ${cap.color}80` }} />
-                  </div>
-                  <h3 className="font-creative font-black tracking-tight"
-                    style={{
-                      fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-                      color: cap.color,
-                      textShadow: `0 0 80px ${cap.color}25, 0 0 160px ${cap.color}08`,
-                      lineHeight: 0.95,
-                    }}>
-                    <VFXSpan shader={cap.shader}>{cap.title}</VFXSpan>
-                  </h3>
-                  <p className="mt-8 text-lg md:text-xl text-zinc-400 leading-relaxed font-light max-w-lg"
-                    style={{ marginLeft: cap.align === 'right' ? 'auto' : undefined }}>
-                    {cap.desc}
-                  </p>
-                  <div className="mt-10 h-[2px] w-32 rounded-full"
-                    style={{
-                      background: `linear-gradient(90deg, ${cap.color}, transparent)`,
-                      marginLeft: cap.align === 'right' ? 'auto' : undefined,
-                    }} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <Suspense fallback={null}><CapabilityCards /></Suspense>
       </section>
 
       {/* ═══ QUALITY — "Not AI Slop." (Design_References.md §1 — electric VFX) ═══ */}
@@ -391,38 +351,42 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ DEPLOY — Your Code, Your Platforms ═══ */}
+      {/* ═══ DEPLOY — curtains.js WebGL displacement + framer-motion grid ═══ */}
       <section id="deploy" className="relative py-56 px-6" style={{ perspective: '1000px' }}>
         <div className="max-w-6xl mx-auto space-y-32">
-          <div className="freedom-block text-center" style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}>
-            <h3 className="font-creative font-black tracking-tight"
-              style={{
-                fontSize: 'clamp(2.5rem, 7vw, 5.5rem)', lineHeight: 0.95,
-                background: 'linear-gradient(135deg, #c8ff64 0%, #06b6d4 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>
-              One Prompt.<br />Production Ready.
-            </h3>
+          <motion.div className="freedom-block text-center"
+            initial={{ opacity: 0, y: 100, scale: 0.9, rotateX: -10 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{ type: 'spring', stiffness: 60, damping: 18 }}
+            style={{ transformStyle: 'preserve-3d' }}>
+            <Suspense fallback={
+              <h3 className="font-creative font-black tracking-tight"
+                style={{
+                  fontSize: 'clamp(2.5rem, 7vw, 5.5rem)', lineHeight: 0.95,
+                  background: 'linear-gradient(135deg, #c8ff64 0%, #06b6d4 100%)',
+                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                }}>
+                One Prompt.<br />Production Ready.
+              </h3>
+            }>
+              <CurtainsPlane>
+                <h3 className="font-creative font-black tracking-tight"
+                  style={{
+                    fontSize: 'clamp(2.5rem, 7vw, 5.5rem)', lineHeight: 0.95,
+                    background: 'linear-gradient(135deg, #c8ff64 0%, #06b6d4 100%)',
+                    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  }}>
+                  One Prompt.<br />Production Ready.
+                </h3>
+              </CurtainsPlane>
+            </Suspense>
             <p className="mt-10 text-xl md:text-2xl text-zinc-400 leading-relaxed max-w-2xl mx-auto font-light">
               Not a demo. Not a prototype. A fully deployed, production-ready
               application — ready for real users.
             </p>
-          </div>
-          {/* Feature grid */}
-          <div className="freedom-block grid grid-cols-1 md:grid-cols-3 gap-6"
-            style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}>
-            {DEPLOY_FEATURES.map((feat) => (
-              <div key={feat.title} className="relative group rounded-2xl border border-white/[0.04] bg-white/[0.015] p-8 hover:bg-white/[0.03] transition-all duration-500">
-                <div className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  style={{ background: `linear-gradient(135deg, ${feat.color}15, transparent 60%)` }} />
-                <div className="relative">
-                  <div className="h-1 w-10 rounded-full mb-6" style={{ background: feat.color, boxShadow: `0 0 12px ${feat.color}40` }} />
-                  <h4 className="text-lg font-bold mb-3 text-white">{feat.title}</h4>
-                  <p className="text-sm text-zinc-500 leading-relaxed">{feat.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          </motion.div>
+          <Suspense fallback={null}><DeployGrid /></Suspense>
         </div>
       </section>
 
@@ -452,7 +416,7 @@ export default function LandingPage() {
             <p className="text-xs text-zinc-600 uppercase tracking-[0.3em] mb-12 font-semibold">
               Integrates with the platforms you love
             </p>
-            <PlatformCarousel />
+            <Suspense fallback={null}><PhysicsLogos /></Suspense>
           </div>
         </div>
       </section>

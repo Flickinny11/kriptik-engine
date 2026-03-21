@@ -2,7 +2,8 @@
  * BrainOrbit3D — R3F scene: glowing icosahedron core + orbiting metallic knowledge nodes
  *
  * Design_References.md §4, §8 — PBR materials, Environment, Bloom postprocessing
- * Dependencies: @react-three/fiber, @react-three/drei (Float, Environment), @react-three/postprocessing
+ * Dependencies: @react-three/fiber, @react-three/drei (Float, Environment),
+ *               @react-three/postprocessing, gl-noise (Simplex vertex displacement)
  */
 
 import { useRef, useMemo, useState, useEffect } from 'react'
@@ -10,6 +11,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Float, Environment } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
+import { Common, Simplex } from 'gl-noise'
 
 const NODES = [
   { color: '#c8ff64', size: 0.12, orbit: 1.8, speed: 0.3, tilt: 0.2, phase: 0 },
@@ -49,29 +51,87 @@ function CameraRig() {
   return null
 }
 
-/** Glowing glass-like icosahedron core */
+/** gl-noise vertex shader for organic breathing displacement */
+const CORE_VS = /* glsl */ `
+${Common}
+${Simplex}
+uniform float uTime;
+varying vec3 vNormal;
+varying vec3 vPosition;
+varying float vDisplacement;
+
+void main() {
+  // gl-noise simplex displacement — organic breathing
+  float noise1 = gln_simplex(position * 2.5 + uTime * 0.4);
+  float noise2 = gln_simplex(position * 5.0 - uTime * 0.3) * 0.5;
+  float noise3 = gln_simplex(position * 1.2 + vec3(uTime * 0.15)) * 0.3;
+  float displacement = (noise1 + noise2 + noise3) * 0.12;
+
+  vec3 newPos = position + normal * displacement;
+  vDisplacement = displacement;
+  vNormal = normalMatrix * normal;
+  vPosition = (modelViewMatrix * vec4(newPos, 1.0)).xyz;
+
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);
+}
+`
+
+const CORE_FS = /* glsl */ `
+uniform float uTime;
+varying vec3 vNormal;
+varying vec3 vPosition;
+varying float vDisplacement;
+
+void main() {
+  vec3 lime  = vec3(0.78, 1.0, 0.39);
+  vec3 cyan  = vec3(0.024, 0.714, 0.831);
+  vec3 amber = vec3(0.961, 0.620, 0.043);
+
+  // Fresnel rim glow
+  vec3 viewDir = normalize(-vPosition);
+  float fresnel = pow(1.0 - max(dot(normalize(vNormal), viewDir), 0.0), 3.0);
+
+  // Color based on displacement + normal
+  float blend = vDisplacement * 6.0 + 0.5;
+  vec3 baseColor = mix(lime, cyan, clamp(blend, 0.0, 1.0));
+  baseColor = mix(baseColor, amber, fresnel * 0.4);
+
+  // Emissive glow
+  float pulse = sin(uTime * 1.5) * 0.15 + 0.85;
+  vec3 emission = baseColor * (0.6 + fresnel * 1.2) * pulse;
+
+  gl_FragColor = vec4(emission, 0.35 + fresnel * 0.3);
+}
+`
+
+/** Glowing glass-like icosahedron core with gl-noise vertex displacement */
 function GlassCore() {
   const ref = useRef<THREE.Mesh>(null!)
+  const matRef = useRef<THREE.ShaderMaterial>(null!)
+
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 },
+  }), [])
 
   useFrame(({ clock }) => {
-    if (!ref.current) return
+    if (!ref.current || !matRef.current) return
     ref.current.rotation.y = clock.elapsedTime * 0.1
     ref.current.rotation.x = Math.sin(clock.elapsedTime * 0.15) * 0.2
+    matRef.current.uniforms.uTime.value = clock.elapsedTime
   })
 
   return (
     <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.5}>
       <mesh ref={ref}>
-        <icosahedronGeometry args={[0.6, 2]} />
-        <meshStandardMaterial
-          color="#c8ff64"
-          emissive="#c8ff64"
-          emissiveIntensity={0.6}
-          metalness={0.3}
-          roughness={0.1}
+        <icosahedronGeometry args={[0.6, 4]} />
+        <shaderMaterial
+          ref={matRef}
+          vertexShader={CORE_VS}
+          fragmentShader={CORE_FS}
+          uniforms={uniforms}
           transparent
-          opacity={0.35}
-          envMapIntensity={1.5}
+          side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
     </Float>
