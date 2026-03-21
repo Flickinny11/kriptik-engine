@@ -14,13 +14,13 @@ gsap.registerPlugin(ScrollTrigger)
 
 const PhysicsLogos = lazy(() => import('./PhysicsLogos'))
 
-const TIMELINE_EVENTS = [
+const TIMELINE_EVENTS: readonly { hour: number; label: string; color: string; angle: number; pulse?: boolean }[] = [
   { hour: 22, label: 'Build started', color: '#c8ff64', angle: -60 },
   { hour: 0, label: 'Architecture done', color: '#06b6d4', angle: 0 },
   { hour: 2, label: 'Frontend built', color: '#c8ff64', angle: 30 },
   { hour: 4, label: 'APIs integrated', color: '#f59e0b', angle: 60 },
   { hour: 6, label: 'Verified & deployed', color: '#c8ff64', angle: 90, pulse: true },
-] as const
+]
 
 const NOTIFICATIONS = [
   { type: 'email', text: 'Your app is ready', from: 'KripTik AI', color: '#c8ff64' },
