@@ -21,7 +21,7 @@ export const SHADER_LIQUID_WARP = `
 precision mediump float;
 uniform vec2 resolution; uniform vec2 offset; uniform float time; uniform sampler2D src;
 void main() {
-  vec2 uv = (gl_FragCoord.xy - offset) / resolution; uv.y = 1.0 - uv.y;
+  vec2 uv = (gl_FragCoord.xy - offset) / resolution;
   float w1 = sin(uv.x * 10.0 + time * 1.8) * cos(uv.y * 7.0 + time * 1.2) * 0.006;
   float w2 = cos(uv.x * 5.0 - time * 2.5) * sin(uv.y * 9.0 + time * 0.8) * 0.004;
   float w3 = sin((uv.x + uv.y) * 8.0 + time * 3.0) * 0.002;
@@ -38,7 +38,7 @@ export const SHADER_ELECTRIC = `
 precision mediump float;
 uniform vec2 resolution; uniform vec2 offset; uniform float time; uniform sampler2D src;
 void main() {
-  vec2 uv = (gl_FragCoord.xy - offset) / resolution; uv.y = 1.0 - uv.y;
+  vec2 uv = (gl_FragCoord.xy - offset) / resolution;
   float distort = sin(uv.y * 40.0 + time * 6.0) * 0.002;
   vec4 col = texture2D(src, uv + vec2(distort, 0.0));
   float scanline = sin(uv.y * resolution.y * 0.5 + time * 8.0) * 0.06;
@@ -53,7 +53,7 @@ export const SHADER_HOLOGRAM = `
 precision mediump float;
 uniform vec2 resolution; uniform vec2 offset; uniform float time; uniform sampler2D src;
 void main() {
-  vec2 uv = (gl_FragCoord.xy - offset) / resolution; uv.y = 1.0 - uv.y;
+  vec2 uv = (gl_FragCoord.xy - offset) / resolution;
   float scan = sin(uv.y * resolution.y * 0.5 + time * 2.0) * 0.025;
   float shift = sin(uv.y * 6.0 + time * 1.5) * 0.004;
   float r = texture2D(src, uv + vec2(shift, scan * 0.5)).r;
@@ -69,7 +69,7 @@ export const SHADER_GLITCH = `
 precision mediump float;
 uniform vec2 resolution; uniform vec2 offset; uniform float time; uniform sampler2D src;
 void main() {
-  vec2 uv = (gl_FragCoord.xy - offset) / resolution; uv.y = 1.0 - uv.y;
+  vec2 uv = (gl_FragCoord.xy - offset) / resolution;
   float block = floor(uv.y * 12.0);
   float glitch = step(0.96, fract(sin(block * 43758.5453 + floor(time * 4.0)) * 2.0));
   vec2 d = uv;
@@ -86,7 +86,7 @@ export const SHADER_NEURAL = `
 precision mediump float;
 uniform vec2 resolution; uniform vec2 offset; uniform float time; uniform sampler2D src;
 void main() {
-  vec2 uv = (gl_FragCoord.xy - offset) / resolution; uv.y = 1.0 - uv.y;
+  vec2 uv = (gl_FragCoord.xy - offset) / resolution;
   float dist = length(uv - 0.5);
   float pulse = sin(dist * 20.0 - time * 3.0) * 0.5 + 0.5;
   pulse = smoothstep(0.3, 0.7, pulse);
@@ -128,6 +128,20 @@ export const CAPABILITIES = [
     desc: 'Custom AI models tuned to your data, your domain, your use case. From fine-tuning to deployment — end to end.',
     align: 'left' as const, color: '#c8ff64', shader: SHADER_NEURAL,
   },
+]
+
+export const DEPLOY_FEATURES = [
+  { title: 'Real Databases', desc: 'PostgreSQL, Supabase, or your own. Production schemas, migrations, and seed data.', color: '#c8ff64' },
+  { title: 'Real APIs', desc: '178 integrations probed and configured. OAuth, API keys, webhooks — all wired.', color: '#06b6d4' },
+  { title: 'Real Infrastructure', desc: 'Vercel, AWS, Netlify, Cloudflare. Deployed, monitored, production-grade.', color: '#f59e0b' },
+  { title: 'Full Source Code', desc: 'Every line is yours. No lock-in, no proprietary runtime, no strings attached.', color: '#c8ff64' },
+  { title: 'Continuous Verification', desc: '28 quality rules enforced in real-time. TypeScript strict, SAST, no placeholders.', color: '#06b6d4' },
+  { title: 'Ship in Your Sleep', desc: 'Builds run autonomously for up to 24 hours. Get notified when it is ready.', color: '#f59e0b' },
+]
+
+export const QUALITY_BARS = [
+  { label: 'Others', sublabel: 'Template-driven', pct: 25, color: '#ef4444' },
+  { label: 'KripTik', sublabel: 'Brain-driven intelligence', pct: 95, color: '#c8ff64' },
 ]
 
 export const PLATFORMS = [
