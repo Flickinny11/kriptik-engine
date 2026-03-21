@@ -6,6 +6,10 @@
  *   33-66% Knowledge node cards fly out with Canvas2D edge lines
  *   66-100% Single node pulses, particle trail, closing statement
  *
+ * Mobile: simplified Canvas2D (4 nodes, adjacent edges, thinner lines),
+ * shorter scroll pin (200%), larger stats, radial glow behind Brain,
+ * no parallax (gyroscope not worth the complexity).
+ *
  * Design_References.md: GSAP ScrollTrigger (pin/scrub), framer-motion springs,
  * react-vfx SHADER_NEURAL, Canvas2D overlay for edges, mouse parallax.
  */
@@ -37,6 +41,9 @@ const KNOWLEDGE_NODES = [
   { label: 'Rate Limits', color: '#f59e0b', angle: 270 },
   { label: 'Component Maps', color: '#c8ff64', angle: 330 },
 ]
+
+/** Mobile shows only 4 nodes (skip indices 2 and 4 for even spacing) */
+const MOBILE_NODE_INDICES = [0, 1, 3, 5]
 
 /* ─── Helpers ─── */
 
@@ -73,8 +80,14 @@ export default function BrainSection() {
   const [closingText, setClosingText] = useState(false)
   const [counters, setCounters] = useState<number[]>([0, 0, 0])
 
-  /* Mouse parallax tracking */
+  /** Visible node list depends on viewport */
+  const visibleNodes = isMobile
+    ? MOBILE_NODE_INDICES.map((i) => ({ ...KNOWLEDGE_NODES[i], _origIdx: i }))
+    : KNOWLEDGE_NODES.map((n, i) => ({ ...n, _origIdx: i }))
+
+  /* Mouse parallax tracking — desktop only */
   useEffect(() => {
+    if (isMobile) return
     const handler = (e: MouseEvent) => {
       mouseRef.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 2,
@@ -83,7 +96,7 @@ export default function BrainSection() {
     }
     window.addEventListener('mousemove', handler)
     return () => window.removeEventListener('mousemove', handler)
-  }, [])
+  }, [isMobile])
 
   /* Counter animation */
   useEffect(() => {
@@ -102,7 +115,7 @@ export default function BrainSection() {
     return () => cancelAnimationFrame(raf)
   }, [statsVisible])
 
-  /* GSAP ScrollTrigger */
+  /* GSAP ScrollTrigger — shorter pin on mobile */
   useEffect(() => {
     const el = sectionRef.current
     if (!el) return
@@ -110,7 +123,7 @@ export default function BrainSection() {
     const st = ScrollTrigger.create({
       trigger: el,
       start: 'top top',
-      end: '+=300%',
+      end: isMobile ? '+=200%' : '+=300%',
       pin: true,
       scrub: 0.8,
       onUpdate: (self) => {
@@ -143,12 +156,12 @@ export default function BrainSection() {
     })
 
     return () => st.kill()
-  }, [])
+  }, [isMobile])
 
-  /* Canvas2D edge lines */
+  /* Canvas2D edge lines — simplified on mobile, full on desktop */
   const drawEdges = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas || isMobile || !nodesVisible) return
+    if (!canvas || !nodesVisible) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -161,44 +174,93 @@ export default function BrainSection() {
 
     const cx = w / 2
     const cy = h / 2
-    const radius = Math.min(w, h) * 0.32
+    const radius = Math.min(w, h) * (isMobile ? 0.28 : 0.32)
 
     ctx.clearRect(0, 0, w, h)
 
     const time = performance.now() * 0.001
+    const nodesToDraw = isMobile
+      ? MOBILE_NODE_INDICES.map((i) => KNOWLEDGE_NODES[i])
+      : KNOWLEDGE_NODES
 
-    KNOWLEDGE_NODES.forEach((node, i) => {
-      const pos = nodePos(node.angle, radius, cx, cy)
-      const isActive = activeNode === i
+    if (isMobile) {
+      /* Mobile: only adjacent edges (ring), thinner lines, fewer particles */
+      nodesToDraw.forEach((node, i) => {
+        const pos = nodePos(node.angle, radius, cx, cy)
+        const isActive = activeNode === MOBILE_NODE_INDICES[i]
 
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.lineTo(pos.x, pos.y)
-      ctx.strokeStyle = isActive ? node.color : `${node.color}44`
-      ctx.lineWidth = isActive ? 2.5 : 1
-      ctx.stroke()
-
-      /* Animated dash for active node (particle trail feel) */
-      if (isActive) {
-        ctx.save()
-        ctx.setLineDash([6, 12])
-        ctx.lineDashOffset = -time * 60
+        /* Spoke to center */
         ctx.beginPath()
         ctx.moveTo(cx, cy)
         ctx.lineTo(pos.x, pos.y)
-        ctx.strokeStyle = node.color
-        ctx.lineWidth = 3
+        ctx.strokeStyle = isActive ? node.color : `${node.color}33`
+        ctx.lineWidth = isActive ? 1.5 : 0.5
         ctx.stroke()
-        ctx.restore()
 
-        /* Center pulse */
-        const pulseR = 8 + Math.sin(time * 4) * 4
+        /* Adjacent ring edge (connect to next node) */
+        const nextIdx = (i + 1) % nodesToDraw.length
+        const nextNode = nodesToDraw[nextIdx]
+        const nextPos = nodePos(nextNode.angle, radius, cx, cy)
         ctx.beginPath()
-        ctx.arc(cx, cy, pulseR, 0, Math.PI * 2)
-        ctx.fillStyle = `${node.color}66`
-        ctx.fill()
-      }
-    })
+        ctx.moveTo(pos.x, pos.y)
+        ctx.lineTo(nextPos.x, nextPos.y)
+        ctx.strokeStyle = `${node.color}22`
+        ctx.lineWidth = 0.5
+        ctx.stroke()
+
+        /* Active particle trail — fewer dashes */
+        if (isActive) {
+          ctx.save()
+          ctx.setLineDash([4, 16])
+          ctx.lineDashOffset = -time * 40
+          ctx.beginPath()
+          ctx.moveTo(cx, cy)
+          ctx.lineTo(pos.x, pos.y)
+          ctx.strokeStyle = node.color
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+          ctx.restore()
+
+          const pulseR = 6 + Math.sin(time * 4) * 3
+          ctx.beginPath()
+          ctx.arc(cx, cy, pulseR, 0, Math.PI * 2)
+          ctx.fillStyle = `${node.color}55`
+          ctx.fill()
+        }
+      })
+    } else {
+      /* Desktop: full edge rendering */
+      nodesToDraw.forEach((node, i) => {
+        const pos = nodePos(node.angle, radius, cx, cy)
+        const isActive = activeNode === i
+
+        ctx.beginPath()
+        ctx.moveTo(cx, cy)
+        ctx.lineTo(pos.x, pos.y)
+        ctx.strokeStyle = isActive ? node.color : `${node.color}44`
+        ctx.lineWidth = isActive ? 2.5 : 1
+        ctx.stroke()
+
+        if (isActive) {
+          ctx.save()
+          ctx.setLineDash([6, 12])
+          ctx.lineDashOffset = -time * 60
+          ctx.beginPath()
+          ctx.moveTo(cx, cy)
+          ctx.lineTo(pos.x, pos.y)
+          ctx.strokeStyle = node.color
+          ctx.lineWidth = 3
+          ctx.stroke()
+          ctx.restore()
+
+          const pulseR = 8 + Math.sin(time * 4) * 4
+          ctx.beginPath()
+          ctx.arc(cx, cy, pulseR, 0, Math.PI * 2)
+          ctx.fillStyle = `${node.color}66`
+          ctx.fill()
+        }
+      })
+    }
   }, [nodesVisible, activeNode, isMobile])
 
   useEffect(() => {
@@ -211,7 +273,7 @@ export default function BrainSection() {
     return () => cancelAnimationFrame(raf)
   }, [drawEdges])
 
-  /* Node positions with parallax */
+  /* Node positions — parallax on desktop, static on mobile */
   const getNodeStyle = (angle: number, depth: number) => {
     const section = sectionRef.current
     if (!section) return {}
@@ -219,8 +281,9 @@ export default function BrainSection() {
     const h = section.offsetHeight
     const radius = Math.min(w, h) * (isMobile ? 0.28 : 0.32)
     const pos = nodePos(angle, radius, w / 2, h / 2)
-    const px = mouseRef.current.x * depth * 12
-    const py = mouseRef.current.y * depth * 12
+    /* No parallax on mobile — keeps things stable for touch scrolling */
+    const px = isMobile ? 0 : mouseRef.current.x * depth * 12
+    const py = isMobile ? 0 : mouseRef.current.y * depth * 12
     return {
       left: pos.x + px,
       top: pos.y + py,
@@ -246,19 +309,29 @@ export default function BrainSection() {
           transition: 'transform 0.1s linear, opacity 0.1s linear',
         }}
       >
+        {/* Radial glow behind Brain on mobile for visual weight */}
+        {isMobile && (
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: '70vw',
+              height: '70vw',
+              background: 'radial-gradient(circle, rgba(200,255,100,0.12) 0%, rgba(6,182,212,0.06) 50%, transparent 80%)',
+              filter: 'blur(20px)',
+            }}
+          />
+        )}
         <Suspense fallback={null}>
           <BrainOrbit3D />
         </Suspense>
       </div>
 
-      {/* Canvas2D overlay for edge lines */}
-      {!isMobile && (
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 z-10 pointer-events-none"
-          style={{ width: '100%', height: '100%' }}
-        />
-      )}
+      {/* Canvas2D overlay for edge lines — present on both mobile and desktop */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 z-10 pointer-events-none"
+        style={{ width: '100%', height: '100%' }}
+      />
 
       {/* Title */}
       <div
@@ -273,7 +346,7 @@ export default function BrainSection() {
           <VFXSpan shader={SHADER_NEURAL}>A Brain, Not a Pipeline</VFXSpan>
         </h2>
 
-        {/* Stats */}
+        {/* Stats — larger on mobile for visual density */}
         <div
           className="flex gap-8 md:gap-16 mt-4"
           style={{
@@ -285,22 +358,22 @@ export default function BrainSection() {
           {STATS.map((s, i) => (
             <div key={s.label} className="text-center">
               <div
-                className="text-3xl md:text-5xl font-black"
+                className="text-4xl md:text-5xl font-black"
                 style={{ color: i === 0 ? '#c8ff64' : i === 1 ? '#06b6d4' : '#f59e0b' }}
               >
                 {s.countable ? counters[i] : s.val}
               </div>
-              <div className="text-sm md:text-base text-white/60 mt-1">{s.label}</div>
+              <div className="text-base md:text-base text-white/60 mt-1">{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Knowledge node cards */}
+      {/* Knowledge node cards — filtered set on mobile */}
       {nodesVisible &&
-        KNOWLEDGE_NODES.map((node, i) => {
+        visibleNodes.map((node, i) => {
           const depth = 0.5 + (i % 3) * 0.3
-          const isActive = activeNode === i
+          const isActive = activeNode === node._origIdx
           const dimmed = activeNode >= 0 && !isActive
 
           return (
@@ -313,7 +386,9 @@ export default function BrainSection() {
                 border: `1.5px solid ${isActive ? node.color : `${node.color}66`}`,
                 boxShadow: isActive
                   ? `0 0 20px ${node.color}44, 0 0 40px ${node.color}22`
-                  : `0 0 8px ${node.color}22`,
+                  : isMobile
+                    ? `0 0 12px ${node.color}33, inset 0 0 6px ${node.color}11`
+                    : `0 0 8px ${node.color}22`,
                 color: node.color,
                 opacity: dimmed ? 0.4 : 1,
                 transition: 'opacity 0.4s, box-shadow 0.4s, border-color 0.4s',

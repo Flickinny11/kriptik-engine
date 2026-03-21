@@ -249,42 +249,121 @@ function DesktopPipeline() {
 }
 
 /* ── Mobile vertical pipeline ────────────────────────── */
-function MobileStage({ children, label }: { children: React.ReactNode; label: string }) {
+const MOBILE_STAGES = [
+  { step: '01', label: 'Write', color: '#c8ff64', pct: '25%' },
+  { step: '02', label: 'Verify', color: '#22c55e', pct: '50%' },
+  { step: '03', label: 'Deploy', color: '#06b6d4', pct: '75%' },
+  { step: '04', label: 'Live', color: '#f59e0b', pct: '100%' },
+] as const
+
+function MobileStage({
+  children, label, step, color, pct, isLast,
+}: {
+  children: React.ReactNode; label: string; step: string; color: string; pct: string; isLast?: boolean
+}) {
   return (
-    <motion.div className="py-12 flex flex-col items-center gap-4"
-      initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }} transition={{ type: 'spring' as const, stiffness: 80, damping: 18 }}>
-      {children}
-      <p className="text-xs font-semibold tracking-widest text-zinc-500 uppercase">{label}</p>
-    </motion.div>
+    <div className="relative flex gap-4">
+      {/* Vertical timeline column */}
+      <div className="flex flex-col items-center shrink-0" style={{ width: 36 }}>
+        {/* Step indicator */}
+        <motion.div
+          className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black z-10"
+          style={{
+            border: `2px solid ${color}`,
+            color,
+            background: `${color}10`,
+            boxShadow: `0 0 16px ${color}25`,
+          }}
+          initial={{ scale: 0, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ type: 'spring' as const, stiffness: 300, damping: 20 }}
+        >
+          {step}
+        </motion.div>
+        {/* Connecting line */}
+        {!isLast && (
+          <div
+            className="flex-1 w-px my-1"
+            style={{
+              background: `linear-gradient(to bottom, ${color}40, rgba(255,255,255,0.06))`,
+              minHeight: 40,
+            }}
+          />
+        )}
+      </div>
+
+      {/* Content */}
+      <motion.div
+        className="flex-1 pb-10 flex flex-col gap-3"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ type: 'spring' as const, stiffness: 80, damping: 18 }}
+      >
+        <div className="flex items-center gap-3">
+          <p className="text-xs font-semibold tracking-widest text-zinc-500 uppercase">{label}</p>
+          <span className="text-[10px] font-mono" style={{ color }}>{pct}</span>
+        </div>
+        {children}
+      </motion.div>
+    </div>
   )
 }
 
 function MobilePipeline() {
+  const scanRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!scanRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(scanRef.current,
+        { top: '0%', opacity: 0 },
+        {
+          top: '100%', opacity: 1, duration: 1.5, ease: 'none',
+          scrollTrigger: {
+            trigger: scanRef.current?.parentElement,
+            start: 'top 70%',
+            end: 'bottom 50%',
+            scrub: 1,
+          },
+        },
+      )
+    })
+    return () => ctx.revert()
+  }, [])
+
   return (
-    <div className="flex flex-col px-4">
-      <MobileStage label="Write">
-        <div className="rounded-xl border border-white/[0.08] p-4 font-mono text-xs w-full max-w-sm"
+    <div className="flex flex-col px-4 max-w-sm mx-auto">
+      <MobileStage label="Write" step="01" color="#c8ff64" pct="25%">
+        <div className="rounded-xl border border-white/[0.08] p-4 font-mono text-xs w-full"
           style={{ background: 'linear-gradient(135deg, #0a0a0a, #111)' }}>
           <div className="mb-3"><Dots px={10} /></div>
           <CodeBlock />
         </div>
       </MobileStage>
-      <MobileStage label="Verify">
-        <div className="flex gap-2 flex-wrap justify-center">
-          {BADGES.map((b, i) => (
-            <motion.div key={b.label} variants={badgeV} initial="hidden" whileInView="visible"
-              viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-              className="px-3 py-1.5 rounded-full text-[11px] font-bold border"
-              style={{ color: b.color, borderColor: `${b.color}40`, background: `${b.color}10`, boxShadow: `0 0 12px ${b.color}20` }}>
-              {b.label} &#10003;
-            </motion.div>
-          ))}
+      <MobileStage label="Verify" step="02" color="#22c55e" pct="50%">
+        <div className="relative rounded-xl border border-white/[0.08] p-3 overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #0a0a0a, #111)' }}>
+          <div ref={scanRef} className="absolute left-0 right-0 h-[2px]"
+            style={{ top: '0%', background: 'linear-gradient(90deg, transparent, #22c55e, transparent)', boxShadow: '0 0 20px #22c55e50' }} />
+          <div className="flex gap-2 flex-wrap justify-center">
+            {BADGES.map((b, i) => (
+              <motion.div key={b.label} variants={badgeV} initial="hidden" whileInView="visible"
+                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className="px-3 py-1.5 rounded-full text-[11px] font-bold border"
+                style={{ color: b.color, borderColor: `${b.color}40`, background: `${b.color}10`, boxShadow: `0 0 12px ${b.color}20` }}>
+                {b.label} &#10003;
+              </motion.div>
+            ))}
+          </div>
         </div>
       </MobileStage>
-      <MobileStage label="Deploy"><PlatformLogos iconSize={16} boxSize={36} /></MobileStage>
-      <MobileStage label="Live">
-        <div className="rounded-xl border border-white/[0.08] overflow-hidden w-full max-w-sm"
+      <MobileStage label="Deploy" step="03" color="#06b6d4" pct="75%">
+        <PlatformLogos iconSize={16} boxSize={36} />
+      </MobileStage>
+      <MobileStage label="Live" step="04" color="#f59e0b" pct="100%" isLast>
+        <div className="rounded-xl border border-white/[0.08] overflow-hidden w-full"
           style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <div className="flex items-center gap-1.5 px-3 py-2 bg-zinc-900/80 border-b border-white/[0.06]">
             <Dots px={10} />

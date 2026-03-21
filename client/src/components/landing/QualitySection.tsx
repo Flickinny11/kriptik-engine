@@ -227,20 +227,24 @@ export default function QualitySection() {
         )
       }
 
+      const isMobile = window.innerWidth < 768
+
       // Left panel: jitter + tilt away on scroll
       if (leftPanelRef.current) {
-        // Micro-tremor
+        // Micro-tremor (reduced amplitude on mobile)
         gsap.to(leftPanelRef.current, {
-          x: '+=1.5', y: '+=1', rotation: 0.3,
+          x: isMobile ? '+=0.8' : '+=1.5',
+          y: isMobile ? '+=0.5' : '+=1',
+          rotation: isMobile ? 0.15 : 0.3,
           duration: 0.08, ease: 'none',
           yoyo: true, repeat: -1,
         })
 
-        // Tilt away on scroll
+        // Tilt away on scroll (reduced on mobile, not removed)
         gsap.fromTo(leftPanelRef.current,
-          { rotateY: -4, opacity: 0, x: -60 },
+          { rotateY: isMobile ? -2 : -4, opacity: 0, x: isMobile ? -30 : -60 },
           {
-            rotateY: -18, opacity: 1, x: 0,
+            rotateY: isMobile ? -8 : -18, opacity: 1, x: 0,
             scrollTrigger: {
               trigger: leftPanelRef.current,
               start: 'top 80%',
@@ -254,9 +258,9 @@ export default function QualitySection() {
       // Right panel: come forward + grow
       if (rightPanelRef.current) {
         gsap.fromTo(rightPanelRef.current,
-          { rotateY: 4, opacity: 0, x: 60, scale: 0.95 },
+          { rotateY: isMobile ? 2 : 4, opacity: 0, x: isMobile ? 30 : 60, scale: 0.95 },
           {
-            rotateY: 2, opacity: 1, x: 0, scale: 1.03,
+            rotateY: isMobile ? 1 : 2, opacity: 1, x: 0, scale: isMobile ? 1.01 : 1.03,
             scrollTrigger: {
               trigger: rightPanelRef.current,
               start: 'top 80%',
@@ -297,7 +301,8 @@ export default function QualitySection() {
           {/* Left: Other Builders */}
           <div
             ref={leftPanelRef}
-            className="flex flex-col items-center md:[transform-style:preserve-3d]"
+            className="flex flex-col items-center"
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <OtherBuildersPanel />
             <p className="mt-4 text-sm font-medium text-[#ef4444]/80">
@@ -306,10 +311,28 @@ export default function QualitySection() {
             <ProgressBar percent={25} color="#ef4444" />
           </div>
 
+          {/* VS divider — visible on mobile only */}
+          <div className="flex items-center justify-center md:hidden">
+            <div className="h-8 w-px bg-white/10" />
+            <span
+              className="mx-3 rounded-full px-3 py-1 text-xs font-black tracking-widest"
+              style={{
+                color: '#fff',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 0 16px rgba(200,255,100,0.08)',
+              }}
+            >
+              VS
+            </span>
+            <div className="h-8 w-px bg-white/10" />
+          </div>
+
           {/* Right: KripTik */}
           <div
             ref={rightPanelRef}
-            className="flex flex-col items-center md:[transform-style:preserve-3d]"
+            className="flex flex-col items-center"
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <KripTikPanel />
             <p className="mt-4 text-sm font-medium text-[#c8ff64]/80">
@@ -322,7 +345,7 @@ export default function QualitySection() {
         {/* ── Quality badges ────────────────── */}
         <div
           ref={badgesRef}
-          className="mb-12 flex flex-wrap items-center justify-center gap-3 md:gap-4"
+          className="mb-12 grid grid-cols-2 gap-3 md:flex md:flex-wrap md:items-center md:justify-center md:gap-4"
         >
           {QUALITY_RULES.map((rule, i) => (
             <motion.div

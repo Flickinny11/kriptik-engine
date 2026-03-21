@@ -299,13 +299,26 @@ export default function ShipSection() {
 
       {/* Main content: ring + notifications */}
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-16">
-        {/* Timeline ring */}
-        <div className="flex-1 flex justify-center">
+        {/* Timeline ring with overlaid notifications on mobile */}
+        <div className="relative flex-1 flex justify-center">
           <TimelineRing progress={progress} />
+
+          {/* Mobile: notifications overlaid on ring area */}
+          <div className="absolute inset-0 flex flex-col items-center justify-end pb-4 gap-2 pointer-events-none md:hidden">
+            {NOTIFICATIONS.map((n, i) => (
+              <div key={n.type} className="pointer-events-auto w-full px-2">
+                <NotificationCard
+                  notification={n}
+                  index={i}
+                  visible={showNotifications}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Notifications */}
-        <div className="flex-1 flex flex-col gap-3 items-center md:items-start">
+        {/* Desktop: notifications beside ring */}
+        <div className="hidden md:flex flex-1 flex-col gap-3 items-start">
           {NOTIFICATIONS.map((n, i) => (
             <NotificationCard
               key={n.type}
@@ -317,12 +330,22 @@ export default function ShipSection() {
         </div>
       </div>
 
+      {/* Connecting line from ring to deploy section */}
+      <div className="flex justify-center my-4 md:hidden">
+        <div
+          className="w-px h-16"
+          style={{
+            background: 'linear-gradient(to bottom, #c8ff6440, #06b6d420, transparent)',
+          }}
+        />
+      </div>
+
       {/* Deploy platform section */}
-      <div className="mt-24 md:mt-32 text-center">
+      <div className="mt-12 md:mt-32 text-center">
         <p className="text-white/50 text-sm md:text-base tracking-wide uppercase mb-8">
           Deploys to any platform
         </p>
-        <div className="max-w-4xl mx-auto h-[300px] md:h-[360px]">
+        <div className="max-w-4xl mx-auto h-[220px] min-[375px]:h-[300px] md:h-[360px]">
           <Suspense fallback={<div className="w-full h-full" />}>
             <PhysicsLogos />
           </Suspense>

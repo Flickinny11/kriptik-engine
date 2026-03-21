@@ -9,10 +9,23 @@
  * Dependencies: @react-three/fiber, three
  */
 
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return mobile
+}
 
 /* ═══════════════════════════════════════════
    RAY-MARCHED SDF METABALL SHADER
@@ -33,9 +46,9 @@ varying vec2 vUv;
 uniform float uTime;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
+uniform float uMobile;
 
 // ── Constants ──
-#define MAX_STEPS 80
 #define MAX_DIST 40.0
 #define SURF_DIST 0.002
 #define AO_STEPS 3
@@ -79,12 +92,14 @@ mediump float noise3(vec3 p) {
   return mix(n0, n1, f.x);
 }
 
-// ── FBM (3 octaves) ──
+// ── FBM (3 octaves desktop, 1 octave mobile) ──
 mediump float fbm(vec3 p) {
   float v = 0.0;
   float a = 0.5;
   vec3 shift = vec3(100.0);
+  int octaves = uMobile > 0.5 ? 1 : 3;
   for (int i = 0; i < 3; i++) {
+    if (i >= octaves) break;
     v += a * noise3(p);
     p = p * 2.0 + shift;
     a *= 0.5;
@@ -204,7 +219,9 @@ vec3 iridescence(float angle, float t) {
 // ── Ray Marching ──
 float rayMarch(vec3 ro, vec3 rd) {
   float d = 0.0;
-  for (int i = 0; i < MAX_STEPS; i++) {
+  int steps = uMobile > 0.5 ? 40 : 80;
+  for (int i = 0; i < 80; i++) {
+    if (i >= steps) break;
     vec3 p = ro + rd * d;
     float ds = sceneSDF(p);
     if (ds < SURF_DIST) return d;
@@ -297,32 +314,36 @@ void main() {
   vec3 ro = vec3(0.0, 0.0, 5.5);
   vec3 rd = normalize(vec3(uv * 1.1, -1.5));
 
-  // ── Chromatic Aberration ──
-  // Shift R and B ray directions based on distance from center
   float distFromCenter = length(uv);
-  float caStrength = distFromCenter * 0.008;
+  vec3 col;
 
-  vec2 uvR = uv + normalize(uv + 0.001) * caStrength;
-  vec2 uvB = uv - normalize(uv + 0.001) * caStrength;
+  if (uMobile > 0.5) {
+    // ── Mobile: single shade call, no chromatic aberration ──
+    col = shade(ro, rd, uv);
+  } else {
+    // ── Desktop: Chromatic Aberration ──
+    float caStrength = distFromCenter * 0.008;
+    vec2 uvR = uv + normalize(uv + 0.001) * caStrength;
+    vec2 uvB = uv - normalize(uv + 0.001) * caStrength;
+    vec3 rdR = normalize(vec3(uvR * 1.1, -1.5));
+    vec3 rdB = normalize(vec3(uvB * 1.1, -1.5));
 
-  vec3 rdR = normalize(vec3(uvR * 1.1, -1.5));
-  vec3 rdB = normalize(vec3(uvB * 1.1, -1.5));
-
-  // Shade each channel with slightly offset rays
-  float colR = shade(ro, rdR, uvR).r;
-  vec3 colG_full = shade(ro, rd, uv);
-  float colG = colG_full.g;
-  float colB = shade(ro, rdB, uvB).b;
-
-  vec3 col = vec3(colR, colG, colB);
+    float colR = shade(ro, rdR, uvR).r;
+    vec3 colG_full = shade(ro, rd, uv);
+    float colG = colG_full.g;
+    float colB = shade(ro, rdB, uvB).b;
+    col = vec3(colR, colG, colB);
+  }
 
   // ── Vignette ──
   float vig = 1.0 - pow(distFromCenter * 1.1, 2.8);
   col *= clamp(vig, 0.0, 1.0);
 
-  // ── Film Grain ──
-  float grain = fract(sin(dot(vUv * (uTime + 1.0), vec2(12.9898, 78.233))) * 43758.5453);
-  col += (grain - 0.5) * 0.018;
+  // ── Film Grain (desktop only) ──
+  if (uMobile < 0.5) {
+    float grain = fract(sin(dot(vUv * (uTime + 1.0), vec2(12.9898, 78.233))) * 43758.5453);
+    col += (grain - 0.5) * 0.018;
+  }
 
   // ── Reinhard Tone Mapping ──
   col = col / (col + vec3(1.0));
@@ -338,7 +359,7 @@ void main() {
    R3F COMPONENTS
    ═══════════════════════════════════════════ */
 
-function MetaballPlane() {
+function MetaballPlane({ isMobile }: { isMobile: boolean }) {
   const materialRef = useRef<THREE.ShaderMaterial>(null!)
   const { size, pointer } = useThree()
   const mouseSmooth = useRef(new THREE.Vector2(0, 0))
@@ -348,9 +369,10 @@ function MetaballPlane() {
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2(size.width, size.height) },
       uMouse: { value: new THREE.Vector2(0, 0) },
+      uMobile: { value: isMobile ? 1.0 : 0.0 },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [isMobile]
   )
 
   useFrame(({ clock, size: frameSize }) => {
@@ -385,6 +407,8 @@ function MetaballPlane() {
    ═══════════════════════════════════════════ */
 
 export default function Hero3D() {
+  const isMobile = useIsMobile()
+
   return (
     <Canvas
       camera={{ position: [0, 0, 1], fov: 45 }}
@@ -399,10 +423,12 @@ export default function Hero3D() {
       style={{ position: 'absolute', inset: 0 }}
       performance={{ min: 0.5 }}
     >
-      <MetaballPlane />
-      <EffectComposer multisampling={0}>
-        <Bloom intensity={1.5} luminanceThreshold={0.55} luminanceSmoothing={0.3} mipmapBlur />
-      </EffectComposer>
+      <MetaballPlane isMobile={isMobile} />
+      {!isMobile && (
+        <EffectComposer multisampling={0}>
+          <Bloom intensity={1.5} luminanceThreshold={0.55} luminanceSmoothing={0.3} mipmapBlur />
+        </EffectComposer>
+      )}
     </Canvas>
   )
 }
