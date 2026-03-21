@@ -1,16 +1,5 @@
-/**
- * KripTik AI Landing Page — 10/10 Immersive Experience
- *
- * Design_References.md usage (10 techniques):
- * - R3F + custom GLSL (Hero3D ray-marched SDF metaballs) + @react-three/postprocessing (Bloom)
- * - GSAP + ScrollTrigger (pinned scroll storytelling, 3D parallax, counter animations)
- * - Lenis (butter-smooth scroll synced with ScrollTrigger)
- * - react-vfx (5 custom GLSL shaders: liquid warp, electric, hologram, glitch, neural)
- * - mouse-follower (Cuberto cursor with skew + magnetic snap)
- * - simplex-noise (NoiseField procedural canvas backgrounds)
- * - Canvas2D (CodeRain falling tokens, BrainGraph knowledge graph)
- * - SDF ray marching, FBM, domain warping, chromatic aberration (Hero shader)
- */
+/** KripTik AI Landing Page — Immersive Experience
+ * R3F, OGL, GSAP, Lenis, react-vfx, mouse-follower, simplex-noise, Canvas2D */
 
 import { useRef, useEffect, Suspense, lazy, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
@@ -24,7 +13,7 @@ import { GitHubIcon, DiscordIcon } from '@/components/ui/icons'
 import LandingAuth from '@/components/landing/LandingAuth'
 import {
   SHADER_LIQUID_WARP, SHADER_ELECTRIC, SHADER_HOLOGRAM, SHADER_NEURAL,
-  BUILD_TYPES, BUILD_DATA, CAPABILITIES,
+  BUILD_TYPES, BUILD_DATA, CAPABILITIES, DEPLOY_FEATURES, QUALITY_BARS,
   RotatingBuildType, PlatformCarousel,
 } from '@/components/landing/LandingComponents'
 import { useLandingAnimations } from '@/components/landing/useLandingAnimations'
@@ -34,7 +23,8 @@ gsap.registerPlugin(ScrollTrigger)
 const Hero3D = lazy(() => import('@/components/landing/Hero3D'))
 const NoiseField = lazy(() => import('@/components/landing/NoiseField'))
 const CodeRain = lazy(() => import('@/components/landing/CodeRain'))
-const BrainGraph = lazy(() => import('@/components/landing/BrainGraph'))
+const BrainOrbit3D = lazy(() => import('@/components/landing/BrainOrbit3D'))
+const FluidCanvas = lazy(() => import('@/components/landing/FluidCanvas'))
 
 /* ═══════════════════════════════════════════
    BRAIN STATS — real numbers from the engine
@@ -213,11 +203,11 @@ export default function LandingPage() {
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 100% at 50% 0%, rgba(200,255,100,0.03) 0%, transparent 70%)' }} />
       </div>
 
-      {/* ═══ THE BRAIN — Intelligence (BrainGraph + Neural Shader) ═══ */}
+      {/* ═══ THE BRAIN — Intelligence (BrainOrbit3D + Neural Shader) ═══ */}
       <section id="intelligence" className="brain-section relative py-48 px-6 overflow-hidden min-h-[80vh]">
-        <Suspense fallback={null}><BrainGraph opacity={0.5} /></Suspense>
+        <Suspense fallback={null}><BrainOrbit3D /></Suspense>
         <Suspense fallback={null}>
-          <NoiseField opacity={0.03} speed={0.00015} scale={0.008} color={[6, 182, 212]} />
+          <NoiseField opacity={0.02} speed={0.00015} scale={0.008} color={[6, 182, 212]} />
         </Suspense>
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <div className="brain-title" style={{ willChange: 'transform, opacity' }}>
@@ -290,38 +280,63 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══ CAPABILITIES — Fix / Komplete / Train (unique shader per item) ═══ */}
+      {/* ═══ CAPABILITIES — Fix / Komplete / Train (OGL Fluid + rich cards) ═══ */}
       <section id="capabilities" className="relative py-48 px-6 overflow-hidden"
         style={{ perspective: '1200px' }}>
         <Suspense fallback={null}>
-          <NoiseField opacity={0.04} speed={0.0002} scale={0.006} color={[6, 182, 212]} />
+          <FluidCanvas opacity={0.35} />
         </Suspense>
-        <div className="relative z-10 max-w-6xl mx-auto space-y-48">
+        <Suspense fallback={null}>
+          <NoiseField opacity={0.03} speed={0.0002} scale={0.006} color={[6, 182, 212]} />
+        </Suspense>
+        <div className="relative z-10 max-w-6xl mx-auto space-y-32">
           {CAPABILITIES.map((cap) => (
             <div key={cap.title}
-              className={`cap-item ${cap.align === 'right' ? 'ml-auto text-right' : 'mr-auto text-left'}`}
+              className={`cap-item ${cap.align === 'right' ? 'ml-auto' : 'mr-auto'}`}
               style={{
-                maxWidth: '750px', willChange: 'transform, opacity',
+                maxWidth: '800px', willChange: 'transform, opacity',
                 transformOrigin: cap.align === 'left' ? 'right center' : 'left center',
               }}>
-              <h3 className="font-creative font-black tracking-tight"
-                style={{
-                  fontSize: 'clamp(3rem, 7vw, 5.5rem)',
-                  color: cap.color,
-                  textShadow: `0 0 80px ${cap.color}25, 0 0 160px ${cap.color}08`,
-                  lineHeight: 0.95,
-                }}>
-                <VFXSpan shader={cap.shader}>{cap.title}</VFXSpan>
-              </h3>
-              <p className="mt-8 text-lg md:text-xl text-zinc-400 leading-relaxed font-light max-w-lg"
-                style={{ marginLeft: cap.align === 'right' ? 'auto' : undefined }}>
-                {cap.desc}
-              </p>
-              <div className="mt-10 h-[2px] w-32 rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, ${cap.color}, transparent)`,
-                  marginLeft: cap.align === 'right' ? 'auto' : undefined,
-                }} />
+              {/* Animated gradient border card */}
+              <div className="relative group">
+                <div className="absolute -inset-[1px] rounded-3xl overflow-hidden opacity-60 group-hover:opacity-100 transition-opacity duration-700">
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: `conic-gradient(from 0deg, ${cap.color}30, transparent 40%, ${cap.color}15, transparent 80%, ${cap.color}30)`,
+                    animation: 'spin 14s linear infinite',
+                  }} />
+                </div>
+                <div className="relative rounded-3xl bg-kriptik-black/80 backdrop-blur-xl border border-white/[0.04] p-10 md:p-14"
+                  style={{ textAlign: cap.align }}>
+                  {/* Glow orb icon */}
+                  <div className="mb-8 inline-flex items-center justify-center w-16 h-16 rounded-2xl"
+                    style={{
+                      background: `linear-gradient(135deg, ${cap.color}12, transparent)`,
+                      boxShadow: `0 0 40px ${cap.color}15, inset 0 0 20px ${cap.color}08`,
+                    }}>
+                    <div className="w-6 h-6 rounded-full animate-pulse"
+                      style={{ background: cap.color, boxShadow: `0 0 20px ${cap.color}80` }} />
+                  </div>
+                  <h3 className="font-creative font-black tracking-tight"
+                    style={{
+                      fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+                      color: cap.color,
+                      textShadow: `0 0 80px ${cap.color}25, 0 0 160px ${cap.color}08`,
+                      lineHeight: 0.95,
+                    }}>
+                    <VFXSpan shader={cap.shader}>{cap.title}</VFXSpan>
+                  </h3>
+                  <p className="mt-8 text-lg md:text-xl text-zinc-400 leading-relaxed font-light max-w-lg"
+                    style={{ marginLeft: cap.align === 'right' ? 'auto' : undefined }}>
+                    {cap.desc}
+                  </p>
+                  <div className="mt-10 h-[2px] w-32 rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, ${cap.color}, transparent)`,
+                      marginLeft: cap.align === 'right' ? 'auto' : undefined,
+                    }} />
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -330,16 +345,16 @@ export default function LandingPage() {
       {/* ═══ QUALITY — "Not AI Slop." (Design_References.md §1 — electric VFX) ═══ */}
       <section className="quality-section relative py-56 px-6 overflow-hidden">
         <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(200,255,100,0.04) 0%, transparent 65%)' }} />
+          style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(200,255,100,0.06) 0%, transparent 65%)' }} />
         <Suspense fallback={null}>
-          <NoiseField opacity={0.03} speed={0.00015} scale={0.01} color={[200, 255, 100]} />
+          <NoiseField opacity={0.04} speed={0.00015} scale={0.01} color={[200, 255, 100]} />
         </Suspense>
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <div className="quality-text" style={{ willChange: 'transform, opacity' }}>
             <h2 className="font-creative font-black tracking-tight"
               style={{
                 fontSize: 'clamp(3rem, 10vw, 8rem)', lineHeight: 0.9, color: '#c8ff64',
-                textShadow: '0 0 120px rgba(200,255,100,0.3), 0 0 240px rgba(200,255,100,0.08)',
+                textShadow: '0 0 120px rgba(200,255,100,0.4), 0 0 240px rgba(200,255,100,0.12)',
               }}>
               <VFXSpan shader={SHADER_ELECTRIC}>Not AI Slop.</VFXSpan>
             </h2>
@@ -350,20 +365,36 @@ export default function LandingPage() {
               <span className="font-bold text-white">significantly better</span>{' '}
               than any app builder on the planet.
             </p>
-            <p className="text-lg md:text-xl text-zinc-500 max-w-2xl mx-auto leading-relaxed">
+            {/* Quality comparison indicators */}
+            <div className="flex flex-col sm:flex-row justify-center gap-6 mt-12 max-w-2xl mx-auto">
+              {QUALITY_BARS.map((bar) => (
+                <div key={bar.label} className="flex-1 text-left">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="font-bold" style={{ color: bar.color }}>{bar.label}</span>
+                    <span className="text-zinc-600 text-xs">{bar.sublabel}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/[0.04] overflow-hidden">
+                    <div className="quality-bar h-full rounded-full" data-width={bar.pct}
+                      style={{
+                        width: '0%', background: bar.color,
+                        boxShadow: `0 0 12px ${bar.color}40`,
+                      }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-lg md:text-xl text-zinc-500 max-w-2xl mx-auto leading-relaxed mt-8">
               Custom. Intentional. Production-grade.
               <br />Not template-driven. Not cookie-cutter. Not generic.
             </p>
-            <div className="mx-auto mt-6 h-px w-48"
-              style={{ background: 'linear-gradient(90deg, transparent, rgba(200,255,100,0.3), transparent)' }} />
           </div>
         </div>
       </section>
 
       {/* ═══ DEPLOY — Your Code, Your Platforms ═══ */}
       <section id="deploy" className="relative py-56 px-6" style={{ perspective: '1000px' }}>
-        <div className="max-w-5xl mx-auto space-y-40">
-          <div className="freedom-block" style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}>
+        <div className="max-w-6xl mx-auto space-y-32">
+          <div className="freedom-block text-center" style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}>
             <h3 className="font-creative font-black tracking-tight"
               style={{
                 fontSize: 'clamp(2.5rem, 7vw, 5.5rem)', lineHeight: 0.95,
@@ -372,30 +403,25 @@ export default function LandingPage() {
               }}>
               One Prompt.<br />Production Ready.
             </h3>
-            <p className="mt-10 text-xl md:text-2xl text-zinc-400 leading-relaxed max-w-2xl font-light">
+            <p className="mt-10 text-xl md:text-2xl text-zinc-400 leading-relaxed max-w-2xl mx-auto font-light">
               Not a demo. Not a prototype. A fully deployed, production-ready
-              application from a single prompt. Real databases, real APIs,
-              real infrastructure — ready for real users.
+              application — ready for real users.
             </p>
-            <div className="mt-8 h-[2px] w-24 rounded-full"
-              style={{ background: 'linear-gradient(90deg, #c8ff64, #06b6d4)' }} />
           </div>
-          <div className="freedom-block" style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}>
-            <h3 className="font-creative font-black tracking-tight"
-              style={{
-                fontSize: 'clamp(2.5rem, 7vw, 5.5rem)', lineHeight: 0.95,
-                background: 'linear-gradient(135deg, #f59e0b 0%, #c8ff64 100%)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>
-              Your Code.<br />Your Platforms.
-            </h3>
-            <p className="mt-10 text-xl md:text-2xl text-zinc-400 leading-relaxed max-w-2xl font-light">
-              We deploy to any platform you choose — Vercel, AWS, Netlify, Cloudflare.
-              When your app is built, it is truly yours. Complete source code ownership.
-              No lock-in. No strings.
-            </p>
-            <div className="mt-8 h-[2px] w-24 rounded-full"
-              style={{ background: 'linear-gradient(90deg, #f59e0b, #c8ff64)' }} />
+          {/* Feature grid */}
+          <div className="freedom-block grid grid-cols-1 md:grid-cols-3 gap-6"
+            style={{ willChange: 'transform, opacity', transformStyle: 'preserve-3d' }}>
+            {DEPLOY_FEATURES.map((feat) => (
+              <div key={feat.title} className="relative group rounded-2xl border border-white/[0.04] bg-white/[0.015] p-8 hover:bg-white/[0.03] transition-all duration-500">
+                <div className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ background: `linear-gradient(135deg, ${feat.color}15, transparent 60%)` }} />
+                <div className="relative">
+                  <div className="h-1 w-10 rounded-full mb-6" style={{ background: feat.color, boxShadow: `0 0 12px ${feat.color}40` }} />
+                  <h4 className="text-lg font-bold mb-3 text-white">{feat.title}</h4>
+                  <p className="text-sm text-zinc-500 leading-relaxed">{feat.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
