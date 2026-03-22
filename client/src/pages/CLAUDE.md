@@ -12,4 +12,11 @@
 | #2015 | 7:58 PM | 🟣 | Builder UI Wired for Dynamic Integration Questions | ~377 |
 | #1978 | 6:44 PM | 🟣 | Created Builder page with split-panel layout and SSE event stream | ~1027 |
 | #1977 | 6:43 PM | 🟣 | Created minimal Dashboard page | ~708 |
+
+### Mar 21, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #2657 | 4:09 PM | 🔵 | Dashboard.tsx.old Import Workflows and GitHub OAuth Integration | ~644 |
+| #2656 | 4:08 PM | 🔵 | Current Dashboard.tsx.old Baseline Before Migration | ~486 |
 </claude-mem-context>

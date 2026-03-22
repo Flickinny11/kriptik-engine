@@ -1,0 +1,497 @@
+/**
+ * HuggingFace Connect - Liquid Glass Design
+ *
+ * Premium styling matching HuggingFace branding:
+ * - Gold/amber accent (#FFD21E, #F5A86C)
+ * - Translucent liquid glass surfaces
+ * - 3D depth with layered shadows
+ * - NO emojis, geometric icons only
+ */
+
+/* =============================================================================
+   CSS VARIABLES
+   ============================================================================= */
+
+.hf-connect-container {
+  --hf-gold: #FFD21E;
+  --hf-amber: #F5A86C;
+  --hf-orange: #FF9D00;
+  --glass-bg: rgba(40, 40, 50, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --error-color: #ef4444;
+  --success-color: #10b981;
+}
+
+/* =============================================================================
+   OVERLAY (Modal mode only)
+   ============================================================================= */
+
+.hf-connect-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+  
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.hf-connect-modal {
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+/* =============================================================================
+   CONTAINER - Liquid Glass Card
+   ============================================================================= */
+
+.hf-connect-container {
+  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  padding: 32px;
+  border-radius: 20px;
+  
+  /* Liquid glass */
+  background: linear-gradient(
+    165deg,
+    rgba(45, 45, 55, 0.9) 0%,
+    rgba(35, 35, 45, 0.95) 100%
+  );
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.hf-connect-container.inline {
+  max-width: 100%;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 24px;
+}
+
+/* =============================================================================
+   HEADER
+   ============================================================================= */
+
+.hf-connect-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.hf-connect-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hf-connect-brand svg {
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 12px rgba(255, 210, 30, 0.3));
+}
+
+.hf-connect-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hf-connect-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.02em;
+  
+  /* HuggingFace gold */
+  background: linear-gradient(135deg, var(--hf-gold) 0%, var(--hf-amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hf-connect-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.hf-connect-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.hf-connect-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+/* =============================================================================
+   WHY CONNECT SECTION
+   ============================================================================= */
+
+.hf-connect-why {
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  border-radius: 14px;
+  
+  /* Amber-tinted glass */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 210, 30, 0.08) 0%,
+    rgba(245, 168, 108, 0.05) 100%
+  );
+  border: 1px solid rgba(255, 210, 30, 0.15);
+}
+
+.hf-connect-why-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--hf-gold);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hf-connect-why-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.hf-connect-why-text strong {
+  color: var(--hf-amber);
+}
+
+/* =============================================================================
+   INPUT GROUP
+   ============================================================================= */
+
+.hf-connect-input-group {
+  margin-bottom: 20px;
+}
+
+.hf-connect-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.hf-connect-label svg {
+  color: var(--hf-amber);
+}
+
+.hf-connect-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hf-connect-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  
+  /* Glass input */
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.hf-connect-input::placeholder {
+  color: var(--text-muted);
+}
+
+.hf-connect-input:focus {
+  outline: none;
+  border-color: rgba(255, 210, 30, 0.5);
+  box-shadow: 0 0 20px rgba(255, 210, 30, 0.15);
+}
+
+.hf-connect-input.error {
+  border-color: var(--error-color);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+.hf-connect-clear {
+  position: absolute;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.hf-connect-clear:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+/* Error Message */
+.hf-connect-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.hf-connect-error svg {
+  flex-shrink: 0;
+  color: var(--error-color);
+}
+
+/* Token Guide Toggle */
+.hf-connect-guide-toggle {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--hf-amber);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.hf-connect-guide-toggle:hover {
+  color: var(--hf-gold);
+}
+
+/* Token Guide */
+.hf-connect-guide {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.hf-connect-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hf-connect-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.hf-connect-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 8px;
+  
+  background: linear-gradient(135deg, var(--hf-gold) 0%, var(--hf-amber) 100%);
+  color: #1a1a1a;
+}
+
+.hf-connect-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  color: var(--hf-amber);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.hf-connect-link:hover {
+  color: var(--hf-gold);
+}
+
+.hf-connect-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* =============================================================================
+   REQUIREMENTS
+   ============================================================================= */
+
+.hf-connect-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.hf-connect-requirement {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.hf-connect-requirement svg {
+  width: 16px;
+  height: 16px;
+  color: var(--success-color);
+}
+
+.hf-connect-requirement code {
+  padding: 2px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  background: rgba(255, 210, 30, 0.1);
+  color: var(--hf-gold);
+}
+
+/* =============================================================================
+   ACTIONS
+   ============================================================================= */
+
+.hf-connect-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hf-connect-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.hf-connect-btn.primary {
+  /* HuggingFace gold gradient */
+  background: linear-gradient(135deg, var(--hf-gold) 0%, var(--hf-amber) 100%);
+  color: #1a1a1a;
+  box-shadow:
+    0 4px 16px rgba(255, 210, 30, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hf-connect-btn.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px rgba(255, 210, 30, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.hf-connect-btn.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hf-connect-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hf-connect-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* Loading Spinner */
+.hf-connect-btn .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =============================================================================
+   SECURITY NOTE
+   ============================================================================= */
+
+.hf-connect-security {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.hf-connect-security-icon {
+  display: flex;
+  color: var(--success-color);
+}

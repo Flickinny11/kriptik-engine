@@ -1,0 +1,55 @@
+/**
+ * Floating Developer Toolbar - Premium 3D Liquid Glass Styling
+ *
+ * This file provides base styles and font imports.
+ * Most 3D effects are handled inline via Framer Motion for performance.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cal+Sans&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+/* GPU-accelerated animations */
+.floating-dev-toolbar * {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Smooth 60fps transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .floating-dev-toolbar * {
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+}
+
+/* Icon styles */
+.dev-toolbar-icon {
+  display: block;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s;
+}
+
+/* Active icon glow */
+.dev-toolbar-icon--active {
+  filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.6));
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .floating-dev-toolbar {
+    transform: scale(0.9);
+    transform-origin: top left;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .floating-dev-toolbar {
+    border: 2px solid white !important;
+  }
+}
+
+/* Print - hide toolbar */
+@media print {
+  .floating-dev-toolbar {
+    display: none !important;
+  }
+}

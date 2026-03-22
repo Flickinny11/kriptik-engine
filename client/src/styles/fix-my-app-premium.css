@@ -1,0 +1,559 @@
+/**
+ * Fix My App Premium Styles
+ * 
+ * Photorealistic liquid glass aesthetics (NOT glassmorphism)
+ * Inspired by Spline's Hanna glass and Slider Revolution techniques
+ * 
+ * Features:
+ * - Multi-layered shadows with depth
+ * - Visible 3D edges
+ * - Ambient lighting effects
+ * - High-performance animations (60fps)
+ * - Perspective and tilt
+ */
+
+/* ============================================================================
+   PREMIUM FONTS
+   ============================================================================ */
+
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=cabinet-grotesk@400,500,700,800&f[]=satoshi@400,500,700&display=swap');
+
+/* ============================================================================
+   BASE VARIABLES
+   ============================================================================ */
+
+:root {
+  /* Premium colors - NO PURPLE */
+  --fma-amber-500: #f59e0b;
+  --fma-orange-500: #f97316;
+  --fma-red-500: #ef4444;
+  --fma-emerald-500: #10b981;
+  --fma-cyan-500: #06b6d4;
+  --fma-blue-500: #3b82f6;
+  
+  /* Glass properties */
+  --fma-glass-bg: rgba(15, 23, 42, 0.7);
+  --fma-glass-border: rgba(255, 255, 255, 0.08);
+  --fma-glass-highlight: rgba(255, 255, 255, 0.15);
+  --fma-glass-shadow: rgba(0, 0, 0, 0.4);
+  
+  /* Depth shadows */
+  --fma-shadow-sm: 0 2px 0 rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
+  --fma-shadow-md: 0 4px 0 rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.3);
+  --fma-shadow-lg: 0 6px 0 rgba(0,0,0,0.3), 0 12px 36px rgba(0,0,0,0.35);
+  --fma-shadow-amber: 0 4px 0 rgba(245,158,11,0.3), 0 8px 24px rgba(245,158,11,0.4);
+  
+  /* Animation timing */
+  --fma-transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --fma-transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --fma-transition-bounce: 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================================================
+   FIX MY APP CONTAINER
+   ============================================================================ */
+
+.fma-container {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0b 0%, #0f172a 50%, #0a0a0b 100%);
+  overflow: hidden;
+}
+
+/* Ambient background effects */
+.fma-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(234, 88, 12, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(30, 41, 59, 0.4) 0%, transparent 70%);
+  animation: fma-ambient-drift 30s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes fma-ambient-drift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  33% { transform: translate(2%, 2%) rotate(1deg); }
+  66% { transform: translate(-2%, -2%) rotate(-1deg); }
+}
+
+/* Grid pattern overlay */
+.fma-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   PREMIUM GLASS CARD
+   ============================================================================ */
+
+.fma-glass-card {
+  position: relative;
+  background: var(--fma-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--fma-glass-border);
+  border-radius: 20px;
+  box-shadow: var(--fma-shadow-md);
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+/* Top highlight edge */
+.fma-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--fma-glass-highlight), transparent);
+}
+
+/* 3D depth edge - bottom */
+.fma-glass-card::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 8px;
+  right: 8px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0 0 16px 16px;
+  filter: blur(1px);
+}
+
+/* ============================================================================
+   PREMIUM BUTTONS
+   ============================================================================ */
+
+.fma-button-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 32px;
+  font-family: 'Cabinet Grotesk', -apple-system, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--fma-amber-500), var(--fma-orange-500), var(--fma-red-500));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  transform: translateY(-2px);
+  box-shadow: var(--fma-shadow-amber);
+  transition: all var(--fma-transition-fast);
+}
+
+.fma-button-primary:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 0 rgba(245,158,11,0.35), 0 14px 35px rgba(245,158,11,0.5);
+}
+
+.fma-button-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 0 rgba(245,158,11,0.3), 0 4px 12px rgba(245,158,11,0.35);
+}
+
+/* Button shimmer effect */
+.fma-button-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  transform: skewX(-25deg);
+  animation: fma-shimmer 3s ease-in-out infinite;
+}
+
+@keyframes fma-shimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* Inner highlight */
+.fma-button-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Ghost button */
+.fma-button-ghost {
+  position: relative;
+  padding: 10px 20px;
+  font-family: 'Satoshi', -apple-system, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--fma-transition-fast);
+}
+
+.fma-button-ghost:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ============================================================================
+   SOURCE CARD STYLES
+   ============================================================================ */
+
+.fma-source-card {
+  position: relative;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: all var(--fma-transition-fast);
+  box-shadow: var(--fma-shadow-sm);
+}
+
+.fma-source-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--fma-shadow-md);
+}
+
+.fma-source-card.selected {
+  transform: translateY(-3px);
+  border-width: 2px;
+  box-shadow: var(--fma-shadow-lg);
+}
+
+/* Card depth edge */
+.fma-source-card::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 0 0 10px 10px;
+  transition: all var(--fma-transition-fast);
+}
+
+.fma-source-card:hover::after {
+  bottom: -4px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Icon container */
+.fma-source-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  flex-shrink: 0;
+  transition: all var(--fma-transition-fast);
+}
+
+.fma-source-card:hover .fma-source-icon {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.fma-source-card.selected .fma-source-icon {
+  box-shadow: 0 2px 8px currentColor;
+}
+
+/* Context badge */
+.fma-context-badge {
+  padding: 2px 8px;
+  font-family: 'Satoshi', -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fma-emerald-500);
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================================
+   PROGRESS STEPPER
+   ============================================================================ */
+
+.fma-progress-container {
+  position: relative;
+  height: 96px;
+  margin-bottom: 24px;
+}
+
+.fma-progress-labels {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.fma-progress-label {
+  font-family: 'Satoshi', -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #475569;
+  transition: color var(--fma-transition-smooth);
+}
+
+.fma-progress-label.active {
+  color: var(--fma-amber-500);
+}
+
+.fma-progress-label.complete {
+  color: #92400e;
+}
+
+/* ============================================================================
+   HEADER STYLES
+   ============================================================================ */
+
+.fma-header {
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fma-header-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    rgba(15, 23, 42, 0.9) 0%,
+    rgba(30, 41, 59, 0.8) 50%,
+    rgba(15, 23, 42, 0.9) 100%
+  );
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.fma-header-edge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.3), transparent);
+}
+
+.fma-gear-container {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--fma-amber-500), var(--fma-orange-500));
+  box-shadow: 0 4px 0 rgba(0,0,0,0.3), 0 8px 24px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  transform: translateY(-2px);
+}
+
+/* ============================================================================
+   CATEGORY SECTION
+   ============================================================================ */
+
+.fma-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fma-category-indicator {
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.fma-category-title {
+  font-family: 'Cabinet Grotesk', -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+/* ============================================================================
+   CONTENT AREA
+   ============================================================================ */
+
+.fma-content {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+.fma-main-card {
+  position: relative;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  box-shadow: var(--fma-shadow-md);
+  overflow: hidden;
+}
+
+.fma-card-header {
+  padding: 24px 24px 16px;
+}
+
+.fma-card-title {
+  font-family: 'Clash Display', -apple-system, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.fma-card-subtitle {
+  font-family: 'Satoshi', -apple-system, sans-serif;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.fma-card-body {
+  max-height: calc(100vh - 400px);
+  overflow-y: auto;
+  padding: 0 24px 24px;
+  
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
+}
+
+.fma-card-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fma-card-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fma-card-body::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 3px;
+}
+
+.fma-card-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.5);
+}
+
+.fma-card-footer {
+  padding: 16px 24px 24px;
+  background: rgba(15, 23, 42, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+
+.fma-font-clash {
+  font-family: 'Clash Display', -apple-system, sans-serif;
+}
+
+.fma-font-cabinet {
+  font-family: 'Cabinet Grotesk', -apple-system, sans-serif;
+}
+
+.fma-font-satoshi {
+  font-family: 'Satoshi', -apple-system, sans-serif;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .fma-content {
+    padding: 16px;
+  }
+  
+  .fma-card-header {
+    padding: 16px 16px 12px;
+  }
+  
+  .fma-card-title {
+    font-size: 20px;
+  }
+  
+  .fma-card-body {
+    padding: 0 16px 16px;
+    max-height: calc(100vh - 350px);
+  }
+  
+  .fma-card-footer {
+    padding: 12px 16px 16px;
+  }
+  
+  .fma-source-card {
+    padding: 12px;
+  }
+}
+
+/* ============================================================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================================================ */
+
+/* GPU acceleration for animated elements */
+.fma-glass-card,
+.fma-source-card,
+.fma-button-primary,
+.fma-button-ghost {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .fma-container::before,
+  .fma-button-primary::before {
+    animation: none;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

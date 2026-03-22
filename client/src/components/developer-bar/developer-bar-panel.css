@@ -1,0 +1,1109 @@
+/**
+ * Developer Bar Panel - Photorealistic Glass Styling
+ *
+ * Matching Spline reference design:
+ * - Real frosted glass with transmission
+ * - Visible 3D edges and depth
+ * - Content appears projected onto glass
+ * - Warm amber accents
+ */
+
+/* ============================================================================
+   Design Tokens
+   ============================================================================ */
+
+:root {
+  /* Glass colors - TRANSLUCENT */
+  --panel-glass-bg: rgba(255, 255, 255, 0.12);
+  --panel-glass-border: rgba(255, 255, 255, 0.25);
+  --panel-glass-inner: rgba(255, 255, 255, 0.06);
+
+  /* Warm glow */
+  --panel-glow-warm: #F5A86C;
+  --panel-glow-warm-soft: rgba(245, 168, 108, 0.3);
+
+  /* Text */
+  --panel-text-dark: rgba(0, 0, 0, 0.85);
+  --panel-text-muted: rgba(0, 0, 0, 0.6);
+  --panel-text-light: rgba(0, 0, 0, 0.4);
+
+  /* Shadows */
+  --panel-shadow-outer: rgba(0, 0, 0, 0.2);
+  --panel-shadow-soft: rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   Main Panel Container
+   ============================================================================ */
+
+.glass-panel {
+  position: fixed;
+  z-index: 9998;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.glass-panel:active,
+.glass-panel--resizing {
+  cursor: grabbing;
+}
+
+.glass-panel--resizing {
+  cursor: nwse-resize !important;
+}
+
+/* ============================================================================
+   Glass Base - Photorealistic 3D Glass with Visible Edges
+   ============================================================================ */
+
+.glass-panel__base {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  overflow: visible; /* Allow 3D edges to be visible */
+  transform-style: preserve-3d;
+
+  /* Slight 3D perspective for depth */
+  transform: rotateX(1deg) rotateY(-0.5deg);
+}
+
+/* Primary frosted glass layer - TRANSLUCENT */
+.glass-panel__frost {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+  /* TRANSLUCENT glass - see through */
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.12) 100%
+  );
+
+  /* Glass blur effect */
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+
+  border: 1px solid rgba(255, 255, 255, 0.3);
+
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+
+  transform-style: preserve-3d;
+}
+
+/* BACK SURFACE for 3D depth */
+.glass-panel__frost-back {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(180, 190, 200, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transform: translateZ(-8px);
+  pointer-events: none;
+}
+
+/* Override the old gradient - now in the above */
+.glass-panel__frost-override {
+  background: none !important;
+  /* Removed old gradient - delete this whole selector later */
+}
+
+/*
+ * NOTE: The following line was the start of old CSS that's being replaced.
+ * The new translucent glass styling is above.
+ */
+
+/* REMOVED: Old gradient background that made it white/opaque */
+.glass-panel__frost--old-remove {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.88) 30%,
+    rgba(248, 250, 252, 0.92) 70%,
+    rgba(255, 255, 255, 0.94) 100%
+  );
+
+  backdrop-filter: blur(16px) saturate(1.5) brightness(1.05);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5) brightness(1.05);
+
+  /* Glass edge highlight */
+  border: 1px solid rgba(255, 255, 255, 0.98);
+
+  /* Inner depth shadow */
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.9),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.04);
+
+  transform-style: preserve-3d;
+}
+
+/* 3D Edge - Top (visible thickness) */
+.glass-panel__frost::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.65) 0%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
+  border-radius: 24px 24px 0 0;
+  transform: rotateX(90deg);
+  transform-origin: bottom center;
+  opacity: 0.85;
+}
+
+/* 3D Edge - Left (visible thickness) */
+.glass-panel__frost::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: -6px;
+  bottom: 8px;
+  width: 6px;
+  background: linear-gradient(90deg,
+    rgba(200, 200, 210, 0.75) 0%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  border-radius: 24px 0 0 24px;
+  transform: rotateY(-90deg);
+  transform-origin: right center;
+  opacity: 0.75;
+}
+
+/* Inner frost layer for extra depth */
+.glass-panel__frost-inner {
+  position: absolute;
+  inset: 4px;
+  border-radius: 20px;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Specular highlight - top reflection */
+.glass-panel__specular {
+  position: absolute;
+  top: 3px;
+  left: 8%;
+  right: 8%;
+  height: 35%;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  border-radius: 24px 24px 50% 50%;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Top edge highlight line */
+.glass-panel__highlight {
+  position: absolute;
+  top: 2px;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.95) 50%,
+    transparent 100%
+  );
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* Multi-layer realistic shadow for floating effect */
+.glass-panel__shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: -1;
+  transform: translateZ(-1px);
+
+  /* Layered shadow for realism */
+  box-shadow:
+    /* Contact shadow - very close, sharp */
+    0 3px 6px rgba(0, 0, 0, 0.1),
+    /* Primary shadow - medium distance */
+    0 8px 20px rgba(0, 0, 0, 0.08),
+    /* Secondary shadow - further out */
+    0 16px 40px rgba(0, 0, 0, 0.06),
+    /* Ambient shadow - very soft, large */
+    0 28px 60px rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================================================
+   Panel Header
+   ============================================================================ */
+
+.glass-panel__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 1;
+}
+
+.glass-panel__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.glass-panel__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.glass-panel__icon--active {
+  background: var(--panel-glow-warm);
+  box-shadow: 0 0 16px var(--panel-glow-warm-soft);
+}
+
+.glass-panel__icon--active svg {
+  color: white;
+}
+
+.glass-panel__title {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--panel-text-dark);
+  letter-spacing: -0.01em;
+}
+
+.glass-panel__header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.glass-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--panel-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.glass-panel__status--active {
+  background: var(--panel-glow-warm-soft);
+  color: #B85C2A;
+}
+
+.glass-panel__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--panel-text-light);
+}
+
+.glass-panel__status--active .glass-panel__status-dot {
+  background: var(--panel-glow-warm);
+  box-shadow: 0 0 8px var(--panel-glow-warm);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.2); }
+}
+
+.glass-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--panel-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.glass-panel__close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--panel-text-dark);
+}
+
+/* ============================================================================
+   Panel Content
+   ============================================================================ */
+
+.glass-panel__content {
+  position: relative;
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 1;
+}
+
+/* Fullwidth content - no padding, fills entire panel */
+.glass-panel__content--fullwidth {
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fullwidth panels fill the entire base */
+.glass-panel__base--fullwidth {
+  display: flex;
+  flex-direction: column;
+}
+
+.glass-panel__base--fullwidth .glass-panel__content {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Floating close button for fullwidth panels */
+.glass-panel__close--floating {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.glass-panel__close--floating:hover {
+  background: rgba(255, 59, 48, 0.8);
+  border-color: rgba(255, 59, 48, 0.5);
+  color: #fff;
+}
+
+/* Custom scrollbar */
+.glass-panel__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.glass-panel__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.glass-panel__content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.glass-panel__content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================================
+   Resize Handle
+   ============================================================================ */
+
+.glass-panel__resize {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  color: rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.glass-panel__resize:hover {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
+   Panel Content Components
+   ============================================================================ */
+
+/* Generic Panel */
+.panel-generic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--panel-text-muted);
+}
+
+.panel-generic__text {
+  font-size: 13px;
+}
+
+/* Agents Panel */
+.panel-agents {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-agents__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.panel-agents__card {
+  position: relative;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.panel-agents__card:hover {
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.panel-agents__card--working {
+  border-color: var(--panel-glow-warm);
+}
+
+.panel-agents__card-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    var(--panel-glow-warm-soft) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.panel-agents__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.panel-agents__card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--panel-text-dark);
+}
+
+.panel-agents__card-badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--panel-text-muted);
+}
+
+.panel-agents__card-badge--working {
+  background: var(--panel-glow-warm-soft);
+  color: #B85C2A;
+}
+
+.panel-agents__card-badge--completed {
+  background: rgba(64, 200, 112, 0.15);
+  color: #2A8B48;
+}
+
+.panel-agents__card-task {
+  font-size: 11px;
+  color: var(--panel-text-muted);
+  margin-bottom: 10px;
+}
+
+.panel-agents__card-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.panel-agents__card-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--panel-glow-warm), #FF9B50);
+}
+
+.panel-agents__card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.panel-agents__btn {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--panel-text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-agents__btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.panel-agents__btn--primary {
+  background: var(--panel-glow-warm);
+  color: white;
+}
+
+.panel-agents__btn--primary:hover {
+  background: #E89A5E;
+}
+
+.panel-agents__btn--secondary {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.panel-agents__new-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  border-radius: 14px;
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  background: transparent;
+  color: var(--panel-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-agents__new-card:hover {
+  border-color: var(--panel-glow-warm);
+  color: var(--panel-glow-warm);
+}
+
+.panel-agents__new-card span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.panel-agents__modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: inherit;
+  z-index: 10;
+}
+
+.panel-agents__modal-content {
+  width: 90%;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-agents__modal-content h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--panel-text-dark);
+  margin: 0;
+}
+
+.panel-agents__textarea {
+  width: 100%;
+  height: 80px;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: none;
+  background: white;
+}
+
+.panel-agents__textarea:focus {
+  outline: none;
+  border-color: var(--panel-glow-warm);
+}
+
+.panel-agents__select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: white;
+}
+
+.panel-agents__modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Memory Panel */
+.panel-memory {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-memory__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.panel-memory__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.panel-memory__stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--panel-text-dark);
+  line-height: 1;
+}
+
+.panel-memory__stat-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--panel-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.panel-memory__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-memory__list h5 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--panel-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.panel-memory__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+  color: var(--panel-text-dark);
+}
+
+.panel-memory__item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--panel-glow-warm);
+}
+
+/* Quality Panel */
+.panel-quality {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-quality__ring {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+}
+
+.panel-quality__ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.panel-quality__ring-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-quality__ring-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--panel-text-dark);
+  line-height: 1;
+}
+
+.panel-quality__ring-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--panel-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.panel-quality__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-quality__bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-quality__bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--panel-text-dark);
+  text-transform: capitalize;
+}
+
+.panel-quality__bar-header span:last-child {
+  font-weight: 600;
+}
+
+.panel-quality__bar-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.panel-quality__bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--panel-glow-warm), #40C870);
+}
+
+.panel-quality__run-btn {
+  margin-top: 8px;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--panel-glow-warm);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-quality__run-btn:hover {
+  background: #E89A5E;
+}
+
+/* Ghost Mode Panel */
+.panel-ghost {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-ghost__status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+}
+
+.panel-ghost__indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.panel-ghost__indicator--active {
+  background: var(--panel-glow-warm-soft);
+}
+
+.panel-ghost__indicator-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid var(--panel-glow-warm);
+}
+
+.panel-ghost__status span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--panel-text-muted);
+}
+
+.panel-ghost__config {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-ghost__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-ghost__field label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--panel-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.panel-ghost__slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-ghost__slider-row input[type="range"] {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.1);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.panel-ghost__slider-row input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--panel-glow-warm);
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.panel-ghost__slider-row span {
+  min-width: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--panel-text-dark);
+  text-align: right;
+}
+
+.panel-ghost__field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: 13px;
+  background: white;
+}
+
+.panel-ghost__toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel-ghost__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--panel-text-dark);
+  cursor: pointer;
+}
+
+.panel-ghost__toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  accent-color: var(--panel-glow-warm);
+}
+
+.panel-ghost__start-btn {
+  margin-top: 8px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--panel-glow-warm);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-ghost__start-btn:hover {
+  background: #E89A5E;
+}
+
+.panel-ghost__start-btn--stop {
+  background: #E85C5C;
+}
+
+.panel-ghost__start-btn--stop:hover {
+  background: #D54545;
+}
+
+/* Time Machine Panel */
+.panel-timemachine {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-timemachine__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panel-timemachine__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.panel-timemachine__item-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--panel-glow-warm);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.panel-timemachine__item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.panel-timemachine__item-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--panel-text-dark);
+}
+
+.panel-timemachine__item-label {
+  font-size: 11px;
+  color: var(--panel-text-muted);
+}
+
+.panel-timemachine__item-files {
+  font-size: 10px;
+  color: var(--panel-text-light);
+}
+
+.panel-timemachine__item-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-timemachine__btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--panel-text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-timemachine__btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.panel-timemachine__btn--restore {
+  background: var(--panel-glow-warm);
+  color: white;
+}
+
+.panel-timemachine__btn--restore:hover {
+  background: #E89A5E;
+}
+
+.panel-timemachine__create-btn {
+  margin-top: 8px;
+  padding: 12px;
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--panel-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.panel-timemachine__create-btn:hover {
+  border-color: var(--panel-glow-warm);
+  color: var(--panel-glow-warm);
+}

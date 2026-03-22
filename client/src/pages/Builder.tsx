@@ -29,6 +29,7 @@ import { useProjectStore } from '@/store/useProjectStore';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
 import { AgentStreamView } from '@/components/builder/AgentStreamView';
 import { AccountSlideOut } from '@/components/account/AccountSlideOut';
+import { FloatingDevToolbar } from '@/components/developer-bar';
 
 type ActiveTab = 'preview' | 'code';
 
@@ -305,6 +306,9 @@ export default function Builder() {
           </div>
         </div>
       )}
+
+      {/* DEVELOPER TOOLBAR — floating over preview, 2 buttons: Feature Agents + Open Source Studio */}
+      <FloatingDevToolbar />
     </div>
   );
 }
