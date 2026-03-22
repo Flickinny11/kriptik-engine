@@ -107,8 +107,8 @@ export function AgentStatusDisplay({
             {/* Working agents */}
             <AnimatePresence>
                 {workingAgents.map(agent => {
-                    const Icon = AGENT_ICONS[agent.type];
-                    const colors = AGENT_COLORS[agent.type];
+                    const Icon = AGENT_ICONS[agent.type] || BrainIcon;
+                    const colors = AGENT_COLORS[agent.type] || AGENT_COLORS.planning;
 
                     return (
                         <motion.div
@@ -166,13 +166,13 @@ export function AgentStatusDisplay({
                     </span>
                     <div className="flex items-center gap-1">
                         {idleAgents.map(agent => {
-                            const Icon = AGENT_ICONS[agent.type];
+                            const Icon = AGENT_ICONS[agent.type] || BrainIcon;
                             return (
                                 <div
                                     key={agent.id}
                                     className={cn(
                                         'p-1 rounded',
-                                        AGENT_COLORS[agent.type] as string
+                                        (AGENT_COLORS[agent.type] || AGENT_COLORS.planning) as string
                                     )}
                                     title={agent.name}
                                 >
