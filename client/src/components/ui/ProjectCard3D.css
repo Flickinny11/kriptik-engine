@@ -1,7 +1,7 @@
 /* =============================================================================
-   Premium 3D Project Card — Clean version
-   Preserves the visual style (3D monitor, flip, glow)
-   Only knows: idle | building | complete | failed
+   Premium 3D Project Card — Photorealistic depth, edges, responsive
+   Status-driven: idle | building | complete | failed
+   NO mechanical patterns, NO phase tracking
    ============================================================================= */
 
 .project-card-container {
@@ -12,6 +12,19 @@
     position: relative;
     padding: 12px 16px;
     margin: -12px -16px;
+}
+
+/* Ambient glow behind card — status-driven */
+.card-ambient-glow {
+    position: absolute;
+    inset: -6px;
+    border-radius: 22px;
+    z-index: -1;
+    transition: background 0.6s ease, opacity 0.6s ease;
+    filter: blur(2px);
+}
+.project-card-container.is-building .card-ambient-glow {
+    animation: build-glow-pulse 2s ease-in-out infinite;
 }
 
 .project-card {
@@ -28,11 +41,11 @@
 }
 
 .project-card.flipped {
-    transform: rotateY(168deg) rotateX(6deg) skewY(1.5deg);
+    transform: rotateY(168deg) rotateX(6deg) skewY(1.5deg) !important;
 }
 
 .project-card-container:hover .project-card.flipped {
-    transform: rotateY(174deg) rotateX(3deg) skewY(0.5deg) scale(1.03);
+    transform: rotateY(174deg) rotateX(3deg) skewY(0.5deg) scale(1.03) !important;
 }
 
 .project-card-face {
@@ -47,43 +60,65 @@
 .project-card-front { z-index: 2; }
 .project-card-back { transform: rotateY(180deg); }
 
-/* Monitor frame */
+/* =============================================================================
+   Monitor frame — photorealistic with visible depth edges
+   ============================================================================= */
 .project-card .monitor-frame {
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: linear-gradient(145deg, #1e1e24 0%, #12121a 100%);
+    background: linear-gradient(155deg, #22222a 0%, #14141c 40%, #0e0e16 100%);
     border-radius: 14px;
     padding: 6px;
-    box-shadow:
-        0 0 40px rgba(200, 255, 100, 0.08),
-        0 25px 50px rgba(0, 0, 0, 0.4),
-        0 12px 25px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        5px 0 0 #0a0a0c,
-        5px 5px 0 #050507,
-        0 5px 0 #0a0a0c;
     position: relative;
+    /* Multi-layer shadow for photorealistic depth */
+    box-shadow:
+        /* Bottom/right edge — visible 3D depth */
+        6px 6px 0 #080810,
+        6px 0 0 #0c0c14,
+        0 6px 0 #0a0a12,
+        /* Ambient light shadow */
+        0 0 40px rgba(200, 255, 100, 0.06),
+        /* Drop shadow */
+        0 30px 60px rgba(0, 0, 0, 0.45),
+        0 15px 30px rgba(0, 0, 0, 0.35),
+        /* Inner top-left highlight */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
-.project-card .monitor-frame::before {
-    content: '';
+/* Top edge — light reflection */
+.frame-edge-top {
     position: absolute;
     top: 0;
-    left: 15%;
-    right: 15%;
+    left: 10%;
+    right: 10%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    z-index: 5;
+}
+
+/* Left edge — subtle light catch for 3D depth */
+.frame-edge-left {
+    position: absolute;
+    top: 10%;
+    bottom: 10%;
+    left: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255,255,255,0.1), transparent);
+    z-index: 5;
 }
 
 .project-card .monitor-screen {
     flex: 1;
-    background: linear-gradient(180deg, #0a0a0f 0%, #15151d 100%);
+    background: linear-gradient(180deg, #0c0c12 0%, #16161e 100%);
     border-radius: 8px;
     overflow: hidden;
     position: relative;
     border: 1px solid rgba(255, 255, 255, 0.04);
+    /* Inner screen shadow for recessed look */
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.15);
 }
 
 .cursor-glow {
@@ -94,7 +129,9 @@
     z-index: 1;
 }
 
-/* Screen header */
+/* =============================================================================
+   Screen header
+   ============================================================================= */
 .project-card .screen-header {
     display: flex;
     align-items: center;
@@ -115,7 +152,11 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
+    box-shadow: inset 0 -1px 2px rgba(0,0,0,0.3);
 }
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #eab308; }
+.dot-green { background: #22c55e; }
 
 .project-card .header-title {
     flex: 1;
@@ -129,6 +170,7 @@
 }
 
 .header-badge {
+    position: relative;
     padding: 2px 8px;
     border-radius: 10px;
     font-family: 'JetBrains Mono', monospace;
@@ -137,9 +179,25 @@
     letter-spacing: 0.5px;
     color: white;
     text-transform: uppercase;
+    overflow: hidden;
 }
 
-/* Screen content */
+.badge-pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    animation: badge-blink 1.5s ease-in-out infinite;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+@keyframes badge-blink {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+/* =============================================================================
+   Screen content
+   ============================================================================= */
 .screen-content {
     flex: 1;
     position: relative;
@@ -161,7 +219,7 @@
     background:
         radial-gradient(ellipse at 30% 20%, rgba(200, 255, 100, 0.06) 0%, transparent 40%),
         radial-gradient(ellipse at 70% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
-        linear-gradient(180deg, #0a0a0f 0%, #12121a 100%);
+        linear-gradient(180deg, #0c0c12 0%, #14141c 100%);
     overflow: hidden;
 }
 
@@ -238,7 +296,9 @@
     50% { opacity: 0.6; transform: translateY(-10px) scale(1); }
 }
 
-/* Screen footer */
+/* =============================================================================
+   Screen footer
+   ============================================================================= */
 .screen-footer {
     display: flex;
     align-items: center;
@@ -259,7 +319,9 @@
 
 .framework-dot { width: 6px; height: 6px; border-radius: 50%; }
 
-/* Monitor chin */
+/* =============================================================================
+   Monitor chin
+   ============================================================================= */
 .project-card .monitor-chin {
     height: 18px;
     display: flex;
@@ -287,17 +349,39 @@
     100% { background-position: -200% 0; }
 }
 
-/* Back face */
+/* =============================================================================
+   Back face — details or live build activity
+   ============================================================================= */
 .back-screen { display: flex; flex-direction: column; }
 
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
-.stat-item { background: rgba(200,255,100,0.06); border: 1px solid rgba(200,255,100,0.12); border-radius: 8px; padding: 8px; text-align: center; }
-.stat-value { display: block; font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: #c8ff64; }
-.stat-label { display: block; font-family: 'Inter', sans-serif; font-size: 8px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-
-.project-description { padding: 0 10px; margin-bottom: 8px; }
+.project-description { padding: 10px; }
 .desc-label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 8px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
 .project-description p { font-family: 'Inter', sans-serif; font-size: 10px; color: rgba(255,255,255,0.7); line-height: 1.4; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+.back-meta {
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.meta-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.meta-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+}
 
 .action-hint {
     display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -305,7 +389,147 @@
     color: #c8ff64; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
 }
 
-/* Ground shadow */
+.back-delete-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px; background: rgba(239,68,68,0.08); border-top: 1px solid rgba(239,68,68,0.15);
+    color: #ef4444; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+    border: none; cursor: pointer; width: 100%;
+    transition: background 0.2s;
+}
+.back-delete-btn:hover { background: rgba(239,68,68,0.15); }
+
+/* =============================================================================
+   Live build activity on back face — real-time animated
+   ============================================================================= */
+.back-build-activity {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.build-activity-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    color: #c8ff64;
+    border-bottom: 1px solid rgba(200,255,100,0.1);
+}
+
+.build-pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c8ff64;
+    animation: pulse-dot 1.2s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(200,255,100,0.6);
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.build-activity-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.build-activity-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    animation: entry-slide-in 0.3s ease-out;
+}
+
+.build-entry-marker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(200,255,100,0.5);
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+.build-entry-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(200,255,100,0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+@keyframes entry-slide-in {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.build-activity-waiting {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+}
+
+.typing-dots {
+    display: flex;
+    gap: 3px;
+}
+.typing-dots span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(200,255,100,0.4);
+    animation: typing-bounce 1.2s ease-in-out infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+.build-activity-footer {
+    padding: 6px 10px;
+    border-top: 1px solid rgba(200,255,100,0.08);
+}
+
+.build-progress-bar {
+    height: 2px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.build-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #c8ff64, #a3e635);
+    animation: indeterminate-progress 2s ease-in-out infinite;
+}
+
+@keyframes indeterminate-progress {
+    0% { width: 0%; margin-left: 0%; }
+    50% { width: 40%; margin-left: 30%; }
+    100% { width: 0%; margin-left: 100%; }
+}
+
+/* =============================================================================
+   Ground shadow — photorealistic
+   ============================================================================= */
 .project-card-container .card-shadow {
     position: absolute; left: 5%; right: 15%; bottom: -18px; height: 35px;
     background: radial-gradient(ellipse 80% 100% at 40% 50%, rgba(0,0,0,0.35) 0%, transparent 60%);
@@ -319,22 +543,38 @@
    ============================================================================= */
 
 .project-card-container.is-building { z-index: 2; }
-.project-card-container.is-building .project-card { animation: build-glow-pulse 2s ease-in-out infinite; }
 .project-card-container.is-building .monitor-frame {
     box-shadow:
-        0 0 50px rgba(200, 255, 100, 0.2),
-        0 25px 50px rgba(0, 0, 0, 0.4),
-        0 12px 25px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        5px 0 0 #0a0a0c, 5px 5px 0 #050507, 0 5px 0 #0a0a0c;
+        0 0 50px rgba(200, 255, 100, 0.18),
+        6px 6px 0 #080810,
+        6px 0 0 #0c0c14,
+        0 6px 0 #0a0a12,
+        0 30px 60px rgba(0, 0, 0, 0.4),
+        0 15px 30px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Complete state — subtle green glow */
+.project-card-container.status-complete .monitor-frame {
+    box-shadow:
+        0 0 30px rgba(34, 197, 94, 0.08),
+        6px 6px 0 #080810,
+        6px 0 0 #0c0c14,
+        0 6px 0 #0a0a12,
+        0 30px 60px rgba(0, 0, 0, 0.45),
+        0 15px 30px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 @keyframes build-glow-pulse {
     0%, 100% {
-        box-shadow: 0 0 30px rgba(200,255,100,0.15), 0 25px 50px rgba(0,0,0,0.4);
+        opacity: 0.7;
+        filter: blur(2px);
     }
     50% {
-        box-shadow: 0 0 60px rgba(200,255,100,0.3), 0 0 80px rgba(200,255,100,0.1), 0 25px 50px rgba(0,0,0,0.4);
+        opacity: 1;
+        filter: blur(4px);
     }
 }
 
@@ -376,20 +616,29 @@
 }
 
 /* =============================================================================
-   Mobile optimization
+   Mobile optimization — responsive
    ============================================================================= */
 
 @media (max-width: 768px), (hover: none) {
     .project-card-container { perspective: 800px; }
     .project-card { transform: rotateY(-6deg) rotateX(3deg); }
     .project-card-container:hover .project-card { transform: rotateY(-3deg) rotateX(1.5deg) scale(1.02); }
-    .project-card.flipped { transform: rotateY(174deg) rotateX(3deg); }
+    .project-card.flipped { transform: rotateY(174deg) rotateX(3deg) !important; }
     .project-card .monitor-frame {
-        box-shadow: 0 0 20px rgba(200,255,100,0.06), 0 12px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08), 3px 3px 0 #0a0a0c;
+        box-shadow:
+            0 0 20px rgba(200,255,100,0.06),
+            3px 3px 0 #0a0a0c,
+            0 12px 24px rgba(0,0,0,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.08);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .project-card { transform-style: flat; transform: none !important; transition: none; }
+    .project-card.flipped { transform: none !important; }
     .project-card-container { perspective: none; }
+    .card-ambient-glow { animation: none !important; }
+    .badge-pulse { animation: none; }
+    .build-pulse-dot { animation: none; }
+    .build-progress-fill { animation: none; width: 50%; }
 }

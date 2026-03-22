@@ -9,9 +9,12 @@
 import { useState, useEffect, useRef, useCallback, memo, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { useUserStore } from '@/store/useUserStore';
 import { useProjectStore } from '@/store/useProjectStore';
 import { apiClient } from '@/lib/api-client';
+import type { GitHubRepo } from '@/lib/api-client';
+import { authenticatedFetch, API_URL } from '@/lib/api-config';
 import { ProjectCard3D } from '@/components/ui/ProjectCard3D';
 import { AccountSlideOut } from '@/components/account/AccountSlideOut';
 import { HoverSidebar } from '@/components/navigation/HoverSidebar';
@@ -22,12 +25,17 @@ import { GenerateButton3D } from '@/components/ui/GenerateButton3D';
 import { DeleteConfirmModal } from '@/components/dashboard/DeleteConfirmModal';
 import { FixMyAppIntro } from '@/components/fix-my-app/FixMyAppIntro';
 import { FixBrokenAppIcon } from '@/components/ui/AbstractIcons';
+import NewProjectModal from '@/components/dashboard/NewProjectModal';
 import {
   SettingsIcon,
   ChevronDownIcon,
   LogOutIcon,
   CreditCardIcon,
   SparklesIcon,
+  BellIcon,
+  UploadIcon,
+  PlusIcon,
+  GitHubIcon,
 } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 import { v4 as uuid } from 'uuid';
@@ -83,6 +91,325 @@ function AnimatedPlaceholder() {
       {displayText}
       <span className="animate-pulse">|</span>
     </span>
+  );
+}
+
+// ── Notification Bell ────────────────────────────────────────────────
+interface DashboardNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  actionUrl: string;
+  metadata: Record<string, unknown>;
+  read: boolean;
+  createdAt: string;
+}
+
+function NotificationBell() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const bellRef = useRef<HTMLDivElement>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    // Fetch initial notifications
+    authenticatedFetch(`${API_URL}/api/notifications?limit=20`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data) return;
+        const notifs = data.notifications || [];
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter((n: DashboardNotification) => !n.read).length);
+      })
+      .catch(() => {});
+
+    // SSE for real-time
+    const es = new EventSource(`${API_URL}/api/training/notifications/stream`, { withCredentials: true });
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'notification') {
+          setNotifications(prev => [data.payload, ...prev.slice(0, 19)]);
+          setUnreadCount(prev => prev + 1);
+        }
+      } catch {}
+    };
+    es.onerror = () => { es.close(); };
+    eventSourceRef.current = es;
+    return () => { es.close(); };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handle = (e: MouseEvent | TouchEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    document.addEventListener('touchstart', handle);
+    return () => {
+      document.removeEventListener('mousedown', handle);
+      document.removeEventListener('touchstart', handle);
+    };
+  }, [isOpen]);
+
+  const markRead = async (id: string) => {
+    await authenticatedFetch(`${API_URL}/api/notifications/${id}/read`, { method: 'POST' }).catch(() => {});
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+  };
+
+  const formatTimeAgo = (d: string) => {
+    const diff = Date.now() - new Date(d).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
+
+  const getIcon = (type: string) => {
+    if (type.includes('complete')) return <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#22c55e" strokeWidth="2"/><path d="M8 12l3 3 5-5" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+    if (type.includes('error') || type.includes('fail')) return <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#ef4444" strokeWidth="2"/><path d="M15 9l-6 6M9 9l6 6" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/></svg>;
+    if (type.includes('alert') || type.includes('freeze')) return <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f59e0b" strokeWidth="2"/></svg>;
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="#666" strokeWidth="2"/><path d="M13.73 21a2 2 0 01-3.46 0" stroke="#666" strokeWidth="2"/></svg>;
+  };
+
+  return (
+    <div ref={bellRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="glass-button relative"
+        style={{ padding: '8px', borderRadius: '12px' }}
+        title="Notifications"
+      >
+        <BellIcon size={18} />
+        {unreadCount > 0 && (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center rounded-full text-white text-[10px] font-bold"
+            style={{ background: '#ef4444', boxShadow: '0 2px 6px rgba(239,68,68,0.4)' }}
+          >
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </motion.span>
+        )}
+      </button>
+
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsOpen(false)}
+                style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                style={{
+                  position: 'fixed',
+                  top: '4rem',
+                  right: '1rem',
+                  width: '22rem',
+                  maxHeight: '26rem',
+                  overflow: 'hidden',
+                  borderRadius: '20px',
+                  background: 'linear-gradient(145deg, rgba(255,255,255,0.85) 0%, rgba(248,248,250,0.9) 100%)',
+                  backdropFilter: 'blur(40px) saturate(200%)',
+                  WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+                  border: '1px solid rgba(255,255,255,0.5)',
+                  boxShadow: '0 30px 80px rgba(0,0,0,0.12), 0 15px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)',
+                  zIndex: 9999,
+                }}
+              >
+                <div className="px-4 py-3 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <h3 className="text-sm font-semibold" style={{ color: '#1a1a1a' }}>Notifications</h3>
+                  {unreadCount > 0 && <span className="text-xs" style={{ color: '#666' }}>{unreadCount} unread</span>}
+                </div>
+                <div style={{ maxHeight: '20rem', overflowY: 'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-sm" style={{ color: '#999' }}>No notifications yet</div>
+                  ) : (
+                    notifications.map(notif => (
+                      <button
+                        key={notif.id}
+                        onClick={() => { if (!notif.read) markRead(notif.id); if (notif.actionUrl) window.location.href = notif.actionUrl; setIsOpen(false); }}
+                        className="w-full px-4 py-3 text-left transition-colors"
+                        style={{
+                          borderBottom: '1px solid rgba(0,0,0,0.04)',
+                          background: notif.read ? 'transparent' : 'rgba(194,90,0,0.04)',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 mt-0.5">{getIcon(notif.type)}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate" style={{ color: notif.read ? '#666' : '#1a1a1a' }}>{notif.title}</p>
+                            <p className="text-xs mt-0.5 line-clamp-2" style={{ color: '#999' }}>{notif.message}</p>
+                            <span className="text-xs mt-1 block" style={{ color: '#bbb' }}>{formatTimeAgo(notif.createdAt)}</span>
+                          </div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+// ── GitHub Repo Selector ─────────────────────────────────────────────
+function GitHubRepoSelector({
+  onSelect,
+}: {
+  onSelect: (repo: GitHubRepo) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [ghConnected, setGhConnected] = useState(false);
+  const [ghUsername, setGhUsername] = useState('');
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [reposLoading, setReposLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  // Check connection status on mount
+  useEffect(() => {
+    apiClient.getGitHubConnection()
+      .then(data => {
+        setGhConnected(data.connected);
+        if (data.username) setGhUsername(data.username);
+      })
+      .catch(() => setGhConnected(false));
+  }, []);
+
+  // Fetch repos when dropdown opens
+  useEffect(() => {
+    if (!isOpen || !ghConnected || repos.length > 0) return;
+    setReposLoading(true);
+    apiClient.getGitHubRepos()
+      .then(data => setRepos(data.repos))
+      .catch(() => {})
+      .finally(() => setReposLoading(false));
+  }, [isOpen, ghConnected, repos.length]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handle = (e: MouseEvent) => {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [isOpen]);
+
+  const handleConnect = async () => {
+    try {
+      const { url } = await apiClient.getGitHubAuthUrl();
+      window.location.href = url;
+    } catch (err) {
+      console.error('GitHub auth failed:', err);
+    }
+  };
+
+  const filtered = search
+    ? repos.filter(r => r.name.toLowerCase().includes(search.toLowerCase()) || r.fullName.toLowerCase().includes(search.toLowerCase()))
+    : repos;
+
+  return (
+    <div ref={dropRef} className="relative">
+      <button
+        onClick={() => ghConnected ? setIsOpen(!isOpen) : handleConnect()}
+        className="glass-button flex items-center gap-1.5"
+        style={{ padding: '7px 10px', borderRadius: '10px', color: '#1a1a1a' }}
+        title={ghConnected ? 'Select GitHub repo' : 'Connect GitHub'}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+        </svg>
+        {ghConnected && <span className="hidden sm:inline text-xs font-medium">{ghUsername || 'GitHub'}</span>}
+        {ghConnected && <ChevronDownIcon size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && ghConnected && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            className="absolute bottom-full mb-2 left-0 z-50"
+            style={{
+              width: '20rem',
+              maxHeight: '22rem',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.88) 0%, rgba(248,248,250,0.92) 100%)',
+              backdropFilter: 'blur(40px) saturate(200%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+              border: '1px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 -20px 60px rgba(0,0,0,0.1), 0 -8px 24px rgba(0,0,0,0.06), inset 0 -1px 0 rgba(255,255,255,0.9)',
+            }}
+          >
+            <div className="p-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search repositories..."
+                className="w-full px-3 py-2 text-sm rounded-lg"
+                style={{
+                  background: 'rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  outline: 'none',
+                  color: '#1a1a1a',
+                }}
+                autoFocus
+              />
+            </div>
+            <div style={{ maxHeight: '16rem', overflowY: 'auto' }}>
+              {reposLoading ? (
+                <div className="p-6 text-center">
+                  <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="p-4 text-center text-sm" style={{ color: '#999' }}>No repos found</div>
+              ) : (
+                filtered.map(repo => (
+                  <button
+                    key={repo.id}
+                    onClick={() => { onSelect(repo); setIsOpen(false); }}
+                    className="w-full px-4 py-2.5 text-left hover:bg-black/[0.03] transition-colors flex items-center gap-3"
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#1a1a1a' }}>{repo.name}</p>
+                      {repo.description && <p className="text-xs truncate mt-0.5" style={{ color: '#999' }}>{repo.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {repo.language && <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.04)', color: '#666' }}>{repo.language}</span>}
+                      {repo.private && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -460,6 +787,9 @@ export default function Dashboard() {
   const [projectToDelete, setProjectToDelete] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showFixMyAppIntro, setShowFixMyAppIntro] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth guard
   useEffect(() => {
@@ -503,6 +833,24 @@ export default function Dashboard() {
       handleGenerate();
     }
   };
+
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) setUploadedFiles(prev => [...prev, ...files]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
+  const handleRepoSelect = useCallback((repo: GitHubRepo) => {
+    setSelectedRepo(repo);
+  }, []);
+
+  const clearSelectedRepo = useCallback(() => {
+    setSelectedRepo(null);
+  }, []);
+
+  const removeUploadedFile = useCallback((index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
   const handleDeleteProject = useCallback((project: any, _cardElement: HTMLElement) => {
     setProjectToDelete(project);
@@ -581,7 +929,10 @@ export default function Dashboard() {
               />
             </div>
           </div>
-          <UserMenu />
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <UserMenu />
+          </div>
         </div>
       </header>
 
@@ -604,6 +955,53 @@ export default function Dashboard() {
 
           {/* Prompt input - Realistic Glass */}
           <div className={cn("glass-input relative transition-all duration-500", isFocused && "focused")}>
+            {/* Selected repo badge */}
+            {selectedRepo && (
+              <div className="px-5 pt-4 pb-0 flex items-center gap-2">
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{
+                    background: 'rgba(0,0,0,0.04)',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    color: '#1a1a1a',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.6 }}>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                  </svg>
+                  <span>{selectedRepo.fullName}</span>
+                  <button
+                    onClick={clearSelectedRepo}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: '#999' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Uploaded files badges */}
+            {uploadedFiles.length > 0 && (
+              <div className="px-5 pt-3 pb-0 flex flex-wrap gap-2">
+                {uploadedFiles.map((file, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
+                    style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a' }}
+                  >
+                    <UploadIcon size={12} />
+                    <span className="truncate max-w-[120px]">{file.name}</span>
+                    <button
+                      onClick={() => removeUploadedFile(i)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#999' }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="relative">
               <textarea
                 ref={textareaRef}
@@ -619,24 +1017,38 @@ export default function Dashboard() {
               />
 
               {/* Animated placeholder */}
-              {!prompt && !isFocused && (
+              {!prompt && !isFocused && !selectedRepo && (
                 <div className="absolute inset-0 p-5 pointer-events-none text-lg">
                   <AnimatedPlaceholder />
                 </div>
               )}
             </div>
 
-            {/* Generate button + Fix My App */}
-            <div className="px-6 py-4 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.5)' }}>
+            {/* Bottom bar: + button, GH button, Generate */}
+            <div className="px-5 py-3 flex items-center gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.5)' }}>
+              {/* File upload + button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                accept="*/*"
+              />
               <button
-                onClick={() => setShowFixMyAppIntro(true)}
-                className="glass-button flex items-center gap-2 px-4 py-2 text-sm font-medium"
-                style={{ borderRadius: '12px', color: '#1a1a1a' }}
+                onClick={() => fileInputRef.current?.click()}
+                className="glass-button flex items-center justify-center"
+                style={{ padding: '7px', borderRadius: '10px', color: '#1a1a1a' }}
+                title="Attach files"
               >
-                <FixBrokenAppIcon size={18} />
-                <span className="hidden sm:inline">Fix Broken App</span>
-                <span className="sm:hidden">Fix App</span>
+                <PlusIcon size={18} />
               </button>
+
+              {/* GitHub repo selector */}
+              <GitHubRepoSelector onSelect={handleRepoSelect} />
+
+              <div className="flex-1" />
+
               <GenerateButton3D
                 onClick={handleGenerate}
                 disabled={!prompt.trim() || isGenerating}
@@ -648,11 +1060,35 @@ export default function Dashboard() {
 
         {/* Project grid */}
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <h2 className="text-xl font-bold" style={{ color: '#1a1a1a' }}>
               Your Projects
             </h2>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Create Project */}
+              <NewProjectModal />
+
+              {/* Import App */}
+              <button
+                onClick={() => navigate('/fix-my-app')}
+                className="glass-button flex items-center gap-2 px-4 py-2 text-sm font-medium"
+                style={{ borderRadius: '12px', color: '#1a1a1a' }}
+              >
+                <UploadIcon size={16} />
+                <span>Import App</span>
+              </button>
+
+              {/* Fix My App — moved here from NLP input area */}
+              <button
+                onClick={() => setShowFixMyAppIntro(true)}
+                className="glass-button flex items-center gap-2 px-4 py-2 text-sm font-medium"
+                style={{ borderRadius: '12px', color: '#1a1a1a' }}
+              >
+                <FixBrokenAppIcon size={16} />
+                <span className="hidden sm:inline">Fix Broken App</span>
+                <span className="sm:hidden">Fix App</span>
+              </button>
+
               {projects.length > 0 && (
                 <button
                   onClick={() => setIsManageMode(!isManageMode)}
