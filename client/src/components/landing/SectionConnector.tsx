@@ -4,7 +4,7 @@
  * Design_References.md §6 — scroll-driven animation
  */
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 interface Props {
   fromColor?: string
@@ -18,8 +18,23 @@ export default function SectionConnector({
   height = 120,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  // Pause RAF when off-screen
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0, rootMargin: '100px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   useEffect(() => {
+    if (!visible) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -106,10 +121,10 @@ export default function SectionConnector({
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [fromColor, toColor])
+  }, [fromColor, toColor, visible])
 
   return (
-    <div className="relative" style={{ height }}>
+    <div ref={containerRef} className="relative" style={{ height }}>
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full"

@@ -6,12 +6,19 @@
  * Iridescent fresnel coloring, subsurface scattering, chromatic aberration.
  * Colors: kriptik lime / cyan / amber mapped via surface normals.
  *
- * Dependencies: @react-three/fiber, three
+ * GPU optimizations:
+ * - Chromatic aberration moved to post-processing (1 raymarch instead of 3)
+ * - IntersectionObserver pauses canvas when hero scrolls out of viewport
+ * - Progressive quality reduction based on scroll visibility
+ * - Single shade() call; CA + Bloom as cheap texture passes
+ *
+ * Dependencies: @react-three/fiber, @react-three/postprocessing, three
  */
 
 import { useRef, useMemo, useState, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { EffectComposer, Bloom } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, ChromaticAberration } from '@react-three/postprocessing'
+import { BlendFunction } from 'postprocessing'
 import * as THREE from 'three'
 
 function useIsMobile() {
@@ -25,6 +32,28 @@ function useIsMobile() {
     return () => mq.removeEventListener('change', handler)
   }, [])
   return mobile
+}
+
+/** Track hero visibility ratio (0 = fully off-screen, 1 = fully visible) */
+function useHeroVisibility(ref: React.RefObject<HTMLDivElement | null>) {
+  const [visible, setVisible] = useState(true)
+  const [ratio, setRatio] = useState(1)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        setVisible(entry.isIntersecting)
+        setRatio(entry.intersectionRatio)
+      },
+      { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0] }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [ref])
+
+  return { visible, ratio }
 }
 
 /* ═══════════════════════════════════════════
@@ -47,6 +76,7 @@ uniform float uTime;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
 uniform float uMobile;
+uniform float uVisibility; // 0.0 = off-screen, 1.0 = fully visible
 
 // ── Constants ──
 #define MAX_DIST 40.0
@@ -92,12 +122,13 @@ mediump float noise3(vec3 p) {
   return mix(n0, n1, f.x);
 }
 
-// ── FBM (3 octaves desktop, 1 octave mobile) ──
+// ── FBM — progressive quality: 3 octaves full, 1 octave mobile or partially scrolled ──
 mediump float fbm(vec3 p) {
   float v = 0.0;
   float a = 0.5;
   vec3 shift = vec3(100.0);
-  int octaves = uMobile > 0.5 ? 1 : 3;
+  // Mobile: 1 octave. Desktop: 3 when fully visible, 1 when <=50% visible
+  int octaves = uMobile > 0.5 ? 1 : (uVisibility < 0.5 ? 1 : 3);
   for (int i = 0; i < 3; i++) {
     if (i >= octaves) break;
     v += a * noise3(p);
@@ -216,10 +247,11 @@ vec3 iridescence(float angle, float t) {
   return c;
 }
 
-// ── Ray Marching ──
+// ── Ray Marching — progressive quality based on visibility ──
 float rayMarch(vec3 ro, vec3 rd) {
   float d = 0.0;
-  int steps = uMobile > 0.5 ? 40 : 80;
+  // Mobile: 40. Desktop: 80 when fully visible, 40 when <=50% visible
+  int steps = uMobile > 0.5 ? 40 : (uVisibility < 0.5 ? 40 : 80);
   for (int i = 0; i < 80; i++) {
     if (i >= steps) break;
     vec3 p = ro + rd * d;
@@ -315,25 +347,9 @@ void main() {
   vec3 rd = normalize(vec3(uv * 1.1, -1.5));
 
   float distFromCenter = length(uv);
-  vec3 col;
 
-  if (uMobile > 0.5) {
-    // ── Mobile: single shade call, no chromatic aberration ──
-    col = shade(ro, rd, uv);
-  } else {
-    // ── Desktop: Chromatic Aberration ──
-    float caStrength = distFromCenter * 0.008;
-    vec2 uvR = uv + normalize(uv + 0.001) * caStrength;
-    vec2 uvB = uv - normalize(uv + 0.001) * caStrength;
-    vec3 rdR = normalize(vec3(uvR * 1.1, -1.5));
-    vec3 rdB = normalize(vec3(uvB * 1.1, -1.5));
-
-    float colR = shade(ro, rdR, uvR).r;
-    vec3 colG_full = shade(ro, rd, uv);
-    float colG = colG_full.g;
-    float colB = shade(ro, rdB, uvB).b;
-    col = vec3(colR, colG, colB);
-  }
+  // ── Single shade call — chromatic aberration is now a post-processing pass ──
+  vec3 col = shade(ro, rd, uv);
 
   // ── Vignette ──
   float vig = 1.0 - pow(distFromCenter * 1.1, 2.8);
@@ -359,7 +375,7 @@ void main() {
    R3F COMPONENTS
    ═══════════════════════════════════════════ */
 
-function MetaballPlane({ isMobile }: { isMobile: boolean }) {
+function MetaballPlane({ isMobile, visibility }: { isMobile: boolean; visibility: number }) {
   const materialRef = useRef<THREE.ShaderMaterial>(null!)
   const { size, pointer } = useThree()
   const mouseSmooth = useRef(new THREE.Vector2(0, 0))
@@ -370,6 +386,7 @@ function MetaballPlane({ isMobile }: { isMobile: boolean }) {
       uResolution: { value: new THREE.Vector2(size.width, size.height) },
       uMouse: { value: new THREE.Vector2(0, 0) },
       uMobile: { value: isMobile ? 1.0 : 0.0 },
+      uVisibility: { value: 1.0 },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isMobile]
@@ -380,6 +397,7 @@ function MetaballPlane({ isMobile }: { isMobile: boolean }) {
 
     materialRef.current.uniforms.uTime.value = clock.elapsedTime
     materialRef.current.uniforms.uResolution.value.set(frameSize.width, frameSize.height)
+    materialRef.current.uniforms.uVisibility.value = visibility
 
     // Smooth mouse following (lerp 0.03)
     mouseSmooth.current.x += (pointer.x * 0.5 - mouseSmooth.current.x) * 0.03
@@ -408,27 +426,41 @@ function MetaballPlane({ isMobile }: { isMobile: boolean }) {
 
 export default function Hero3D() {
   const isMobile = useIsMobile()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { visible, ratio } = useHeroVisibility(containerRef)
+
+  // Chromatic aberration offset — matches the original distance-based strength
+  const caOffset = useMemo(() => new THREE.Vector2(0.004, 0.002), [])
 
   return (
-    <Canvas
-      camera={{ position: [0, 0, 1], fov: 45 }}
-      dpr={[1, 1.5]}
-      gl={{
-        antialias: false,
-        alpha: false,
-        powerPreference: 'high-performance',
-        stencil: false,
-        depth: false,
-      }}
-      style={{ position: 'absolute', inset: 0 }}
-      performance={{ min: 0.5 }}
-    >
-      <MetaballPlane isMobile={isMobile} />
-      {!isMobile && (
-        <EffectComposer multisampling={0}>
-          <Bloom intensity={1.5} luminanceThreshold={0.55} luminanceSmoothing={0.3} mipmapBlur />
-        </EffectComposer>
-      )}
-    </Canvas>
+    <div ref={containerRef} style={{ position: 'absolute', inset: 0 }}>
+      <Canvas
+        camera={{ position: [0, 0, 1], fov: 45 }}
+        dpr={[1, 1.5]}
+        gl={{
+          antialias: false,
+          alpha: false,
+          powerPreference: 'high-performance',
+          stencil: false,
+          depth: false,
+        }}
+        style={{ position: 'absolute', inset: 0 }}
+        performance={{ min: 0.5 }}
+        frameloop={visible ? 'always' : 'never'}
+      >
+        <MetaballPlane isMobile={isMobile} visibility={ratio} />
+        {!isMobile && (
+          <EffectComposer multisampling={0}>
+            <ChromaticAberration
+              blendFunction={BlendFunction.NORMAL}
+              offset={caOffset}
+              radialModulation
+              modulationOffset={0.0}
+            />
+            <Bloom intensity={1.5} luminanceThreshold={0.55} luminanceSmoothing={0.3} mipmapBlur />
+          </EffectComposer>
+        )}
+      </Canvas>
+    </div>
   )
 }

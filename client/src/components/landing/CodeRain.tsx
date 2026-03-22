@@ -4,7 +4,7 @@
  * Uses JetBrains Mono, kriptik-lime at low opacity
  */
 
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 
 const TOKENS = [
   'const', 'function', 'return', 'async', 'await', 'import', 'export',
@@ -41,8 +41,22 @@ const CodeRain = React.memo(function CodeRain({
   className = '', opacity = 0.08, density = 30, speed = 1,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  // Pause RAF when off-screen
+  useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0, rootMargin: '100px' }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   useEffect(() => {
+    if (!visible) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -89,7 +103,7 @@ const CodeRain = React.memo(function CodeRain({
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', resize)
     }
-  }, [density, speed])
+  }, [density, speed, visible])
 
   return (
     <canvas ref={canvasRef} className={className}
