@@ -149,6 +149,37 @@ class ApiClient {
   async getBillingHistory() {
     return this.request<{ transactions: CreditTransaction[] }>('GET', '/api/billing/history');
   }
+
+  // GitHub Integration
+  async getGitHubConnection() {
+    return this.request<{ connected: boolean; username?: string; avatarUrl?: string; scope?: string; connectedAt?: string }>('GET', '/api/github/connection');
+  }
+
+  async getGitHubAuthUrl() {
+    return this.request<{ url: string; state: string }>('GET', '/api/github/auth/url');
+  }
+
+  async getGitHubRepos() {
+    return this.request<{ repos: GitHubRepo[] }>('GET', '/api/github/repos');
+  }
+
+  async disconnectGitHub() {
+    return this.request<{ success: boolean }>('DELETE', '/api/github/connection');
+  }
+
+  // File upload
+  async uploadFiles(projectId: string, files: FormData) {
+    const res = await authenticatedFetch(`${API_URL}/api/projects/${projectId}/upload`, {
+      method: 'POST',
+      body: files,
+      headers: {}, // Let browser set Content-Type for FormData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `Upload failed: ${res.status}`);
+    }
+    return res.json() as Promise<{ success: boolean; fileCount: number }>;
+  }
 }
 
 export interface OAuthCatalogEntry {
@@ -231,6 +262,18 @@ export interface CreditTransaction {
   projectId: string | null;
   stripeSessionId: string | null;
   createdAt: string;
+}
+
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  fullName: string;
+  description: string | null;
+  private: boolean;
+  htmlUrl: string;
+  defaultBranch: string;
+  language: string | null;
+  updatedAt: string;
 }
 
 export const apiClient = new ApiClient();

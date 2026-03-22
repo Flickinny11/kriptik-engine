@@ -13,6 +13,7 @@ import credentialsRouter from './routes/credentials.js';
 import publishRouter from './routes/publish.js';
 import speculateRouter from './routes/speculate.js';
 import accountRouter from './routes/account.js';
+import githubRouter from './routes/github.js';
 import billingRouter, { handleStripeWebhook } from './routes/billing.js';
 
 
@@ -66,6 +67,7 @@ app.use('/api/credentials', credentialsRouter);
 app.use('/api/publish', publishRouter);
 app.use('/api/speculate', speculateRouter);
 app.use('/api/account', accountRouter);
+app.use('/api/github', githubRouter);
 app.use('/api/billing', billingRouter);
 // Client error reporting — captures error boundary crashes
 app.post('/api/errors/report', (req, res) => {
