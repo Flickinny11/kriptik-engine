@@ -44,7 +44,7 @@ export function TrainingProgress({ progress, onPause, onResume, onStop, onDownlo
   const [activeTab, setActiveTab] = useState<'metrics' | 'logs'>('metrics');
   const logsEndRef = useRef<HTMLDivElement>(null);
 
-  const status = statusConfig[progress.status];
+  const status = statusConfig[progress.status as keyof typeof statusConfig] || statusConfig.pending;
   const StatusIcon = status.icon;
 
   const progressPercent = progress.totalSteps > 0
