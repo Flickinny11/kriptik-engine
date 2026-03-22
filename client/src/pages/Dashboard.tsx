@@ -412,9 +412,11 @@ const ProjectThumbnail = memo(function ProjectThumbnail({
     position: 'relative',
   };
 
-  // Status mapped from project.status — clean, no old app patterns
-  const cardStatus = project.status === 'completed' ? 'completed' :
-                     project.status === 'building' ? 'building' : 'active';
+  // Status mapped from project.status to ProjectCard3D's accepted values
+  const cardStatus: 'idle' | 'building' | 'complete' | 'failed' =
+    project.status === 'completed' ? 'complete' :
+    project.status === 'building' ? 'building' :
+    project.status === 'failed' ? 'failed' : 'idle';
 
   return (
     <div ref={wrapperRef} className="group" style={wrapperStyle}>
