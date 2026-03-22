@@ -39,7 +39,7 @@ const PremiumGlassSelection = lazy(() => premiumGlassPromise);
 // MODERN 3D BUTTON STYLES (React CSSProperties)
 // =============================================================================
 
-// Primary action button - semi-translucent with 3D edges
+// Primary action button - warm amber gradient with 3D depth
 const primaryButtonStyles: React.CSSProperties = {
     position: 'relative',
     overflow: 'hidden',
@@ -48,18 +48,16 @@ const primaryButtonStyles: React.CSSProperties = {
     fontWeight: 600,
     letterSpacing: '0.025em',
     fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-    background: 'linear-gradient(135deg, rgba(251,191,36,0.95) 0%, rgba(249,115,22,0.95) 50%, rgba(239,68,68,0.9) 100%)',
+    background: 'linear-gradient(135deg, #c25a00 0%, #a04800 50%, #8b3d00 100%)',
     color: 'white',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255,255,255,0.25)',
-    boxShadow: '0 4px 0 rgba(0,0,0,0.3), 0 8px 24px rgba(251,146,60,0.4), inset 0 1px 0 rgba(255,255,255,0.35)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: '0 4px 0 rgba(0,0,0,0.15), 0 8px 24px rgba(194,90,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25)',
     transform: 'translateY(-2px)',
     cursor: 'pointer',
     transition: 'all 0.15s ease-out',
 };
 
-// Secondary/outline button - glass morphism with visible edges
+// Secondary/outline button - frosted glass with visible edges
 const secondaryButtonStyles: React.CSSProperties = {
     position: 'relative',
     overflow: 'hidden',
@@ -68,12 +66,12 @@ const secondaryButtonStyles: React.CSSProperties = {
     fontWeight: 500,
     letterSpacing: '0.02em',
     fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-    background: 'rgba(30, 41, 59, 0.5)',
-    color: '#e2e8f0',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    border: '1px solid rgba(100, 116, 139, 0.4)',
-    boxShadow: '0 3px 0 rgba(0,0,0,0.25), 0 6px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1)',
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.4) 100%)',
+    color: '#1a1a1a',
+    backdropFilter: 'blur(24px) saturate(180%)',
+    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+    border: '1px solid rgba(255,255,255,0.5)',
+    boxShadow: '0 3px 0 rgba(200,195,190,0.4), 0 6px 20px rgba(0,0,0,0.06), inset 0 1px 1px rgba(255,255,255,0.9)',
     transform: 'translateY(-1px)',
     cursor: 'pointer',
     transition: 'all 0.15s ease-out',
@@ -90,12 +88,10 @@ const ctaButtonStyles: React.CSSProperties = {
     letterSpacing: '0.05em',
     textTransform: 'uppercase' as const,
     fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-    background: 'linear-gradient(135deg, rgba(251,191,36,0.98) 0%, rgba(249,115,22,0.98) 40%, rgba(244,63,94,0.95) 100%)',
+    background: 'linear-gradient(135deg, #c25a00 0%, #a04800 40%, #8b3d00 100%)',
     color: 'white',
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255,255,255,0.3)',
-    boxShadow: '0 6px 0 rgba(0,0,0,0.3), 0 14px 35px rgba(251,146,60,0.45), inset 0 2px 0 rgba(255,255,255,0.4)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    boxShadow: '0 6px 0 rgba(0,0,0,0.15), 0 14px 35px rgba(194,90,0,0.35), inset 0 2px 0 rgba(255,255,255,0.3)',
     transform: 'translateY(-3px) scale(1.01)',
     cursor: 'pointer',
     transition: 'all 0.15s ease-out',
@@ -108,12 +104,12 @@ const ghostButtonStyles: React.CSSProperties = {
     borderRadius: '10px',
     fontWeight: 500,
     fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
-    background: 'rgba(255,255,255,0.06)',
-    color: '#cbd5e1',
+    background: 'rgba(0,0,0,0.03)',
+    color: '#666',
     backdropFilter: 'blur(8px)',
     WebkitBackdropFilter: 'blur(8px)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)',
+    border: '1px solid rgba(0,0,0,0.06)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
     cursor: 'pointer',
     transition: 'all 0.2s ease-out',
 };
@@ -889,33 +885,8 @@ export default function FixMyApp() {
     const [verificationReport, setVerificationReport] = useState<any>(null);
     const [notification, setNotification] = useState<SarcasticNotification | null>(null);
 
-    // Ultimate AI-First Builder Architecture State
+    // Fix mode — standard or production
     const [fixMode, setFixMode] = useState<'standard' | 'production'>('standard');
-    const [fixBuildPhases] = useState<Array<{
-        phase: 'intent_lock' | 'initialization' | 'parallel_build' | 'integration' | 'testing' | 'intent_satisfaction' | 'demo';
-        status: 'pending' | 'active' | 'complete' | 'failed' | 'skipped';
-        progress?: number;
-    }>>([
-        { phase: 'intent_lock', status: 'complete' },
-        { phase: 'initialization', status: 'complete' },
-        { phase: 'parallel_build', status: 'active', progress: progress },
-        { phase: 'integration', status: 'pending' },
-        { phase: 'testing', status: 'pending' },
-    ]);
-    const [fixVerificationAgents, setFixVerificationAgents] = useState<Array<{
-        type: 'error_checker' | 'code_quality' | 'visual_verifier' | 'security_scanner' | 'placeholder_eliminator' | 'design_style';
-        status: 'idle' | 'running' | 'passed' | 'failed' | 'warning';
-        score?: number;
-        lastRun?: Date;
-        issues?: number;
-    }>>([
-        { type: 'error_checker', status: 'running' },
-        { type: 'code_quality', status: 'idle' },
-        { type: 'visual_verifier', status: 'idle' },
-        { type: 'security_scanner', status: 'idle' },
-        { type: 'placeholder_eliminator', status: 'idle' },
-        { type: 'design_style', status: 'idle' },
-    ]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -1194,12 +1165,10 @@ export default function FixMyApp() {
         };
 
         // This routes through Brain-driven engine with Intent Satisfaction gate
-        const endpoint = useOrchestrator
-            ? `/api/fix-my-app/${session.sessionId}/fix-orchestrated`
-            : `/api/fix-my-app/${session.sessionId}/fix`;
+        const endpoint = `/api/fix-my-app/${session.sessionId}/fix`;
 
         try {
-            const response = await apiClient.post(endpoint, {
+            await apiClient.post(endpoint, {
                 strategy: selectedStrategy,
                 preferences: {
                     uiPreference,
@@ -1208,16 +1177,6 @@ export default function FixMyApp() {
                 mode: fixMode,
                 credentials: {},
             });
-
-            if (useOrchestrator && response.data) {
-                const data = response.data as { websocketChannel?: string; projectId?: string };
-                setLogs(prev => [
-                    ...prev,
-                    `Using full 6-Phase Brain-driven engine`,
-                    `WebSocket channel: ${data.websocketChannel || 'N/A'}`,
-                    `Project ID: ${data.projectId || 'N/A'}`,
-                ]);
-            }
         } catch (error) {
             toast({
                 title: 'Fix Failed',
@@ -1293,36 +1252,20 @@ export default function FixMyApp() {
         <div
             className="min-h-screen"
             style={{
-                // Premium dark background for ALL steps
-                background: '#030305',
-                color: '#f1f5f9',
+                background: 'linear-gradient(145deg, #e8e4df 0%, #d8d4cf 50%, #ccc8c3 100%)',
+                color: '#1a1a1a',
+                fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif',
             }}
         >
-            {/* Ambient gradient overlay for premium feel */}
-            <div
-                className="fixed inset-0 pointer-events-none"
-                style={{
-                    background: 'radial-gradient(ellipse at 30% 20%, rgba(245,158,11,0.06) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.04) 0%, transparent 40%)',
-                }}
-            />
-
-            {/* Subtle grid pattern */}
-            <div
-                className="fixed inset-0 opacity-5 pointer-events-none"
-                style={{
-                    backgroundImage: `
-                        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
-                    `,
-                    backgroundSize: '60px 60px',
-                }}
-            />
             {/* Header - Premium Glass Style (hidden on source step) */}
             {showOldUI && (
             <header
-                className="relative z-10"
+                className="relative z-10 sticky top-0"
                 style={{
-                    background: 'linear-gradient(180deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.7) 80%, transparent 100%)',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.45) 100%)',
+                    backdropFilter: 'blur(24px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.04), inset 0 1px 1px rgba(255,255,255,0.9)',
                 }}
             >
                 <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -1330,25 +1273,21 @@ export default function FixMyApp() {
                         <div
                             className="w-12 h-12 rounded-xl flex items-center justify-center"
                             style={{
-                                background: 'linear-gradient(135deg, rgba(251,191,36,0.2), rgba(245,158,11,0.3))',
-                                boxShadow: '0 4px 20px rgba(245,158,11,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-                                border: '1px solid rgba(245,158,11,0.3)',
+                                background: 'linear-gradient(135deg, #c25a00 0%, #a04800 100%)',
+                                boxShadow: '0 4px 16px rgba(194,90,0,0.3), inset 0 1px 2px rgba(255,255,255,0.2)',
                             }}
                         >
-                            <SettingsIcon size={22} className="text-amber-500" />
+                            <SettingsIcon size={22} className="text-white" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-white">Fix My App</h1>
-                            <p className="text-xs text-slate-400">Import & fix broken AI-built apps</p>
+                            <h1 className="text-xl font-bold" style={{ color: '#1a1a1a' }}>Fix My App</h1>
+                            <p className="text-xs" style={{ color: '#666' }}>Import & fix broken AI-built apps</p>
                         </div>
                     </div>
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 transition-all hover:text-white hover:bg-white/5"
-                        style={{
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.06)',
-                        }}
+                        className="glass-button px-4 py-2 rounded-xl text-sm font-medium"
+                        style={{ color: '#1a1a1a' }}
                     >
                         Cancel
                     </button>
@@ -1370,22 +1309,34 @@ export default function FixMyApp() {
                                 <motion.div
                                     className={cn(
                                         "flex items-center gap-2 px-4 py-2 rounded-full transition-all",
-                                        isActive && "bg-amber-500/20 border border-amber-500/50",
-                                        isComplete && "bg-emerald-500/20 border border-emerald-500/50",
-                                        !isActive && !isComplete && "bg-slate-800/50 border border-slate-700/50"
+                                        isActive && "border",
+                                        isComplete && "border",
+                                        !isActive && !isComplete && "border"
                                     )}
+                                    style={{
+                                        background: isActive
+                                            ? 'rgba(194,90,0,0.1)'
+                                            : isComplete
+                                                ? 'rgba(22,163,74,0.08)'
+                                                : 'rgba(0,0,0,0.03)',
+                                        borderColor: isActive
+                                            ? 'rgba(194,90,0,0.3)'
+                                            : isComplete
+                                                ? 'rgba(22,163,74,0.25)'
+                                                : 'rgba(0,0,0,0.06)',
+                                    }}
                                     animate={{ scale: isActive ? 1.05 : 1 }}
                                 >
                                     <Icon className={cn(
                                         "w-4 h-4",
-                                        isActive && "text-amber-400",
-                                        isComplete && "text-emerald-400",
+                                        isActive && "text-amber-700",
+                                        isComplete && "text-emerald-600",
                                         !isActive && !isComplete && "text-slate-500"
                                     ) as string} />
                                     <span className={cn(
                                         "text-sm font-medium hidden sm:block",
-                                        isActive && "text-amber-400",
-                                        isComplete && "text-emerald-400",
+                                        isActive && "text-amber-700",
+                                        isComplete && "text-emerald-600",
                                         !isActive && !isComplete && "text-slate-500"
                                     )}>
                                         {s.label}
@@ -1394,7 +1345,7 @@ export default function FixMyApp() {
                                 {index < steps.length - 1 && (
                                     <div className={cn(
                                         "w-8 h-0.5 mx-2",
-                                        isComplete ? "bg-emerald-500/50" : "bg-slate-700/50"
+                                        isComplete ? "bg-emerald-500/40" : "bg-black/10"
                                     )} />
                                 )}
                             </div>
@@ -1410,10 +1361,10 @@ export default function FixMyApp() {
                 {step === 'source' && (
                     <div className="fixed inset-0 z-50">
                         <Suspense fallback={
-                            <div className="min-h-screen bg-[#030305] flex items-center justify-center">
+                            <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #e8e4df 0%, #d8d4cf 50%, #ccc8c3 100%)' }}>
                                 <div className="text-center">
-                                    <div className="w-16 h-16 mx-auto mb-4 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
-                                    <p className="text-slate-400">Loading premium experience...</p>
+                                    <div className="w-16 h-16 mx-auto mb-4 border-4 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
+                                    <p style={{ color: '#666' }}>Loading premium experience...</p>
                                 </div>
                             </div>
                         }>
@@ -1448,19 +1399,19 @@ export default function FixMyApp() {
 
                         {/* Step 2: Consent - URL Input and Authorization */}
                         {step === 'consent' && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800">
+                            <Card className="p-8 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 <h2 className="text-2xl font-bold mb-2">Enter Your Project URL</h2>
-                                <p className="text-slate-400 mb-8">
+                                <p className="text-slate-500 mb-8">
                                     We'll use our cloud browser to capture your entire conversation history automatically.
                                 </p>
 
                                 {/* Project URL Input - Required for AI Builders */}
                                 {requiresBrowserLogin() && (
-                                    <div className="mb-8 p-6 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                                        <label className="block text-sm font-medium text-white mb-2">
+                                    <div className="mb-8 p-6 rounded-xl bg-white/30 border border-black/[0.06]">
+                                        <label className="block text-sm font-medium text-slate-900 mb-2">
                                             Your Project URL in {sourceOptions.find(s => s.id === source)?.name}
                                         </label>
-                                        <p className="text-sm text-slate-400 mb-4">
+                                        <p className="text-sm text-slate-500 mb-4">
                                             Paste the URL of your project. This is the page where you can see your chat history and code.
                                         </p>
                                         <input
@@ -1474,10 +1425,10 @@ export default function FixMyApp() {
                                                 source === 'create' ? 'https://create.xyz/your-project-id' :
                                                 'https://...'
                                             }
-                                            className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all"
+                                            className="w-full px-4 py-3 rounded-lg bg-white/40 border border-black/[0.08] text-slate-900 placeholder-slate-500 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all"
                                         />
                                         {!projectUrl && (
-                                            <p className="text-sm text-amber-400 mt-2">
+                                            <p className="text-sm text-amber-700 mt-2">
                                                 Required: Enter your project URL to continue
                                             </p>
                                         )}
@@ -1491,7 +1442,7 @@ export default function FixMyApp() {
                                             "p-6 rounded-xl border-2 cursor-pointer transition-all",
                                             consent.chatHistory && consent.buildLogs && consent.errorLogs && consent.versionHistory
                                                 ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-500/50"
-                                                : "bg-slate-800/50 border-slate-700/50 hover:border-slate-600"
+                                                : "bg-white/30/50 border-black/[0.08]/50 hover:border-black/[0.12]"
                                         )}
                                         onClick={() => {
                                             const allEnabled = consent.chatHistory && consent.buildLogs && consent.errorLogs && consent.versionHistory;
@@ -1509,17 +1460,17 @@ export default function FixMyApp() {
                                                 "w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all",
                                                 consent.chatHistory && consent.buildLogs && consent.errorLogs && consent.versionHistory
                                                     ? "bg-emerald-500 border-emerald-500"
-                                                    : "border-slate-600"
+                                                    : "border-black/[0.12]"
                                             )}>
                                                 {consent.chatHistory && consent.buildLogs && consent.errorLogs && consent.versionHistory && (
                                                     <CheckCircle2Icon size={16} className="text-white" />
                                                 )}
                                             </div>
                                             <div className="flex-1">
-                                                <div className="font-semibold text-white text-lg mb-2">
+                                                <div className="font-semibold text-slate-900 text-lg mb-2">
                                                     Grant Full Context Access
                                                 </div>
-                                                <p className="text-slate-400 text-sm mb-4">
+                                                <p className="text-slate-500 text-sm mb-4">
                                                     Allow KripTik AI to capture all available data to understand your intent and fix your app:
                                                 </p>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1529,10 +1480,10 @@ export default function FixMyApp() {
                                                         'Runtime error logs',
                                                         'Version history'
                                                     ].map((item) => (
-                                                        <div key={item} className="flex items-center gap-2 text-sm text-slate-300">
+                                                        <div key={item} className="flex items-center gap-2 text-sm text-slate-700">
                                                             <CheckCircle2Icon size={14} className={cn(
                                                                 "flex-shrink-0",
-                                                                consent.chatHistory ? "text-emerald-400" : "text-slate-600"
+                                                                consent.chatHistory ? "text-emerald-600" : "text-slate-600"
                                                             )} />
                                                             <span>{item}</span>
                                                         </div>
@@ -1549,10 +1500,10 @@ export default function FixMyApp() {
                                 {/* How it works info box */}
                                 <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30 mb-8">
                                     <div className="flex items-start gap-3">
-                                        <BrainIcon size={20} className="text-blue-400 flex-shrink-0 mt-0.5" />
+                                        <BrainIcon size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                                         <div>
-                                            <p className="text-sm text-blue-300 font-medium mb-1">How Cloud Capture Works</p>
-                                            <p className="text-sm text-slate-400">
+                                            <p className="text-sm text-blue-700 font-medium mb-1">How Cloud Capture Works</p>
+                                            <p className="text-sm text-slate-500">
                                                 Our cloud browser will open your project. You'll log in once, and we'll capture your entire
                                                 conversation automatically. No extension needed!
                                             </p>
@@ -1564,7 +1515,7 @@ export default function FixMyApp() {
                                     <button
                                         onClick={() => setStep('source')}
                                         style={{...secondaryButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                        className="hover:bg-slate-600/60 hover:translate-y-[1px] active:translate-y-[3px]"
+                                        className="hover:bg-black/[0.04] hover:translate-y-[1px] active:translate-y-[3px]"
                                     >
                                         <ArrowLeftIcon size={16} /> Back
                                     </button>
@@ -1596,9 +1547,9 @@ export default function FixMyApp() {
 
                         {/* Step 3: Login - HyperBrowser Live Login */}
                         {step === 'login' && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800">
+                            <Card className="p-8 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 <h2 className="text-2xl font-bold mb-2">Log Into Your Account</h2>
-                                <p className="text-slate-400 mb-6">
+                                <p className="text-slate-500 mb-6">
                                     A cloud browser has opened with your project. Please log in to {sourceOptions.find(s => s.id === source)?.name} to continue.
                                 </p>
 
@@ -1608,11 +1559,11 @@ export default function FixMyApp() {
                                         <div className="p-6 rounded-xl bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-blue-500/30">
                                             <div className="flex items-start gap-4 mb-6">
                                                 <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                                                    <MonitorIcon size={24} className="text-blue-400" />
+                                                    <MonitorIcon size={24} className="text-blue-600" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h3 className="text-lg font-semibold text-white mb-2">Cloud Browser Ready</h3>
-                                                    <p className="text-slate-400 text-sm">
+                                                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Cloud Browser Ready</h3>
+                                                    <p className="text-slate-500 text-sm">
                                                         Click the button below to open the cloud browser, then log into your {sourceOptions.find(s => s.id === source)?.name} account.
                                                     </p>
                                                 </div>
@@ -1626,8 +1577,8 @@ export default function FixMyApp() {
                                                 <ExternalLinkIcon size={18} /> Open Cloud Browser & Login
                                             </button>
 
-                                            <div className="flex items-center gap-2 text-sm text-slate-400">
-                                                <Loader2Icon size={14} className="animate-spin text-blue-400" />
+                                            <div className="flex items-center gap-2 text-sm text-slate-500">
+                                                <Loader2Icon size={14} className="animate-spin text-blue-600" />
                                                 <span>Waiting for you to log in... (auto-detecting)</span>
                                             </div>
                                         </div>
@@ -1635,16 +1586,16 @@ export default function FixMyApp() {
                                         {/* Instructions */}
                                         <ol className="mt-6 space-y-3">
                                             <li className="flex items-start gap-3">
-                                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">1</span>
-                                                <span className="text-slate-300">Click "Open Cloud Browser" above</span>
+                                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">1</span>
+                                                <span className="text-slate-700">Click "Open Cloud Browser" above</span>
                                             </li>
                                             <li className="flex items-start gap-3">
-                                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">2</span>
-                                                <span className="text-slate-300">Log into your {sourceOptions.find(s => s.id === source)?.name} account</span>
+                                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">2</span>
+                                                <span className="text-slate-700">Log into your {sourceOptions.find(s => s.id === source)?.name} account</span>
                                             </li>
                                             <li className="flex items-start gap-3">
-                                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">3</span>
-                                                <span className="text-slate-300">Once logged in, click "I've Logged In" below</span>
+                                                <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">3</span>
+                                                <span className="text-slate-700">Once logged in, click "I've Logged In" below</span>
                                             </li>
                                         </ol>
 
@@ -1667,24 +1618,24 @@ export default function FixMyApp() {
 
                                 {/* Fallback Option */}
                                 {!useShareLinkFallback ? (
-                                    <div className="mt-8 pt-6 border-t border-slate-700">
+                                    <div className="mt-8 pt-6 border-t border-black/[0.08]">
                                         <button
                                             onClick={() => setUseShareLinkFallback(true)}
-                                            className="text-sm text-slate-400 hover:text-slate-300 underline"
+                                            className="text-sm text-slate-500 hover:text-slate-700 underline"
                                         >
                                             Can't log in? Use share link instead
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="p-6 rounded-xl bg-slate-800/50 border border-slate-700">
-                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                            <LinkIcon size={18} className="text-amber-400" /> Share Link Fallback
+                                    <div className="p-6 rounded-xl bg-white/30 border border-black/[0.06]">
+                                        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                                            <LinkIcon size={18} className="text-amber-700" /> Share Link Fallback
                                         </h3>
-                                        <p className="text-slate-400 text-sm mb-4">
+                                        <p className="text-slate-500 text-sm mb-4">
                                             Share your project publicly in {sourceOptions.find(s => s.id === source)?.name}, then paste the share link below.
                                         </p>
 
-                                        <ol className="space-y-2 mb-4 text-sm text-slate-300">
+                                        <ol className="space-y-2 mb-4 text-sm text-slate-700">
                                             <li>1. Go to your project in {sourceOptions.find(s => s.id === source)?.name}</li>
                                             <li>2. Click the "Share" button</li>
                                             <li>3. Copy the share link</li>
@@ -1696,14 +1647,14 @@ export default function FixMyApp() {
                                             value={shareLink}
                                             onChange={(e) => setShareLink(e.target.value)}
                                             placeholder="Paste your share link here..."
-                                            className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all mb-4"
+                                            className="w-full px-4 py-3 rounded-lg bg-white/40 border border-black/[0.08] text-slate-900 placeholder-slate-500 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 outline-none transition-all mb-4"
                                         />
 
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => setUseShareLinkFallback(false)}
                                                 style={{...secondaryButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                                className="hover:bg-slate-600/60"
+                                                className="hover:bg-black/[0.04]"
                                             >
                                                 <ArrowLeftIcon size={16} /> Back to Login
                                             </button>
@@ -1738,7 +1689,7 @@ export default function FixMyApp() {
                                             setStep('consent');
                                         }}
                                         style={{...ghostButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                        className="hover:bg-white/10"
+                                        className="hover:bg-black/[0.04]"
                                     >
                                         <ArrowLeftIcon size={16} /> Change Project URL
                                     </button>
@@ -1748,9 +1699,9 @@ export default function FixMyApp() {
 
                         {/* Step 3: Upload - With Embedded Browser for AI Builders */}
                         {step === 'upload' && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800">
+                            <Card className="p-8 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 <h2 className="text-2xl font-bold mb-2">Import Your Project</h2>
-                                <p className="text-slate-400 mb-6">
+                                <p className="text-slate-500 mb-6">
                                     {requiresBrowserLogin()
                                         ? `Log in to ${sourceOptions.find(s => s.id === source)?.name} and navigate to your project.`
                                         : 'Upload your project files or paste your code.'}
@@ -1759,8 +1710,8 @@ export default function FixMyApp() {
                                 {/* GitHub - Direct URL */}
                                 {source === 'github' && (
                                     <div className="text-center py-8 mb-6">
-                                        <GitHubIcon size={64} className="mx-auto mb-4 text-slate-400" />
-                                        <p className="text-slate-300 mb-2">Repository: <code className="text-amber-400">{githubUrl}</code></p>
+                                        <GitHubIcon size={64} className="mx-auto mb-4 text-slate-500" />
+                                        <p className="text-slate-700 mb-2">Repository: <code className="text-amber-700">{githubUrl}</code></p>
                                         <p className="text-sm text-slate-500">Click continue to clone this repository</p>
                                     </div>
                                 )}
@@ -1769,14 +1720,14 @@ export default function FixMyApp() {
                                 {requiresBrowserLogin() && (
                                     <div className="mb-6">
                                         {/* Instructions for manual export and upload */}
-                                        <div className="p-6 border-2 border-dashed border-slate-700 rounded-xl mb-4">
+                                        <div className="p-6 border-2 border-dashed border-black/[0.08] rounded-xl mb-4">
                                             <div className="flex items-start gap-4 mb-6">
                                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center flex-shrink-0">
-                                                    <DownloadIcon size={24} className="text-amber-400" />
+                                                    <DownloadIcon size={24} className="text-amber-700" />
                                                 </div>
                                                 <div>
-                                                    <h3 className="text-lg font-semibold text-white mb-2">Export Your Project</h3>
-                                                    <p className="text-slate-400 text-sm">
+                                                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Export Your Project</h3>
+                                                    <p className="text-slate-500 text-sm">
                                                         We've opened {sourceOptions.find(s => s.id === source)?.name} in a new tab.
                                                         Follow these steps:
                                                     </p>
@@ -1785,36 +1736,36 @@ export default function FixMyApp() {
 
                                             <ol className="space-y-3 mb-6">
                                                 <li className="flex items-start gap-3">
-                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">1</span>
-                                                    <span className="text-slate-300">Log in to your account in the new tab</span>
+                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">1</span>
+                                                    <span className="text-slate-700">Log in to your account in the new tab</span>
                                                 </li>
                                                 <li className="flex items-start gap-3">
-                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">2</span>
-                                                    <span className="text-slate-300">Navigate to the project you want to fix</span>
+                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">2</span>
+                                                    <span className="text-slate-700">Navigate to the project you want to fix</span>
                                                 </li>
                                                 <li className="flex items-start gap-3">
-                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">3</span>
-                                                    <span className="text-slate-300">Export/download your project as a ZIP file</span>
+                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">3</span>
+                                                    <span className="text-slate-700">Export/download your project as a ZIP file</span>
                                                 </li>
                                                 <li className="flex items-start gap-3">
-                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 text-sm font-semibold flex items-center justify-center flex-shrink-0">4</span>
-                                                    <span className="text-slate-300">Upload the ZIP file below</span>
+                                                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-700 text-sm font-semibold flex items-center justify-center flex-shrink-0">4</span>
+                                                    <span className="text-slate-700">Upload the ZIP file below</span>
                                                 </li>
                                             </ol>
 
                                             <button
                                                 onClick={() => window.open(getPlatformUrl(), '_blank')}
                                                 style={{...secondaryButtonStyles, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}
-                                                className="hover:bg-slate-600/60 hover:translate-y-[1px] active:translate-y-[3px]"
+                                                className="hover:bg-black/[0.04] hover:translate-y-[1px] active:translate-y-[3px]"
                                             >
                                                 <MonitorIcon size={16} /> Open {sourceOptions.find(s => s.id === source)?.name} Again
                                             </button>
                                         </div>
 
                                         {/* Upload Section */}
-                                        <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center">
+                                        <div className="border-2 border-dashed border-black/[0.08] rounded-xl p-8 text-center">
                                             <UploadIcon size={48} className="mx-auto mb-4 text-slate-500" />
-                                            <p className="text-slate-300 mb-4">Upload your exported project ZIP or folder</p>
+                                            <p className="text-slate-700 mb-4">Upload your exported project ZIP or folder</p>
                                             <input
                                                 type="file"
                                                 webkitdirectory=""
@@ -1824,12 +1775,12 @@ export default function FixMyApp() {
                                                 id="file-upload-ai-builder"
                                             />
                                             <label htmlFor="file-upload-ai-builder" className="cursor-pointer">
-                                                <span style={{...secondaryButtonStyles, display: 'inline-block'}} className="hover:bg-slate-600/60">Select Files</span>
+                                                <span style={{...secondaryButtonStyles, display: 'inline-block'}} className="hover:bg-black/[0.04]">Select Files</span>
                                             </label>
 
                                             {files.length > 0 && (
                                                 <div className="mt-4 text-left">
-                                                    <p className="text-sm text-emerald-400 mb-2">
+                                                    <p className="text-sm text-emerald-600 mb-2">
                                                         ✓ {files.length} files selected
                                                     </p>
                                                 </div>
@@ -1840,9 +1791,9 @@ export default function FixMyApp() {
 
                                 {/* ZIP Upload - Manual file upload */}
                                 {source === 'zip' && (
-                                    <div className="border-2 border-dashed border-slate-700 rounded-xl p-8 text-center mb-6">
+                                    <div className="border-2 border-dashed border-black/[0.08] rounded-xl p-8 text-center mb-6">
                                         <PackageIcon size={48} className="mx-auto mb-4 text-slate-500" />
-                                        <p className="text-slate-300 mb-4">Drag & drop your project ZIP or folder</p>
+                                        <p className="text-slate-700 mb-4">Drag & drop your project ZIP or folder</p>
                                         <input
                                             type="file"
                                             webkitdirectory=""
@@ -1852,12 +1803,12 @@ export default function FixMyApp() {
                                             id="file-upload"
                                         />
                                         <label htmlFor="file-upload" className="cursor-pointer">
-                                            <span style={{...secondaryButtonStyles, display: 'inline-block'}} className="hover:bg-slate-600/60">Select Files</span>
+                                            <span style={{...secondaryButtonStyles, display: 'inline-block'}} className="hover:bg-black/[0.04]">Select Files</span>
                                         </label>
 
                                         {files.length > 0 && (
                                             <div className="mt-4 text-left">
-                                                <p className="text-sm text-emerald-400 mb-2">
+                                                <p className="text-sm text-emerald-600 mb-2">
                                                     ✓ {files.length} files selected
                                                 </p>
                                                 <div className="max-h-32 overflow-y-auto text-xs text-slate-500">
@@ -1877,7 +1828,7 @@ export default function FixMyApp() {
                                         <button
                                             onClick={() => setStep('consent')}
                                             style={{...secondaryButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                            className="hover:bg-slate-600/60 hover:translate-y-[1px] active:translate-y-[3px]"
+                                            className="hover:bg-black/[0.04] hover:translate-y-[1px] active:translate-y-[3px]"
                                         >
                                             <ArrowLeftIcon size={16} /> Back
                                         </button>
@@ -1900,7 +1851,7 @@ export default function FixMyApp() {
 
                         {/* Step 4: Context (Chat History) */}
                         {step === 'context' && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800">
+                            <Card className="p-8 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="text-3xl">
                                         {typeof sourceOptions.find(s => s.id === source)?.icon === 'string'
@@ -1909,24 +1860,24 @@ export default function FixMyApp() {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-bold">Paste Your Chat History</h2>
-                                        <p className="text-slate-400 text-sm">
+                                        <p className="text-slate-500 text-sm">
                                             from {sourceOptions.find(s => s.id === source)?.name}
                                         </p>
                                     </div>
                                 </div>
 
-                                <p className="text-slate-400 mb-6">
-                                    This conversation history is the <strong className="text-amber-400">secret weapon</strong> that boosts fix success from 60% to 95%.
+                                <p className="text-slate-500 mb-6">
+                                    This conversation history is the <strong className="text-amber-700">secret weapon</strong> that boosts fix success from 60% to 95%.
                                 </p>
 
                                 <div className="mb-6">
                                     {/* Source-specific instructions */}
-                                    <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 mb-4">
-                                        <h3 className="font-medium text-white mb-2 flex items-center gap-2">
+                                    <div className="p-4 rounded-lg bg-white/30 border border-black/[0.06] mb-4">
+                                        <h3 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                                             <MessageSquareIcon size={16} className="text-amber-500" />
                                             How to get your chat history from {sourceOptions.find(s => s.id === source)?.name}:
                                         </h3>
-                                        <ol className="text-sm text-slate-400 list-decimal list-inside space-y-1">
+                                        <ol className="text-sm text-slate-500 list-decimal list-inside space-y-1">
                                             {(sourceOptions.find(s => s.id === source)?.chatInstructions || [
                                                 `Open your ${sourceOptions.find(s => s.id === source)?.name} project`,
                                                 'Scroll to the top of the chat/conversation',
@@ -1940,7 +1891,7 @@ export default function FixMyApp() {
 
                                     {/* What to include tips */}
                                     <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 mb-4">
-                                        <p className="text-sm text-emerald-400">
+                                        <p className="text-sm text-emerald-600">
                                             💡 <strong>Include everything:</strong> Your requests, AI responses, error messages, and any code snippets.
                                             The more context, the better the fix!
                                         </p>
@@ -1950,7 +1901,7 @@ export default function FixMyApp() {
                                         value={chatHistory}
                                         onChange={(e) => setChatHistory(e.target.value)}
                                         placeholder={`Paste your ${sourceOptions.find(s => s.id === source)?.name} conversation here...\n\nExample:\nUser: Build me a todo app with dark mode\nAssistant: I'll create a todo app with...\n...`}
-                                        className="min-h-[300px] bg-slate-800 border-slate-700 font-mono text-sm"
+                                        className="min-h-[300px] bg-white/30 border-black/[0.08] font-mono text-sm"
                                     />
 
                                     {/* Character count */}
@@ -1965,14 +1916,14 @@ export default function FixMyApp() {
                                     <button
                                         onClick={() => setStep('upload')}
                                         style={{...secondaryButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                        className="hover:bg-slate-600/60 hover:translate-y-[1px] active:translate-y-[3px]"
+                                        className="hover:bg-black/[0.04] hover:translate-y-[1px] active:translate-y-[3px]"
                                     >
                                         <ArrowLeftIcon size={16} /> Back
                                     </button>
                                     <button
                                         onClick={runAnalysis}
                                         style={{...ghostButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                        className="hover:bg-white/10 hover:text-white"
+                                        className="hover:bg-black/[0.04] hover:text-slate-900"
                                     >
                                         Skip Context
                                         <span className="text-xs opacity-60">(~60%)</span>
@@ -1995,11 +1946,11 @@ export default function FixMyApp() {
 
                         {/* Step 5: Analysis Results */}
                         {step === 'analysis' && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800">
+                            <Card className="p-8 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 <div className="flex flex-col items-center justify-center py-12">
                                     <BrainIcon size={64} className="text-amber-500 animate-pulse mb-6" />
                                     <h2 className="text-2xl font-bold mb-2">Analyzing Your Project</h2>
-                                    <p className="text-slate-400 mb-8">{currentActivity || 'Extracting intent and building error timeline...'}</p>
+                                    <p className="text-slate-500 mb-8">{currentActivity || 'Extracting intent and building error timeline...'}</p>
                                     <Progress value={progress} className="w-full max-w-md" />
                                 </div>
                             </Card>
@@ -2007,9 +1958,9 @@ export default function FixMyApp() {
 
                         {/* Step 5.5: UI Preferences */}
                         {step === 'preferences' && intentSummary && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800">
+                            <Card className="p-8 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 <h2 className="text-2xl font-bold mb-2">How Should We Handle Your UI?</h2>
-                                <p className="text-slate-400 mb-8">
+                                <p className="text-slate-500 mb-8">
                                     We found your existing design. Do you want to keep it or start fresh?
                                 </p>
 
@@ -2021,22 +1972,22 @@ export default function FixMyApp() {
                                             "w-full p-6 rounded-xl border-2 text-left transition-all",
                                             uiPreference === 'keep_ui'
                                                 ? "border-emerald-500 bg-emerald-500/10"
-                                                : "border-slate-700 hover:border-slate-600"
+                                                : "border-black/[0.08] hover:border-black/[0.12]"
                                         )}
                                     >
                                         <div className="flex items-start gap-4">
                                             <div className={cn(
                                                 "w-12 h-12 rounded-xl flex items-center justify-center text-2xl",
-                                                uiPreference === 'keep_ui' ? "bg-emerald-500/20" : "bg-slate-800"
+                                                uiPreference === 'keep_ui' ? "bg-emerald-500/20" : "bg-white/30"
                                             )}>
                                                 🎨
                                             </div>
                                             <div className="flex-1">
-                                                <div className="font-semibold text-white mb-1">Keep My UI</div>
-                                                <p className="text-sm text-slate-400">
+                                                <div className="font-semibold text-slate-900 mb-1">Keep My UI</div>
+                                                <p className="text-sm text-slate-500">
                                                     Preserve your existing design exactly. We'll clone your UI components and only fix the broken functions/logic underneath.
                                                 </p>
-                                                <div className="mt-2 text-xs text-emerald-400">
+                                                <div className="mt-2 text-xs text-emerald-600">
                                                     Best for: "I love my design, just make it work"
                                                 </div>
                                             </div>
@@ -2050,22 +2001,22 @@ export default function FixMyApp() {
                                             "w-full p-6 rounded-xl border-2 text-left transition-all",
                                             uiPreference === 'improve_ui'
                                                 ? "border-amber-500 bg-amber-500/10"
-                                                : "border-slate-700 hover:border-slate-600"
+                                                : "border-black/[0.08] hover:border-black/[0.12]"
                                         )}
                                     >
                                         <div className="flex items-start gap-4">
                                             <div className={cn(
                                                 "w-12 h-12 rounded-xl flex items-center justify-center text-2xl",
-                                                uiPreference === 'improve_ui' ? "bg-amber-500/20" : "bg-slate-800"
+                                                uiPreference === 'improve_ui' ? "bg-amber-500/20" : "bg-white/30"
                                             )}>
                                                 ✨
                                             </div>
                                             <div className="flex-1">
-                                                <div className="font-semibold text-white mb-1">Improve If Needed</div>
-                                                <p className="text-sm text-slate-400">
+                                                <div className="font-semibold text-slate-900 mb-1">Improve If Needed</div>
+                                                <p className="text-sm text-slate-500">
                                                     Keep your general design direction and colors, but allow improvements to component structure for better UX.
                                                 </p>
-                                                <div className="mt-2 text-xs text-amber-400">
+                                                <div className="mt-2 text-xs text-amber-700">
                                                     Best for: "Make it work, and make it better"
                                                 </div>
                                             </div>
@@ -2079,22 +2030,22 @@ export default function FixMyApp() {
                                             "w-full p-6 rounded-xl border-2 text-left transition-all",
                                             uiPreference === 'rebuild_ui'
                                                 ? "border-blue-500 bg-blue-500/10"
-                                                : "border-slate-700 hover:border-slate-600"
+                                                : "border-black/[0.08] hover:border-black/[0.12]"
                                         )}
                                     >
                                         <div className="flex items-start gap-4">
                                             <div className={cn(
                                                 "w-12 h-12 rounded-xl flex items-center justify-center text-2xl",
-                                                uiPreference === 'rebuild_ui' ? "bg-blue-500/20" : "bg-slate-800"
+                                                uiPreference === 'rebuild_ui' ? "bg-blue-500/20" : "bg-white/30"
                                             )}>
                                                 🚀
                                             </div>
                                             <div className="flex-1">
-                                                <div className="font-semibold text-white mb-1">Rebuild From Scratch</div>
-                                                <p className="text-sm text-slate-400">
+                                                <div className="font-semibold text-slate-900 mb-1">Rebuild From Scratch</div>
+                                                <p className="text-sm text-slate-500">
                                                     Don't worry about the existing UI. Build a fresh, premium design based on your original requirements.
                                                 </p>
-                                                <div className="mt-2 text-xs text-blue-400">
+                                                <div className="mt-2 text-xs text-blue-600">
                                                     Best for: "Start over with a better design"
                                                 </div>
                                             </div>
@@ -2104,14 +2055,14 @@ export default function FixMyApp() {
 
                                 {/* Additional instructions */}
                                 <div className="mb-8">
-                                    <Label className="text-slate-300 mb-2 block">
+                                    <Label className="text-slate-700 mb-2 block">
                                         Any specific instructions? (optional)
                                     </Label>
                                     <Textarea
                                         value={additionalInstructions}
                                         onChange={(e) => setAdditionalInstructions(e.target.value)}
                                         placeholder="e.g., 'Keep the dark theme but improve the button animations' or 'Make sure the sidebar navigation works exactly as I designed it'"
-                                        className="bg-slate-800 border-slate-700 min-h-[100px]"
+                                        className="bg-white/30 border-black/[0.08] min-h-[100px]"
                                     />
                                 </div>
 
@@ -2119,7 +2070,7 @@ export default function FixMyApp() {
                                     <button
                                         onClick={() => setStep('analysis')}
                                         style={{...secondaryButtonStyles, display: 'flex', alignItems: 'center', gap: '8px'}}
-                                        className="hover:bg-slate-600/60 hover:translate-y-[1px] active:translate-y-[3px]"
+                                        className="hover:bg-black/[0.04] hover:translate-y-[1px] active:translate-y-[3px]"
                                     >
                                         <ArrowLeftIcon size={16} /> Back
                                     </button>
@@ -2143,16 +2094,16 @@ export default function FixMyApp() {
                         {step === 'strategy' && intentSummary && (
                             <div className="space-y-6">
                                 {/* Intent Summary */}
-                                <Card className="p-6 bg-slate-900/50 border-slate-800">
+                                <Card className="p-6 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                         <TargetIcon size={20} className="text-amber-500" />
                                         What You Wanted to Build
                                     </h3>
-                                    <p className="text-slate-300 mb-4">{intentSummary.corePurpose}</p>
+                                    <p className="text-slate-700 mb-4">{intentSummary.corePurpose}</p>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-400 mb-2">Primary Features</h4>
+                                            <h4 className="text-sm font-medium text-slate-500 mb-2">Primary Features</h4>
                                             <div className="space-y-2">
                                                 {intentSummary.primaryFeatures.map(f => (
                                                     <div key={f.id} className="flex items-center gap-2">
@@ -2160,13 +2111,13 @@ export default function FixMyApp() {
                                                         {f.status === 'partial' && <AlertCircleIcon size={16} className="text-amber-500" />}
                                                         {f.status === 'missing' && <AlertCircleIcon size={16} className="text-red-500" />}
                                                         {f.status === 'broken' && <AlertCircleIcon size={16} className="text-red-500" />}
-                                                        <span className="text-sm text-white">{f.name}</span>
+                                                        <span className="text-sm text-slate-900">{f.name}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                         <div>
-                                            <h4 className="text-sm font-medium text-slate-400 mb-2">Secondary Features</h4>
+                                            <h4 className="text-sm font-medium text-slate-500 mb-2">Secondary Features</h4>
                                             <div className="space-y-2">
                                                 {intentSummary.secondaryFeatures.map(f => (
                                                     <div key={f.id} className="flex items-center gap-2">
@@ -2174,7 +2125,7 @@ export default function FixMyApp() {
                                                         {f.status === 'partial' && <AlertCircleIcon size={16} className="text-amber-500" />}
                                                         {f.status === 'missing' && <AlertCircleIcon size={16} className="text-red-500" />}
                                                         {f.status === 'broken' && <AlertCircleIcon size={16} className="text-red-500" />}
-                                                        <span className="text-sm text-white">{f.name}</span>
+                                                        <span className="text-sm text-slate-900">{f.name}</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -2184,7 +2135,7 @@ export default function FixMyApp() {
 
                                 {/* Error Timeline */}
                                 {errorTimeline && errorTimeline.errorCount > 0 && (
-                                    <Card className="p-6 bg-slate-900/50 border-slate-800">
+                                    <Card className="p-6 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                             <AlertCircleIcon size={20} className="text-red-500" />
                                             Error Archaeology
@@ -2192,13 +2143,13 @@ export default function FixMyApp() {
                                         <div className="space-y-3">
                                             {errorTimeline.firstError && (
                                                 <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                                                    <div className="text-sm font-medium text-red-400">
+                                                    <div className="text-sm font-medium text-red-600">
                                                         First Error (Message #{errorTimeline.firstError.messageNumber})
                                                     </div>
-                                                    <div className="text-sm text-slate-300">{errorTimeline.firstError.description}</div>
+                                                    <div className="text-sm text-slate-700">{errorTimeline.firstError.description}</div>
                                                 </div>
                                             )}
-                                            <div className="text-sm text-slate-400">
+                                            <div className="text-sm text-slate-500">
                                                 <strong>Root Cause:</strong> {errorTimeline.rootCause}
                                             </div>
                                             {errorTimeline.cascadingFailures && (
@@ -2209,7 +2160,7 @@ export default function FixMyApp() {
                                 )}
 
                                 {/* Strategy Selection */}
-                                <Card className="p-6 bg-slate-900/50 border-slate-800">
+                                <Card className="p-6 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                                         <SparklesIcon size={20} className="text-amber-500" />
                                         Recommended Fix Strategy
@@ -2223,24 +2174,24 @@ export default function FixMyApp() {
                                                     "w-full p-4 rounded-xl border-2 text-left transition-all",
                                                     selectedStrategy === recommendedStrategy
                                                         ? "border-amber-500 bg-amber-500/10"
-                                                        : "border-slate-700 hover:border-slate-600"
+                                                        : "border-black/[0.08] hover:border-black/[0.12]"
                                                 )}
                                             >
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <Badge className="bg-amber-500/20 text-amber-400">Recommended</Badge>
-                                                    <span className="text-2xl font-bold text-emerald-400">
+                                                    <Badge className="bg-amber-500/20 text-amber-700">Recommended</Badge>
+                                                    <span className="text-2xl font-bold text-emerald-600">
                                                         {Math.round(recommendedStrategy.confidence * 100)}% confidence
                                                     </span>
                                                 </div>
-                                                <div className="font-semibold text-white capitalize mb-2">
+                                                <div className="font-semibold text-slate-900 capitalize mb-2">
                                                     {recommendedStrategy.approach.replace('_', ' ')}
                                                 </div>
-                                                <p className="text-sm text-slate-400 mb-3">{recommendedStrategy.reasoning}</p>
+                                                <p className="text-sm text-slate-500 mb-3">{recommendedStrategy.reasoning}</p>
                                                 <div className="flex gap-4 text-sm">
-                                                    <span className="text-slate-400">
+                                                    <span className="text-slate-500">
                                                         ⏱️ ~{recommendedStrategy.estimatedTimeMinutes} min
                                                     </span>
-                                                    <span className="text-slate-400">
+                                                    <span className="text-slate-500">
                                                         💰 ~${recommendedStrategy.estimatedCost.toFixed(2)}
                                                     </span>
                                                 </div>
@@ -2248,8 +2199,8 @@ export default function FixMyApp() {
 
                                             {alternativeStrategies.length > 0 && (
                                                 <>
-                                                    <Separator className="bg-slate-700" />
-                                                    <div className="text-sm text-slate-400 mb-2">Alternative Strategies:</div>
+                                                    <Separator className="bg-black/[0.08]" />
+                                                    <div className="text-sm text-slate-500 mb-2">Alternative Strategies:</div>
                                                     {alternativeStrategies.map((strategy, i) => (
                                                         <button
                                                             key={i}
@@ -2258,14 +2209,14 @@ export default function FixMyApp() {
                                                                 "w-full p-4 rounded-xl border-2 text-left transition-all",
                                                                 selectedStrategy === strategy
                                                                     ? "border-amber-500 bg-amber-500/10"
-                                                                    : "border-slate-700 hover:border-slate-600"
+                                                                    : "border-black/[0.08] hover:border-black/[0.12]"
                                                             )}
                                                         >
                                                             <div className="flex items-center justify-between mb-2">
-                                                                <span className="font-medium text-white capitalize">
+                                                                <span className="font-medium text-slate-900 capitalize">
                                                                     {strategy.approach.replace('_', ' ')}
                                                                 </span>
-                                                                <span className="text-slate-400">
+                                                                <span className="text-slate-500">
                                                                     {Math.round(strategy.confidence * 100)}% confidence
                                                                 </span>
                                                             </div>
@@ -2278,8 +2229,8 @@ export default function FixMyApp() {
                                     )}
 
                                     {/* Fix Mode Selector */}
-                                    <div className="mt-6 p-4 bg-slate-800/30 rounded-xl">
-                                        <h4 className="text-sm font-medium text-slate-400 mb-3">Fix Mode</h4>
+                                    <div className="mt-6 p-4 bg-white/20 rounded-xl">
+                                        <h4 className="text-sm font-medium text-slate-500 mb-3">Fix Mode</h4>
                                         <SpeedDialSelector
                                             selectedMode={fixMode}
                                             onModeChange={setFixMode}
@@ -2301,26 +2252,26 @@ export default function FixMyApp() {
                         {/* Step 7: Fix Progress - Enhanced with Ultimate Builder Components */}
                         {step === 'fix' && (
                             <div className="space-y-4">
-                                <Card className="p-6 bg-slate-900/50 border-slate-800">
+                                <Card className="p-6 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                     <div className="flex items-center gap-4 mb-4">
                                         <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
                                             <SettingsIcon size={20} className="text-amber-500 animate-pulse" />
                                         </div>
                                         <div>
                                             <h2 className="text-lg font-bold">Fixing Your App</h2>
-                                            <p className="text-sm text-slate-400">{currentActivity}</p>
+                                            <p className="text-sm text-slate-500">{currentActivity}</p>
                                         </div>
                                     </div>
 
                                     {/* Build Phase Indicator */}
-                                    <div className="mb-4 p-3 bg-slate-800/30 rounded-xl">
+                                    <div className="mb-4 p-3 bg-white/20 rounded-xl">
                                     </div>
 
                                     <Progress value={progress} className="h-2 mb-4" />
 
                                     {/* Fix Mode Badge */}
                                     <div className="flex items-center gap-2 mb-4">
-                                        <Badge variant="outline" className="bg-amber-500/10 border-amber-500/30 text-amber-400">
+                                        <Badge variant="outline" className="bg-amber-500/10 border-amber-500/30 text-amber-700">
                                             {fixMode === 'standard' ? 'Standard' : 'Production'}
                                         </Badge>
                                         <span className="text-xs text-slate-500">
@@ -2330,9 +2281,9 @@ export default function FixMyApp() {
                                     </div>
 
                                     {/* Logs */}
-                                    <div className="bg-slate-800/50 rounded-xl p-3 font-mono text-xs h-40 overflow-y-auto">
+                                    <div className="bg-white/30/50 rounded-xl p-3 font-mono text-xs h-40 overflow-y-auto">
                                         {logs.map((log, i) => (
-                                            <div key={i} className="text-slate-300">
+                                            <div key={i} className="text-slate-700">
                                                 <span className="text-slate-500">[{new Date().toLocaleTimeString()}]</span> {log}
                                             </div>
                                         ))}
@@ -2340,14 +2291,14 @@ export default function FixMyApp() {
                                 </Card>
 
                                 {/* premium glass Status */}
-                                <Card className="p-4 bg-slate-900/50 border-slate-800">
+                                <Card className="p-4 border-0" style={{ background: 'linear-gradient(145deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.4) 50%, rgba(248,248,250,0.45) 100%)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.9), 0 0 0 1px rgba(255,255,255,0.5)', borderRadius: 20 }}>
                                 </Card>
                             </div>
                         )}
 
                         {/* Step 8: Complete */}
                         {step === 'complete' && notification && (
-                            <Card className="p-8 bg-slate-900/50 border-slate-800 text-center">
+                            <Card className="p-8 border-0 text-center">
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
@@ -2355,14 +2306,14 @@ export default function FixMyApp() {
                                     className="mb-6"
                                 >
                                     <div className="text-6xl mb-4">{notification.emoji}</div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">{notification.title}</h2>
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-2">{notification.title}</h2>
                                 </motion.div>
 
                                 <motion.p
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.3 }}
-                                    className="text-lg text-slate-300 mb-4"
+                                    className="text-lg text-slate-700 mb-4"
                                 >
                                     {notification.message}
                                 </motion.p>
@@ -2371,7 +2322,7 @@ export default function FixMyApp() {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.6 }}
-                                    className="text-amber-400 font-medium mb-8"
+                                    className="text-amber-700 font-medium mb-8"
                                 >
                                     {notification.subtext}
                                 </motion.p>
@@ -2390,10 +2341,10 @@ export default function FixMyApp() {
                                 {verificationReport && (
                                     <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 mb-8 text-left">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <CheckCircle2Icon size={20} className="text-emerald-400" />
-                                            <span className="font-medium text-emerald-400">Verification Passed</span>
+                                            <CheckCircle2Icon size={20} className="text-emerald-600" />
+                                            <span className="font-medium text-emerald-600">Verification Passed</span>
                                         </div>
-                                        <p className="text-sm text-slate-400">
+                                        <p className="text-sm text-slate-500">
                                             {verificationReport.featureVerifications?.filter((f: any) => f.working).length || 0} /
                                             {verificationReport.featureVerifications?.length || 0} features working
                                         </p>

@@ -32,10 +32,10 @@
   --fma-blue-500: #3b82f6;
   
   /* Glass properties */
-  --fma-glass-bg: rgba(15, 23, 42, 0.7);
-  --fma-glass-border: rgba(255, 255, 255, 0.08);
-  --fma-glass-highlight: rgba(255, 255, 255, 0.15);
-  --fma-glass-shadow: rgba(0, 0, 0, 0.4);
+  --fma-glass-bg: rgba(255, 255, 255, 0.45);
+  --fma-glass-border: rgba(0, 0, 0, 0.06);
+  --fma-glass-highlight: rgba(255, 255, 255, 0.8);
+  --fma-glass-shadow: rgba(0, 0, 0, 0.08);
   
   /* Depth shadows */
   --fma-shadow-sm: 0 2px 0 rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2);
@@ -56,7 +56,7 @@
 .fma-container {
   position: relative;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0b 0%, #0f172a 50%, #0a0a0b 100%);
+  background: linear-gradient(145deg, #e8e4df 0%, #d8d4cf 50%, #ccc8c3 100%);
   overflow: hidden;
 }
 
