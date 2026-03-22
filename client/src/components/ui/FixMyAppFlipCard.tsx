@@ -74,19 +74,48 @@ const DEFAULT_THOUGHTS = [
 
 function highlightSyntax(line: string): React.ReactNode {
   if (!line) return <span>&nbsp;</span>;
-  return line
-    .replace(/(const|let|var|async|function|await|for|of|if|return|import|from)/g, '§KW§$1§/KW§')
-    .replace(/(".*?")/g, '§STR§$1§/STR§')
-    .replace(/(\/\/.*)/g, '§CMT§$1§/CMT§')
-    .split(/(§\/?(?:KW|STR|CMT)§)/)
-    .reduce((acc: React.ReactNode[], part, i) => {
-      if (part === '§KW§') return [...acc, <span key={i} style={{ color: '#c792ea' }}>];
-      if (part === '§STR§') return [...acc, <span key={i} style={{ color: '#c3e88d' }}>];
-      if (part === '§CMT§') return [...acc, <span key={i} style={{ color: '#546e7a' }}>];
-      if (part === '§/KW§' || part === '§/STR§' || part === '§/CMT§') return [...acc, </span>];
-      if (part.match(/§/)) return acc;
-      return [...acc, part];
-    }, []);
+
+  const tokens: React.ReactNode[] = [];
+  let remaining = line;
+  let key = 0;
+
+  while (remaining.length > 0) {
+    // Check for comments first
+    const commentMatch = remaining.match(/^(\/\/.*)/);
+    if (commentMatch) {
+      tokens.push(<span key={key++} style={{ color: '#546e7a' }}>{commentMatch[1]}</span>);
+      remaining = remaining.slice(commentMatch[1].length);
+      continue;
+    }
+
+    // Check for strings
+    const strMatch = remaining.match(/^(".*?")/);
+    if (strMatch) {
+      tokens.push(<span key={key++} style={{ color: '#c3e88d' }}>{strMatch[1]}</span>);
+      remaining = remaining.slice(strMatch[1].length);
+      continue;
+    }
+
+    // Check for keywords
+    const kwMatch = remaining.match(/^(const|let|var|async|function|await|for|of|if|return|import|from)\b/);
+    if (kwMatch) {
+      tokens.push(<span key={key++} style={{ color: '#c792ea' }}>{kwMatch[1]}</span>);
+      remaining = remaining.slice(kwMatch[1].length);
+      continue;
+    }
+
+    // Plain text — consume until next special token
+    const nextSpecial = remaining.search(/(\/\/|"|(?:const|let|var|async|function|await|for|of|if|return|import|from)\b)/);
+    if (nextSpecial > 0) {
+      tokens.push(remaining.slice(0, nextSpecial));
+      remaining = remaining.slice(nextSpecial);
+    } else {
+      tokens.push(remaining);
+      break;
+    }
+  }
+
+  return <>{tokens}</>;
 }
 
 export function FixMyAppFlipCard({

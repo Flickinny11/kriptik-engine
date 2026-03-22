@@ -2,6 +2,7 @@
  * useProjectSettingsStore - Shared Zustand store for project-level settings
  *
  * This store is the single source of truth for project settings.
+ * All floating panels (Verification Swarm, Ghost Mode, Tournament, Live Video,
  * Soft Interrupt) read their configuration from this store instead of using
  * hardcoded defaults.
  *
@@ -18,7 +19,7 @@ import { apiClient } from '../lib/api-client';
 
 export interface BuildConfig {
   defaultModel: string;
-  speedMode: 'standard' | 'production';
+  speedMode: 'standard' | 'tournament' | 'production';
   buildType: 'web' | 'mobile' | 'api';
   extendedThinking: boolean;
   autoMergeOnPass: boolean;
@@ -74,6 +75,7 @@ export interface VerificationConfig {
   agents?: Record<string, { enabled: boolean; autoFix?: boolean }>;
 }
 
+export interface TournamentConfig {
   competitors: number;
   autoMergeWinner: boolean;
 }
@@ -124,6 +126,7 @@ export interface ProjectSettings {
   design: DesignConfig;
   ghostMode: GhostModeConfig;
   verification: VerificationConfig;
+  tournament?: TournamentConfig;
   featureAgent?: FeatureAgentConfig;
   timeMachine: TimeMachineConfig;
   learning: LearningConfig;
@@ -197,6 +200,7 @@ export const DEFAULT_PROJECT_SETTINGS: ProjectSettings = {
     autoMerge: false,
     checkpointInterval: 15,
   },
+  tournament: {
     competitors: 3,
     autoMergeWinner: false,
   },

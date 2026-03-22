@@ -8,6 +8,8 @@
  * 2. Error occurs in user's app (click handler, API call, etc.)
  * 3. Preview iframe sends postMessage with error details
  * 4. This store captures the error
+ * 5. RepairManPanel activates -> triggers verification swarm
+ * 6. Gemini Live + verification swarm investigate and fix
  * 7. Error resolved -> panel dismisses, swarm stands down
  *
  * The repair-man panel should NEVER activate until there's an error in the
@@ -53,6 +55,7 @@ export interface ErrorReproductionAttempt {
     }>;
 }
 
+export interface VerificationSwarmStatus {
     isDeployed: boolean;
     deployedAt?: number;
     agents: Array<{
@@ -69,6 +72,7 @@ interface UserAppErrorsState {
     projectId: string | null;
     errors: UserAppError[];
     reproductionAttempts: ErrorReproductionAttempt[];
+    verificationSwarm: VerificationSwarmStatus;
     isRepairManActive: boolean;
     
     lastErrorAt: number | null;
@@ -83,6 +87,9 @@ interface UserAppErrorsState {
     
     addReproductionAttempt: (attempt: Omit<ErrorReproductionAttempt, 'id' | 'timestamp'>) => void;
     
+    deployVerificationSwarm: () => void;
+    updateSwarmAgent: (agentType: VerificationSwarmStatus['agents'][0]['type'], updates: Partial<VerificationSwarmStatus['agents'][0]>) => void;
+    setSwarmVerdict: (verdict: VerificationSwarmStatus['verdict']) => void;
     standDownSwarm: () => void;
     
     setRepairManActive: (active: boolean) => void;
@@ -94,6 +101,7 @@ interface UserAppErrorsState {
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const initialSwarmStatus: VerificationSwarmStatus = {
     isDeployed: false,
     agents: [
         { type: 'error_checker', status: 'idle', progress: 0 },
@@ -111,6 +119,7 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
             projectId: null,
             errors: [],
             reproductionAttempts: [],
+            verificationSwarm: { ...initialSwarmStatus },
             isRepairManActive: false,
             lastErrorAt: null,
             totalErrorsCaptured: 0,
@@ -122,6 +131,7 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
                         projectId,
                         errors: [],
                         reproductionAttempts: [],
+                        verificationSwarm: { ...initialSwarmStatus },
                         isRepairManActive: false,
                         lastErrorAt: null,
                     });
@@ -164,6 +174,7 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
                 set({
                     errors: [],
                     reproductionAttempts: [],
+                    verificationSwarm: { ...initialSwarmStatus },
                     isRepairManActive: false,
                     lastErrorAt: null,
                 });
@@ -196,10 +207,14 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
                 }));
             },
             
+            deployVerificationSwarm: () => {
                 set((state) => ({
+                    verificationSwarm: {
+                        ...state.verificationSwarm,
                         isDeployed: true,
                         deployedAt: Date.now(),
                         verdict: 'fixing',
+                        agents: state.verificationSwarm.agents.map((a) => ({
                             ...a,
                             status: 'investigating' as const,
                             progress: 0,
@@ -208,16 +223,24 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
                     isRepairManActive: true,
                 }));
                 
+                console.log('[UserAppErrors] Verification swarm deployed');
             },
             
+            updateSwarmAgent: (agentType, updates) => {
                 set((state) => ({
+                    verificationSwarm: {
+                        ...state.verificationSwarm,
+                        agents: state.verificationSwarm.agents.map((a) =>
                             a.type === agentType ? { ...a, ...updates } : a
                         ),
                     },
                 }));
             },
             
+            setSwarmVerdict: (verdict) => {
                 set((state) => ({
+                    verificationSwarm: {
+                        ...state.verificationSwarm,
                         verdict,
                     },
                 }));
@@ -225,9 +248,11 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
             
             standDownSwarm: () => {
                 set({
+                    verificationSwarm: { ...initialSwarmStatus },
                     isRepairManActive: false,
                 });
                 
+                console.log('[UserAppErrors] Verification swarm stood down');
             },
             
             setRepairManActive: (active) => {
@@ -236,6 +261,8 @@ export const useUserAppErrorsStore = create<UserAppErrorsState>()(
             
             setGeminiLiveSessionId: (sessionId) => {
                 set((state) => ({
+                    verificationSwarm: {
+                        ...state.verificationSwarm,
                         geminiLiveSessionId: sessionId,
                     },
                 }));

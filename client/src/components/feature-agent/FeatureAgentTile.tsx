@@ -22,6 +22,7 @@ import { FeaturePreviewWindow } from './FeaturePreviewWindow';
 import { FeatureAgentActivityStream } from './FeatureAgentActivityStream';
 import type { AgentActivityEvent } from '@/types/agent-activity';
 import { parseStreamChunkToEvent } from '@/types/agent-activity';
+import TournamentStreamResults, { type TournamentStreamData } from '../builder/TournamentStreamResults';
 import './feature-agent-tile.css';
 
 // =============================================================================
@@ -385,6 +386,7 @@ export function FeatureAgentTile({ agentId, onClose, onMinimize, initialPosition
   const [showGhostModeConfig, setShowGhostModeConfig] = useState(false);
   const [showPreviewWindow, setShowPreviewWindow] = useState(false);
   const [activityEvents, setActivityEvents] = useState<AgentActivityEvent[]>([]);
+  const [tournamentData, setTournamentData] = useState<TournamentStreamData | null>(null);
 
   // NEW: Planning/Iteration mode toggle (like Builder view)
   const [planningMode, setPlanningMode] = useState<'planning' | 'iterate'>('planning');
@@ -438,34 +440,51 @@ export function FeatureAgentTile({ agentId, onClose, onMinimize, initialPosition
         const rawData = JSON.parse(evt.data);
         if (!rawData || typeof rawData !== 'object' || typeof rawData.type !== 'string') return;
 
+        // Handle tournament events separately (they use different type strings)
         const eventType = rawData.type as string;
+        if (eventType === 'tournament-started') {
           const meta = (rawData.metadata || {}) as Record<string, unknown>;
+          setTournamentData({
+            tournamentId: (meta.tournamentId as string) || `t-${Date.now()}`,
             featureDescription: (meta.featureDescription as string) || 'Feature build',
             phase: 'init',
+            competitors: (meta.competitors as TournamentStreamData['competitors']) || [],
+            judges: (meta.judges as TournamentStreamData['judges']) || [],
             startTime: Date.now(),
           });
           return;
+        } else if (eventType === 'tournament-competitor-update') {
           const meta = (rawData.metadata || {}) as Record<string, unknown>;
+          setTournamentData(prev => {
             if (!prev) return prev;
+            const update = meta.update as Partial<TournamentStreamData['competitors'][0]> || {};
             const competitors = prev.competitors.map(c =>
               c.id === meta.competitorId ? { ...c, ...update } : c
             );
+            const phase = (meta.phase as TournamentStreamData['phase']) || prev.phase;
             return { ...prev, competitors, phase };
           });
           return;
+        } else if (eventType === 'tournament-judge-update') {
           const meta = (rawData.metadata || {}) as Record<string, unknown>;
+          setTournamentData(prev => {
             if (!prev) return prev;
+            const update = meta.update as Partial<TournamentStreamData['judges'][0]> || {};
             const judges = prev.judges.map(j =>
               j.id === meta.judgeId ? { ...j, ...update } : j
             );
+            const phase = (meta.phase as TournamentStreamData['phase']) || prev.phase;
             return { ...prev, judges, phase };
           });
           return;
+        } else if (eventType === 'tournament-complete') {
           const meta = (rawData.metadata || {}) as Record<string, unknown>;
+          setTournamentData(prev => {
             if (!prev) return prev;
             return {
               ...prev,
               phase: 'complete' as const,
+              winner: meta.winner as TournamentStreamData['winner'],
               endTime: Date.now(),
             };
           });
@@ -615,22 +634,22 @@ export function FeatureAgentTile({ agentId, onClose, onMinimize, initialPosition
     }
   };
 
-  // Step modification type for API calls
-  type StepModification = { type: string; content: string };
+  // Phase modification type for API calls
+  type PhaseModification = { type: string; content: string };
 
-  const approveStep = async (phaseId: string) => {
+  const approvePhase = async (phaseId: string) => {
     await apiClient.post(`/api/developer-mode/feature-agent/${encodeURIComponent(agentId)}/plan/approve-phase`, { phaseId });
-    addMessage(agentId, { type: 'status', content: `Step approved: ${phaseId}`, timestamp: Date.now() });
+    addMessage(agentId, { type: 'status', content: `Phase approved: ${phaseId}`, timestamp: Date.now() });
   };
 
-  const modifyStep = async (phaseId: string, modifications: StepModification[]) => {
+  const modifyPhase = async (phaseId: string, modifications: PhaseModification[]) => {
     await apiClient.post(`/api/developer-mode/feature-agent/${encodeURIComponent(agentId)}/plan/modify-phase`, { phaseId, modifications });
-    addMessage(agentId, { type: 'status', content: `Step modification submitted: ${phaseId}`, timestamp: Date.now() });
+    addMessage(agentId, { type: 'status', content: `Phase modification submitted: ${phaseId}`, timestamp: Date.now() });
   };
 
   // Suppress unused variable warnings - these are available for future use
-  void approveStep;
-  void modifyStep;
+  void approvePhase;
+  void modifyPhase;
 
   const approveAll = async () => {
     await apiClient.post(`/api/developer-mode/feature-agent/${encodeURIComponent(agentId)}/plan/approve-all`, {});
@@ -768,7 +787,14 @@ export function FeatureAgentTile({ agentId, onClose, onMinimize, initialPosition
 
       <div className="fa-tile__body">
         <div className="fa-tile__scroll" ref={scrollRef}>
+          {/* Tournament Mode Results - shows when tournament is active */}
+          {tournamentData && (
+            <div className="fa-tile__tournament">
+              <TournamentStreamResults
+                data={tournamentData}
                 onSelectWinner={(files) => {
+                  console.log('[FeatureAgentTile] Tournament winner files:', Object.keys(files));
+                  setTournamentData(null);
                 }}
               />
             </div>
