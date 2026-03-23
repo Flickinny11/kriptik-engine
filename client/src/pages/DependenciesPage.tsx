@@ -23,6 +23,7 @@ import { ConnectButton } from '@/components/dependencies/ConnectButton';
 import { useDependencyConnect } from '@/hooks/useDependencyConnect';
 import { useUserStore } from '@/store/useUserStore';
 import { useProjectStore } from '@/store/useProjectStore';
+import { useDependencyStore } from '@/store/useDependencyStore';
 import { apiClient } from '@/lib/api-client';
 import type { ServiceRegistryEntry, CategoryMeta, Project } from '@/lib/api-client';
 import '@/styles/realistic-glass.css';
@@ -36,7 +37,15 @@ export default function DependenciesPage() {
   const user = useUserStore(s => s.user);
   const { projects, fetchProjects } = useProjectStore();
 
-  // Data loading
+  // Service registry from global store
+  const storeServices = useDependencyStore(s => s.services);
+  const storeCategories = useDependencyStore(s => s.categories);
+  const registryLoaded = useDependencyStore(s => s.registryLoaded);
+  const loadRegistry = useDependencyStore(s => s.loadRegistry);
+  const loadStoreConnections = useDependencyStore(s => s.loadConnections);
+  const startHealthChecks = useDependencyStore(s => s.startHealthChecks);
+
+  // Use store data, fall back to local state for first load
   const [services, setServices] = useState<ServiceRegistryEntry[]>([]);
   const [categories, setCategories] = useState<CategoryMeta[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(true);
@@ -63,26 +72,22 @@ export default function DependenciesPage() {
     refreshConnections,
   } = useDependencyConnect();
 
-  // Load data on mount
+  // Load data on mount — use global store, sync to local state
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoadingServices(true);
-      try {
-        const [servicesRes, categoriesRes] = await Promise.all([
-          apiClient.getServiceRegistry(),
-          apiClient.getServiceCategories(),
-        ]);
-        setServices(servicesRes.services);
-        setCategories(categoriesRes.categories);
-      } catch {
-        // Data load failed silently
-      } finally {
-        setIsLoadingServices(false);
-      }
-    };
-    loadData();
+    loadRegistry();
+    loadStoreConnections();
+    startHealthChecks();
     fetchProjects();
-  }, [fetchProjects]);
+  }, [loadRegistry, loadStoreConnections, startHealthChecks, fetchProjects]);
+
+  // Sync store data to local state for rendering
+  useEffect(() => {
+    if (registryLoaded) {
+      setServices(storeServices);
+      setCategories(storeCategories);
+      setIsLoadingServices(false);
+    }
+  }, [registryLoaded, storeServices, storeCategories]);
 
   // Close project dropdown on outside click
   useEffect(() => {

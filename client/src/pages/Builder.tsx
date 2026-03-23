@@ -26,6 +26,7 @@ import { useEngineEvents } from '@/hooks/useEngineEvents';
 import { useSpeculation } from '@/hooks/useSpeculation';
 import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { useProjectStore } from '@/store/useProjectStore';
+import { useDependencyStore } from '@/store/useDependencyStore';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
 import { AgentStreamView } from '@/components/builder/AgentStreamView';
 import { AccountSlideOut } from '@/components/account/AccountSlideOut';
@@ -63,7 +64,41 @@ export default function Builder() {
     projectStatus === 'idle' ? userInput : '', projectId || null,
   );
 
-  useEffect(() => { apiClient.getOAuthCatalog().then(r => setOauthCatalog(r.providers)).catch(() => {}); }, []);
+  // Load dependency store data for MCP-aware planning tiles
+  const { loadRegistry, loadConnections, startHealthChecks, stopHealthChecks, setConnectionState, setToolsForService } = useDependencyStore();
+
+  useEffect(() => {
+    apiClient.getOAuthCatalog().then(r => setOauthCatalog(r.providers)).catch(() => {});
+    loadRegistry();
+    loadConnections();
+    startHealthChecks();
+    return () => stopHealthChecks();
+  }, [loadRegistry, loadConnections, startHealthChecks, stopHealthChecks]);
+
+  // Listen for MCP OAuth popup completion to update global dependency store
+  // and auto-create project instance when connecting during a build
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'mcp_oauth_complete') {
+        const { success, serviceId: connectedServiceId } = event.data;
+        if (success && connectedServiceId) {
+          setConnectionState(connectedServiceId, 'connected', { connectedAt: new Date().toISOString() });
+          // Fetch tools in background
+          apiClient.getMcpTools(connectedServiceId).then(({ tools }) => {
+            setToolsForService(connectedServiceId, tools);
+          }).catch(() => {});
+          // Auto-create project instance if we have a project context
+          if (projectId) {
+            apiClient.createServiceInstance(connectedServiceId, projectId).catch(() => {
+              // Instance creation is best-effort during builds
+            });
+          }
+        }
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [setConnectionState, setToolsForService, projectId]);
 
   useEffect(() => {
     if (!projectId) return;

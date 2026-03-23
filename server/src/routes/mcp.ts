@@ -128,6 +128,46 @@ router.get('/:serviceId/tools', requireAuth as any, async (req, res) => {
 });
 
 /**
+ * POST /api/mcp/health-check
+ *
+ * Validate token status for all of the user's MCP connections.
+ * Attempts to refresh expired tokens. Returns current health status.
+ */
+router.post('/health-check', requireAuth as any, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+
+  try {
+    const connections = await listMcpConnections(authReq.user!.id);
+    const client = getMcpClient();
+    const results = [];
+
+    for (const conn of connections) {
+      try {
+        const token = await client.getValidToken(authReq.user!.id, conn.serviceId);
+        results.push({
+          serviceId: conn.serviceId,
+          status: 'connected' as const,
+          tokenValid: !!token,
+          lastRefreshed: new Date().toISOString(),
+        });
+      } catch (err: unknown) {
+        const needsReauth = err && typeof err === 'object' && 'requiresReauth' in err && (err as { requiresReauth: boolean }).requiresReauth;
+        results.push({
+          serviceId: conn.serviceId,
+          status: needsReauth ? 'needs_reauth' as const : 'error' as const,
+          tokenValid: false,
+        });
+      }
+    }
+
+    res.json({ results });
+  } catch (err) {
+    console.error('[MCP] Health check failed:', err);
+    res.status(500).json({ error: 'Health check failed' });
+  }
+});
+
+/**
  * DELETE /api/mcp/:serviceId
  *
  * Disconnect an MCP service.

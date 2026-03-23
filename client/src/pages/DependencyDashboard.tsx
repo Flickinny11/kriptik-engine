@@ -40,6 +40,7 @@ import {
 import { useDependencyConnect } from '@/hooks/useDependencyConnect';
 import { useUserStore } from '@/store/useUserStore';
 import { useProjectStore } from '@/store/useProjectStore';
+import { useDependencyStore } from '@/store/useDependencyStore';
 import { apiClient } from '@/lib/api-client';
 import type {
   ServiceRegistryEntry,
@@ -94,6 +95,9 @@ export default function DependencyDashboard() {
     refreshConnections,
   } = useDependencyConnect();
 
+  const setToolsForService = useDependencyStore(s => s.setToolsForService);
+  const storeConnection = useDependencyStore(s => serviceId ? s.connections.get(serviceId) : undefined);
+
   const [service, setService] = useState<ServiceRegistryEntry | null>(null);
   const [tools, setTools] = useState<McpToolDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,9 +111,12 @@ export default function DependencyDashboard() {
     const load = async () => {
       setIsLoading(true);
       try {
+        // Use cached tools from store if available
+        const cachedTools = storeConnection?.tools;
+
         const [serviceRes, toolsRes] = await Promise.allSettled([
           apiClient.getService(serviceId),
-          apiClient.getMcpTools(serviceId),
+          cachedTools && cachedTools.length > 0 ? Promise.resolve({ tools: cachedTools }) : apiClient.getMcpTools(serviceId),
         ]);
 
         if (serviceRes.status === 'fulfilled') {
@@ -117,6 +124,10 @@ export default function DependencyDashboard() {
         }
         if (toolsRes.status === 'fulfilled') {
           setTools(toolsRes.value.tools);
+          // Sync tools to global store
+          if (toolsRes.value.tools.length > 0) {
+            setToolsForService(serviceId, toolsRes.value.tools);
+          }
         }
       } catch {
         // Load failed
@@ -126,7 +137,7 @@ export default function DependencyDashboard() {
     };
     load();
     fetchProjects();
-  }, [serviceId, fetchProjects]);
+  }, [serviceId, fetchProjects, storeConnection?.tools, setToolsForService]);
 
   const connectionState = serviceId ? getConnectionState(serviceId) : 'disconnected';
   const connectionInfo = serviceId ? connections.get(serviceId) : undefined;

@@ -146,6 +146,10 @@ class ApiClient {
     return this.request<{ success: boolean }>('DELETE', `/api/mcp/${serviceId}`);
   }
 
+  async checkConnectionHealth() {
+    return this.request<{ results: ConnectionHealthResult[] }>('POST', '/api/mcp/health-check');
+  }
+
   // Service Registry
   async getServiceRegistry(params?: { category?: string; search?: string }) {
     const query = new URLSearchParams();
@@ -399,6 +403,14 @@ export interface ProjectServiceInstance {
   createdAt: string | null;
   updatedAt: string | null;
   service: ServiceRegistryEntry | null;
+}
+
+// Health Check Types
+export interface ConnectionHealthResult {
+  serviceId: string;
+  status: McpConnectionStatus;
+  tokenValid: boolean;
+  lastRefreshed?: string;
 }
 
 // Browser Agent Types

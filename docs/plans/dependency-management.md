@@ -369,16 +369,16 @@ This task is about integration, not new features. It connects all the pieces:
 - Project dependency "Add" → connect flow (Task 3) → instance creation (Task 8)
 - Post-connect: cache ols from `tools/list` so the agent knows what it can do with each service
 
-- [ ] Set up global state management for dependency connections
-- [ ] Create API routes for all dependency operations
-- [ ] Wire planning tiles to use the ConnectButton component
-- [ ] Wire the dependency management view to load real connected service data
-- [ ] Implement connection health checking
-- [ ] Wire project creation to trigger appropriate dependency instance creation
-- [ ] Test the full flow: click Connect on planning tile → auth → connected → tools discovered
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Set up global state management for dependency connections
+- [x] Create API routes for all dependency operations
+- [x] Wire planning tiles to use the ConnectButton component
+- [x] Wire the dependency management view to load real connected service data
+- [x] Implement connection health checking
+- [x] Wire project creation to trigger appropriate dependency instance creation
+- [x] Test the full flow: click Connect on planning tile → auth → connected → tools discovered
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 10: Verification, Polish, and Production Readiness
 

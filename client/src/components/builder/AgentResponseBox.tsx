@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, MessageSquareIcon } from '@/components/ui/icons';
 import type { AgentInfo, EventGroup } from '@/hooks/useAgentTracker';
 import type { EngineEvent } from '@/hooks/useEngineEvents';
@@ -7,7 +7,9 @@ import { TypeAnimatedText, RevealOnMount } from './TypeAnimatedText';
 import './response-box.css';
 import './state-effects.css';
 import { QuestionTile } from './QuestionTile';
-import type { OAuthCatalogEntry } from '@/lib/api-client';
+import type { OAuthCatalogEntry, ServiceRegistryEntry } from '@/lib/api-client';
+import { useDependencyStore } from '@/store/useDependencyStore';
+import { apiClient } from '@/lib/api-client';
 
 /**
  * Renders one response box for a group of events from a single agent reasoning cycle.
@@ -247,6 +249,38 @@ function StandaloneBox({
   oauthCatalog: OAuthCatalogEntry[];
   onAnswer: (nodeId: string, answer: string) => void;
 }) {
+  // Pull MCP service data from the global dependency store
+  const services = useDependencyStore(s => s.services);
+  const connectionsMap = useDependencyStore(s => s.getConnectionsMap());
+  const setConnectionState = useDependencyStore(s => s.setConnectionState);
+  const setToolsForService = useDependencyStore(s => s.setToolsForService);
+
+  const handleMcpConnect = useCallback(async (service: ServiceRegistryEntry) => {
+    if (!service.mcp) return;
+    setConnectionState(service.id, 'connecting');
+    try {
+      const { authorizationUrl } = await apiClient.startMcpAuth(service.id, service.mcp.url);
+      const width = 600, height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+      const popup = window.open(authorizationUrl, `mcp_oauth_${service.id}`, `width=${width},height=${height},left=${left},top=${top}`);
+      if (popup) {
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            // If still connecting, revert to disconnected
+            const current = useDependencyStore.getState().connections.get(service.id);
+            if (current?.state === 'connecting') {
+              setConnectionState(service.id, 'disconnected');
+            }
+          }
+        }, 500);
+      }
+    } catch {
+      setConnectionState(service.id, 'error', { error: 'Failed to start connection' });
+    }
+  }, [setConnectionState, setToolsForService]);
+
   switch (event.type) {
     case 'agent_spawned':
       return (
@@ -273,6 +307,9 @@ function StandaloneBox({
           context={event.data.context ? String(event.data.context) : undefined}
           projectId={projectId}
           oauthCatalog={oauthCatalog}
+          serviceRegistry={services}
+          mcpConnectionStates={connectionsMap}
+          onMcpConnect={handleMcpConnect}
           onAnswer={onAnswer}
         />
       );
