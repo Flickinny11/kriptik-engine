@@ -20,7 +20,7 @@ import {
 } from '../services/index.js';
 import { listMcpConnections } from '../mcp/index.js';
 import { db } from '../db.js';
-import { projectServiceInstances } from '../schema.js';
+import { projectServiceInstances, credentials } from '../schema.js';
 
 const router = Router();
 
@@ -159,12 +159,26 @@ router.post('/:serviceId/create-instance', requireAuth as any, async (req, res) 
     return res.status(404).json({ error: 'Service not found' });
   }
 
-  // Verify user has a connection to this service
-  const connections = await listMcpConnections(authReq.user!.id);
-  const connection = connections.find(c => c.serviceId === serviceId);
+  // Verify user has a connection to this service (MCP or browser-agent)
+  const mcpConns = await listMcpConnections(authReq.user!.id);
+  const hasMcpConnection = mcpConns.some(c => c.serviceId === serviceId);
 
-  if (!connection) {
-    return res.status(400).json({ error: 'Not connected to this service. Connect first.' });
+  if (!hasMcpConnection) {
+    // Also check browser-agent credentials in the vault
+    const browserCreds = await db.select({ id: credentials.id })
+      .from(credentials)
+      .where(
+        and(
+          eq(credentials.userId, authReq.user!.id),
+          eq(credentials.providerId, serviceId),
+          eq(credentials.projectId, projectId),
+        ),
+      )
+      .limit(1);
+
+    if (browserCreds.length === 0) {
+      return res.status(400).json({ error: 'Not connected to this service. Connect first.' });
+    }
   }
 
   try {

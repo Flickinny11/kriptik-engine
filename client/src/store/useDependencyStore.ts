@@ -179,6 +179,7 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
     try {
       const { results } = await apiClient.checkConnectionHealth();
       const now = new Date().toISOString();
+      const serverServiceIds = new Set(results.map(r => r.serviceId));
 
       set(prev => {
         const next = new Map(prev.connections);
@@ -203,6 +204,20 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
               state: healthState,
               lastHealthCheck: now,
             });
+          }
+        }
+
+        // Reconcile: mark connections as disconnected if they were previously
+        // seen via health check (have lastHealthCheck) but are no longer on the
+        // server. Connections without lastHealthCheck (e.g. browser-agent) are
+        // not affected since they never appear in MCP health results.
+        for (const [id, entry] of next) {
+          if (
+            entry.lastHealthCheck &&
+            entry.state !== 'connecting' &&
+            !serverServiceIds.has(id)
+          ) {
+            next.set(id, { ...entry, state: 'disconnected', lastHealthCheck: now });
           }
         }
 

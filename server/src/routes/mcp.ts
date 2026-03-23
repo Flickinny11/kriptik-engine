@@ -12,6 +12,7 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { getMcpClient, listMcpConnections, deleteMcpConnection } from '../mcp/index.js';
+import { getServiceById } from '../services/index.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -25,11 +26,14 @@ const router = Router();
 router.post('/:serviceId/authorize', requireAuth as any, async (req, res) => {
   const authReq = req as AuthenticatedRequest;
   const { serviceId } = req.params;
-  const { mcpServerUrl } = req.body;
 
-  if (!mcpServerUrl) {
-    return res.status(400).json({ error: 'mcpServerUrl is required' });
+  // Look up the service in the registry and use its MCP URL — never trust
+  // a client-provided URL, which could redirect to a phishing OAuth server.
+  const service = getServiceById(serviceId);
+  if (!service?.mcp?.url) {
+    return res.status(400).json({ error: 'Service not found or does not support MCP' });
   }
+  const mcpServerUrl = service.mcp.url;
 
   try {
     const client = getMcpClient();
