@@ -410,6 +410,115 @@ New billing system needs:
 
 ---
 
+## Dependency Management System
+
+KripTik's dependency management system lets users connect to external services (databases, hosting, auth, payments, AI/ML, etc.) through a unified interface. Two layers handle connectivity: MCP OAuth 2.1 for ~80% of services, and a browser-agent fallback for the rest.
+
+### Architecture Overview
+
+```
+User clicks "Connect"
+    │
+    ├─ MCP-enabled service?
+    │   └── YES → MCP OAuth 2.1 + PKCE flow
+    │       ├── server/src/mcp/discovery.ts    ← Probe server, discover metadata
+    │       ├── server/src/mcp/registration.ts ← Dynamic client registration (RFC 7591)
+    │       ├── server/src/mcp/client.ts       ← OAuth flow, token exchange, tools/list
+    │       └── server/src/mcp/token-store.ts  ← Encrypted token storage (AES-256-GCM)
+    │
+    └─ No MCP server?
+        └── Browser agent fallback
+            ├── server/src/browser-agent/session-manager.ts  ← Session lifecycle
+            ├── server/src/browser-agent/templates.ts        ← Per-service signup workflows
+            ├── server/src/browser-agent/browser-use-client.ts ← Browser Use integration
+            ├── server/src/browser-agent/credential-generator.ts ← Secure password gen + vault
+            └── server/src/browser-agent/email-verifier.ts   ← Gmail MCP auto-verification
+```
+
+### Key Files
+
+| Area | File | Purpose |
+|------|------|---------|
+| **MCP Client** | `server/src/mcp/client.ts` | Universal MCP connector — metadata discovery, PKCE auth, token exchange, refresh, tools/list |
+| **MCP Client** | `server/src/mcp/discovery.ts` | RFC 9728 Protected Resource + RFC 8414 Auth Server metadata discovery |
+| **MCP Client** | `server/src/mcp/registration.ts` | RFC 7591 Dynamic Client Registration |
+| **MCP Client** | `server/src/mcp/token-store.ts` | Encrypted per-user per-service token storage with upsert, refresh, status tracking |
+| **MCP Client** | `server/src/mcp/types.ts` | All MCP TypeScript types: connection state, metadata, tokens, tools, errors |
+| **Registry** | `server/src/services/registry.ts` | 38 real developer services with MCP URLs, pricing, brand metadata |
+| **Registry** | `server/src/services/registry-types.ts` | Type definitions: ServiceRegistryEntry, InstanceModel, PricingTier, etc. |
+| **Registry** | `server/src/services/categories.ts` | 13 category definitions with display metadata |
+| **Registry** | `server/src/services/custom-servers.ts` | User-added custom MCP server support |
+| **Browser Agent** | `server/src/browser-agent/session-manager.ts` | Session lifecycle, progress streaming, retry (max 2) |
+| **Browser Agent** | `server/src/browser-agent/templates.ts` | Workflow templates for 8 non-MCP services |
+| **Browser Agent** | `server/src/browser-agent/browser-use-client.ts` | Browser Use Cloud API + local dev simulation |
+| **Browser Agent** | `server/src/browser-agent/credential-generator.ts` | 20-char crypto passwords + AES-256-GCM vault |
+| **Browser Agent** | `server/src/browser-agent/email-verifier.ts` | Gmail MCP polling + manual paste fallback |
+| **API Routes** | `server/src/routes/services.ts` | Service catalog, connections, project instance CRUD |
+| **API Routes** | `server/src/routes/mcp.ts` | MCP OAuth authorize, callback, tools, health-check, disconnect |
+| **Client Pages** | `client/src/pages/DependenciesPage.tsx` | Main catalog — My Dependencies / Browse All modes |
+| **Client Pages** | `client/src/pages/DependencyDashboard.tsx` | Individual service management (adaptive panels via MCP tools) |
+| **Client Pages** | `client/src/pages/ProjectDependenciesPage.tsx` | Per-project dependency view with add/remove |
+| **Components** | `client/src/components/dependencies/ConnectButton.tsx` | 6-state connect button (MCP + fallback) |
+| **Components** | `client/src/components/dependencies/ConnectionStatusIndicator.tsx` | Branded logo + animated status dot |
+| **Components** | `client/src/components/dependencies/FallbackApprovalDialog.tsx` | Browser agent approval + progress + verification |
+| **Components** | `client/src/components/dependencies/TierSelector.tsx` | Post-connection subscription picker |
+| **Components** | `client/src/components/dependencies/EmailMcpBanner.tsx` | Dashboard banner prompting email MCP setup |
+| **Hooks** | `client/src/hooks/useDependencyConnect.ts` | OAuth popup lifecycle, postMessage, connection state |
+| **Store** | `client/src/store/useDependencyStore.ts` | Global Zustand store — registry, connections, tools, health checks |
+| **DB** | `server/src/schema.ts` | Tables: `mcp_connections`, `mcp_tool_caches`, `mcp_oauth_states`, `project_service_instances` |
+
+### Database Tables
+
+- **mcp_connections** — Per-user per-service encrypted token storage (access + refresh tokens, registration data, status)
+- **mcp_tool_caches** — Cached tools/list results per service (24hr TTL)
+- **mcp_oauth_states** — Temporary OAuth state for CSRF protection during auth flow
+- **project_service_instances** — Project-to-service associations with instance model, environment, API keys
+
+### API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/services` | List services (optional category/search filters) |
+| GET | `/api/services/categories` | Category metadata for filter tabs |
+| GET | `/api/services/:serviceId` | Single service lookup |
+| GET | `/api/services/user/connections` | User's connected services (enriched with registry data) |
+| GET | `/api/services/project/:projectId/dependencies` | Project's dependencies |
+| POST | `/api/services/:serviceId/create-instance` | Create project-service association |
+| DELETE | `/api/services/:serviceId/project/:projectId` | Remove project-service association |
+| POST | `/api/mcp/:serviceId/authorize` | Start MCP OAuth flow → returns authorizationUrl |
+| GET | `/api/mcp/callback` | OAuth callback — exchanges code for tokens, returns HTML |
+| GET | `/api/mcp/connections` | List MCP connections (no tokens exposed) |
+| GET | `/api/mcp/:serviceId/tools` | Discover/cache MCP tools for a service |
+| POST | `/api/mcp/health-check` | Validate all connection tokens, auto-refresh expired |
+| DELETE | `/api/mcp/:serviceId` | Disconnect from service (revoke + delete tokens) |
+| POST | `/api/browser-agent/start` | Start browser agent fallback session |
+| GET | `/api/browser-agent/status` | Session status with long-polling |
+| POST | `/api/browser-agent/verify` | Submit verification code |
+| POST | `/api/browser-agent/cancel` | Cancel fallback session |
+| POST | `/api/browser-agent/retry` | Retry failed fallback |
+
+### Instance Models
+
+Services relate to KripTik projects in three ways:
+- **project-per-project** (Supabase, Vercel, Neon) — Each KripTik project gets a dedicated project/instance at the service
+- **api-key-per-project** (fal.ai, Replicate, Stripe) — Same account, separate API keys per project for billing visibility
+- **shared** (Sentry, monitoring tools) — One instance covers all projects
+
+### Environment Variables
+
+- `BROWSER_USE_API_KEY` — Browser Use Cloud API key (production). Without it, local dev simulation is used.
+- `API_BASE_URL` or `BACKEND_URL` — MCP OAuth callback base URL (defaults to http://localhost:3001)
+
+### How to Add a New Service
+
+1. Add an entry to `SERVICE_REGISTRY` in `server/src/services/registry.ts` following the `ServiceRegistryEntry` interface
+2. If the service has an MCP server, set the `mcp` field with `{ url, authMethod: 'oauth' }`
+3. If no MCP server, set `mcp: null` and `browserFallbackAvailable: true`, then add a workflow template in `server/src/browser-agent/templates.ts`
+4. Add the service's simple-icons slug to `iconSlug` for branded logo rendering
+5. If simple-icons doesn't have the logo, add a custom SVG path to `client/src/components/ui/icons/BrandIcon.tsx`
+
+---
+
 ## Continuous Learning Engine (Component 28)
 
 The learning engine makes every build smarter than the last. It extracts learnings from completed builds, stores them in a global experience memory, retrieves relevant experience at build time, and strengthens pathways that produce good outcomes.
