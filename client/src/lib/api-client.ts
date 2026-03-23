@@ -191,6 +191,27 @@ class ApiClient {
   async getBillingHistory() {
     return this.request<{ transactions: CreditTransaction[] }>('GET', '/api/billing/history');
   }
+
+  // Browser Agent Fallback
+  async startBrowserAgent(serviceId: string, userEmail: string, userName: string, projectId?: string) {
+    return this.request<BrowserAgentStartResponse>('POST', `/api/browser-agent/${serviceId}/start`, { userEmail, userName, projectId });
+  }
+
+  async getBrowserAgentStatus(sessionId: string, wait = false) {
+    return this.request<BrowserAgentStatusResponse>('GET', `/api/browser-agent/${sessionId}/status${wait ? '?wait=true' : ''}`);
+  }
+
+  async submitVerificationCode(sessionId: string, code: string, type: 'email' | 'sms') {
+    return this.request<{ success: boolean; message: string }>('POST', `/api/browser-agent/${sessionId}/verify`, { code, type });
+  }
+
+  async cancelBrowserAgent(sessionId: string) {
+    return this.request<{ success: boolean; message: string }>('POST', `/api/browser-agent/${sessionId}/cancel`);
+  }
+
+  async retryBrowserAgent(sessionId: string, userEmail: string, userName: string, projectId?: string) {
+    return this.request<BrowserAgentStartResponse>('POST', `/api/browser-agent/${sessionId}/retry`, { userEmail, userName, projectId });
+  }
 }
 
 export interface OAuthCatalogEntry {
@@ -354,6 +375,37 @@ export interface ServiceInstance {
   label: string;
   status: string;
   createdAt: string;
+}
+
+// Browser Agent Types
+export type BrowserAgentSessionStatus =
+  | 'pending'
+  | 'running'
+  | 'waiting-verification'
+  | 'waiting-user-input'
+  | 'extracting-credentials'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
+
+export interface BrowserAgentProgressMessage {
+  timestamp: string;
+  message: string;
+  stepType: string;
+  completed: boolean;
+}
+
+export interface BrowserAgentStartResponse {
+  sessionId: string;
+  status: BrowserAgentSessionStatus;
+}
+
+export interface BrowserAgentStatusResponse {
+  sessionId: string;
+  status: BrowserAgentSessionStatus;
+  progressMessages: BrowserAgentProgressMessage[];
+  waitingFor?: string;
+  error?: string;
 }
 
 export const apiClient = new ApiClient();

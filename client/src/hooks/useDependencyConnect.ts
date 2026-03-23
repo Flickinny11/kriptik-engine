@@ -17,6 +17,8 @@ import type {
   McpConnection,
   McpToolDefinition,
   InstanceModel,
+  BrowserAgentSessionStatus,
+  BrowserAgentProgressMessage,
 } from '@/lib/api-client';
 
 export type ConnectFlowState =
@@ -35,11 +37,29 @@ export interface ConnectionInfo {
   tools?: McpToolDefinition[];
 }
 
+export interface BrowserAgentState {
+  sessionId: string;
+  status: BrowserAgentSessionStatus;
+  progressMessages: BrowserAgentProgressMessage[];
+  waitingFor?: string;
+  error?: string;
+}
+
 interface UseDependencyConnectReturn {
   /** Current flow state for a given service */
   getConnectionState: (serviceId: string) => ConnectFlowState;
   /** Start the MCP OAuth popup flow for a service */
   startMcpConnect: (service: ServiceRegistryEntry) => Promise<void>;
+  /** Start browser agent fallback for a non-MCP service */
+  startBrowserFallback: (service: ServiceRegistryEntry, userEmail: string, userName: string, projectId?: string) => Promise<void>;
+  /** Submit a verification code for browser agent */
+  submitVerification: (serviceId: string, code: string, type: 'email' | 'sms') => Promise<void>;
+  /** Cancel a browser agent session */
+  cancelFallback: (serviceId: string) => void;
+  /** Retry a failed browser agent session */
+  retryFallback: (serviceId: string, userEmail: string, userName: string, projectId?: string) => Promise<void>;
+  /** Get browser agent state for a service */
+  getBrowserAgentState: (serviceId: string) => BrowserAgentState | null;
   /** Disconnect from a service */
   disconnect: (serviceId: string) => Promise<void>;
   /** Create a project instance after connection */
@@ -57,6 +77,8 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
   const [isLoading, setIsLoading] = useState(false);
   const popupRef = useRef<Window | null>(null);
   const pendingServiceRef = useRef<string | null>(null);
+  const browserAgentStates = useRef<Map<string, BrowserAgentState>>(new Map());
+  const pollingRefs = useRef<Map<string, boolean>>(new Map());
 
   // Listen for OAuth popup completion messages
   useEffect(() => {
@@ -250,9 +272,182 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
     }
   }, []);
 
+  // Browser agent fallback methods
+
+  const pollBrowserAgentStatus = useCallback(async (serviceId: string, sessionId: string) => {
+    if (pollingRefs.current.get(serviceId)) return;
+    pollingRefs.current.set(serviceId, true);
+
+    try {
+      while (pollingRefs.current.get(serviceId)) {
+        const response = await apiClient.getBrowserAgentStatus(sessionId, true);
+
+        const agentState: BrowserAgentState = {
+          sessionId,
+          status: response.status,
+          progressMessages: response.progressMessages,
+          waitingFor: response.waitingFor,
+          error: response.error,
+        };
+        browserAgentStates.current.set(serviceId, agentState);
+
+        // Update connection state based on agent status
+        if (response.status === 'completed') {
+          setConnections(prev => {
+            const next = new Map(prev);
+            next.set(serviceId, {
+              serviceId,
+              state: 'connected',
+              connectedAt: new Date().toISOString(),
+            });
+            return next;
+          });
+          pollingRefs.current.delete(serviceId);
+          return;
+        }
+
+        if (response.status === 'failed' || response.status === 'cancelled') {
+          setConnections(prev => {
+            const next = new Map(prev);
+            next.set(serviceId, {
+              serviceId,
+              state: response.status === 'failed' ? 'error' : 'disconnected',
+              error: response.error,
+            });
+            return next;
+          });
+          pollingRefs.current.delete(serviceId);
+          return;
+        }
+      }
+    } catch {
+      pollingRefs.current.delete(serviceId);
+    }
+  }, []);
+
+  const startBrowserFallback = useCallback(async (
+    service: ServiceRegistryEntry,
+    userEmail: string,
+    userName: string,
+    projectId?: string,
+  ) => {
+    setConnections(prev => {
+      const next = new Map(prev);
+      next.set(service.id, {
+        serviceId: service.id,
+        state: 'connecting',
+      });
+      return next;
+    });
+
+    try {
+      const { sessionId, status } = await apiClient.startBrowserAgent(
+        service.id,
+        userEmail,
+        userName,
+        projectId,
+      );
+
+      browserAgentStates.current.set(service.id, {
+        sessionId,
+        status,
+        progressMessages: [],
+      });
+
+      // Start polling for progress
+      pollBrowserAgentStatus(service.id, sessionId);
+    } catch (err) {
+      setConnections(prev => {
+        const next = new Map(prev);
+        next.set(service.id, {
+          serviceId: service.id,
+          state: 'error',
+          error: err instanceof Error ? err.message : 'Failed to start browser agent',
+        });
+        return next;
+      });
+    }
+  }, [pollBrowserAgentStatus]);
+
+  const submitVerification = useCallback(async (
+    serviceId: string,
+    code: string,
+    type: 'email' | 'sms',
+  ) => {
+    const state = browserAgentStates.current.get(serviceId);
+    if (!state) return;
+    await apiClient.submitVerificationCode(state.sessionId, code, type);
+  }, []);
+
+  const cancelFallback = useCallback((serviceId: string) => {
+    pollingRefs.current.delete(serviceId);
+    const state = browserAgentStates.current.get(serviceId);
+    if (state) {
+      apiClient.cancelBrowserAgent(state.sessionId).catch(() => {});
+    }
+    setConnections(prev => {
+      const next = new Map(prev);
+      next.set(serviceId, { serviceId, state: 'disconnected' });
+      return next;
+    });
+    browserAgentStates.current.delete(serviceId);
+  }, []);
+
+  const retryFallback = useCallback(async (
+    serviceId: string,
+    userEmail: string,
+    userName: string,
+    projectId?: string,
+  ) => {
+    const oldState = browserAgentStates.current.get(serviceId);
+    if (!oldState) return;
+
+    setConnections(prev => {
+      const next = new Map(prev);
+      next.set(serviceId, { serviceId, state: 'connecting' });
+      return next;
+    });
+
+    try {
+      const { sessionId, status } = await apiClient.retryBrowserAgent(
+        oldState.sessionId,
+        userEmail,
+        userName,
+        projectId,
+      );
+
+      browserAgentStates.current.set(serviceId, {
+        sessionId,
+        status,
+        progressMessages: [],
+      });
+
+      pollBrowserAgentStatus(serviceId, sessionId);
+    } catch (err) {
+      setConnections(prev => {
+        const next = new Map(prev);
+        next.set(serviceId, {
+          serviceId,
+          state: 'error',
+          error: err instanceof Error ? err.message : 'Retry failed',
+        });
+        return next;
+      });
+    }
+  }, [pollBrowserAgentStatus]);
+
+  const getBrowserAgentState = useCallback((serviceId: string): BrowserAgentState | null => {
+    return browserAgentStates.current.get(serviceId) || null;
+  }, []);
+
   return {
     getConnectionState,
     startMcpConnect,
+    startBrowserFallback,
+    submitVerification,
+    cancelFallback,
+    retryFallback,
+    getBrowserAgentState,
     disconnect,
     createInstance,
     connections,

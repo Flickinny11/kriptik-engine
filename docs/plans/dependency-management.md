@@ -193,17 +193,17 @@ The typical flow:
 - If a signup fails, show the error and offer to retry or let the user create the account manually
 - The fallback is designed to be a last resort — as MCP adoption grows, fewer services need it
 
-- [ ] Set up Browser Use integration (server-side)
-- [ ] Build the workflow template system and data structure
-- [ ] Create templates for 6+ non-MCP services with real signup URLs and form field mappings
-- [ ] Build the chat-based approval and progress UI
-- [ ] Implement email verification via Gmail MCP integration
-- [ ] Implement the "paste your code" flow for SMS and non-MCP email verification
-- [ ] Implement secure credential generation and encrypted storage
-- [ ] Handlelures gracefully with retry and manual fallback options
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Set up Browser Use integration (server-side)
+- [x] Build the workflow template system and data structure
+- [x] Create templates for 6+ non-MCP services with real signup URLs and form field mappings
+- [x] Build the chat-based approval and progress UI
+- [x] Implement email verification via Gmail MCP integration
+- [x] Implement the "paste your code" flow for SMS and non-MCP email verification
+- [x] Implement secure credential generation and encrypted storage
+- [x] Handle failures gracefully with retry and manual fallback options
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 5: Email MCP Banner and Popout Menu Integration
 

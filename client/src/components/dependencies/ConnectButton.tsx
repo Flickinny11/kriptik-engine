@@ -20,8 +20,8 @@ import { BrandIcon } from '@/components/ui/BrandIcon';
 import { CheckIcon, RefreshIcon, ZapIcon, LinkIcon } from '@/components/ui/icons';
 import { FallbackApprovalDialog } from './FallbackApprovalDialog';
 import { TierSelector } from './TierSelector';
-import type { ConnectFlowState } from '@/hooks/useDependencyConnect';
-import type { ServiceRegistryEntry, PricingTier } from '@/lib/api-client';
+import type { ConnectFlowState, BrowserAgentState } from '@/hooks/useDependencyConnect';
+import type { ServiceRegistryEntry, PricingTier, BrowserAgentProgressMessage } from '@/lib/api-client';
 
 interface ConnectButtonProps {
   /** Service to connect to */
@@ -38,6 +38,8 @@ interface ConnectButtonProps {
   onDisconnect?: (serviceId: string) => Promise<void>;
   /** User's email for fallback dialog */
   userEmail?: string;
+  /** User's display name for fallback */
+  userName?: string;
   /** Whether to show tier selector after connection */
   showTierSelector?: boolean;
   /** Agent's recommended tier */
@@ -46,6 +48,14 @@ interface ConnectButtonProps {
   compact?: boolean;
   /** Whether to show the service logo */
   showLogo?: boolean;
+  /** Browser agent state (for progress/verification) */
+  browserAgentState?: BrowserAgentState | null;
+  /** Called to submit verification code */
+  onSubmitVerificationCode?: (code: string, type: 'email' | 'sms') => void;
+  /** Called to cancel browser agent */
+  onCancelFallback?: () => void;
+  /** Called to retry browser agent */
+  onRetryFallback?: () => void;
 }
 
 export function ConnectButton({
@@ -56,10 +66,15 @@ export function ConnectButton({
   onTierSelect,
   onDisconnect,
   userEmail = '',
+  userName = '',
   showTierSelector = false,
   recommendedTier,
   compact = false,
   showLogo = true,
+  browserAgentState,
+  onSubmitVerificationCode,
+  onCancelFallback,
+  onRetryFallback,
 }: ConnectButtonProps) {
   const [showFallbackDialog, setShowFallbackDialog] = useState(false);
   const [showTiers, setShowTiers] = useState(false);
@@ -67,32 +82,28 @@ export function ConnectButton({
 
   const handleClick = useCallback(async () => {
     if (state === 'connected') {
-      // Already connected — could open management or disconnect
       return;
     }
 
     if (state === 'connecting') {
-      // Already in progress
       return;
     }
 
     if (service.mcp) {
-      // MCP-enabled: start OAuth popup flow
       await onConnect(service);
     } else if (service.browserFallbackAvailable) {
-      // No MCP: show fallback approval dialog
       setShowFallbackDialog(true);
     }
   }, [service, state, onConnect]);
 
   const handleFallbackApprove = useCallback(() => {
-    setShowFallbackDialog(false);
     onFallbackApprove?.(service);
   }, [service, onFallbackApprove]);
 
   const handleFallbackCancel = useCallback(() => {
     setShowFallbackDialog(false);
-  }, []);
+    onCancelFallback?.();
+  }, [onCancelFallback]);
 
   // Show tier selector when transitioning to connected
   useEffect(() => {
@@ -129,6 +140,13 @@ export function ConnectButton({
             userEmail={userEmail}
             onApprove={handleFallbackApprove}
             onCancel={handleFallbackCancel}
+            isRunning={state === 'connecting'}
+            progressMessages={browserAgentState?.progressMessages}
+            waitingFor={browserAgentState?.waitingFor}
+            onSubmitCode={onSubmitVerificationCode}
+            isComplete={browserAgentState?.status === 'completed'}
+            error={browserAgentState?.error}
+            onRetry={onRetryFallback}
           />
         )}
       </>
@@ -208,6 +226,13 @@ export function ConnectButton({
           userEmail={userEmail}
           onApprove={handleFallbackApprove}
           onCancel={handleFallbackCancel}
+          isRunning={state === 'connecting'}
+          progressMessages={browserAgentState?.progressMessages}
+          waitingFor={browserAgentState?.waitingFor}
+          onSubmitCode={onSubmitVerificationCode}
+          isComplete={browserAgentState?.status === 'completed'}
+          error={browserAgentState?.error}
+          onRetry={onRetryFallback}
         />
       )}
     </div>

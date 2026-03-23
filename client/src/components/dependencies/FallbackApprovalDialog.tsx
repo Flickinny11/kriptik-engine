@@ -4,11 +4,16 @@
  * Shown when a user tries to connect to a service that doesn't have an MCP server.
  * Explains that KripTik will use a browser agent to create an account on their behalf,
  * and requires explicit user approval before proceeding.
+ *
+ * Three views:
+ * 1. Approval — explains what will happen, shows pricing, asks for consent
+ * 2. Progress — shows real-time progress messages from the browser agent
+ * 3. Verification — input field for pasting email/SMS verification codes
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { BrandIcon } from '@/components/ui/BrandIcon';
-import type { ServiceRegistryEntry } from '@/lib/api-client';
+import type { ServiceRegistryEntry, BrowserAgentProgressMessage } from '@/lib/api-client';
 
 interface FallbackApprovalDialogProps {
   /** The service to connect to */
@@ -22,7 +27,17 @@ interface FallbackApprovalDialogProps {
   /** Whether the fallback is currently running */
   isRunning?: boolean;
   /** Progress messages from the browser agent */
-  progressMessages?: string[];
+  progressMessages?: BrowserAgentProgressMessage[];
+  /** What the session is waiting for (email-code, sms-code) */
+  waitingFor?: string;
+  /** Called when user submits a verification code */
+  onSubmitCode?: (code: string, type: 'email' | 'sms') => void;
+  /** Whether the session completed successfully */
+  isComplete?: boolean;
+  /** Error message if the session failed */
+  error?: string;
+  /** Called to retry a failed session */
+  onRetry?: () => void;
 }
 
 export function FallbackApprovalDialog({
@@ -32,13 +47,32 @@ export function FallbackApprovalDialog({
   onCancel,
   isRunning = false,
   progressMessages = [],
+  waitingFor,
+  onSubmitCode,
+  isComplete = false,
+  error,
+  onRetry,
 }: FallbackApprovalDialogProps) {
   const [approved, setApproved] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const progressEndRef = useRef<HTMLDivElement>(null);
 
   const handleApprove = () => {
     setApproved(true);
     onApprove();
   };
+
+  const handleSubmitCode = () => {
+    if (!verificationCode.trim() || !onSubmitCode) return;
+    const type = waitingFor === 'sms-code' ? 'sms' : 'email';
+    onSubmitCode(verificationCode.trim(), type);
+    setVerificationCode('');
+  };
+
+  // Auto-scroll progress messages
+  useEffect(() => {
+    progressEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [progressMessages.length]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -67,10 +101,10 @@ export function FallbackApprovalDialog({
           </div>
           <div>
             <h3 className="text-lg font-semibold text-kriptik-white">
-              Connect to {service.name}
+              {isComplete ? `Connected to ${service.name}` : `Connect to ${service.name}`}
             </h3>
             <p className="text-xs text-kriptik-silver">
-              Automated account setup
+              {isComplete ? 'Account created successfully' : 'Automated account setup'}
             </p>
           </div>
         </div>
@@ -133,9 +167,10 @@ export function FallbackApprovalDialog({
             </div>
           </>
         ) : (
-          /* Progress view */
+          /* Progress / Verification / Complete / Error view */
           <div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            {/* Progress messages */}
+            <div className="space-y-2 max-h-48 overflow-y-auto mb-4">
               {progressMessages.length > 0 ? (
                 progressMessages.map((msg, i) => (
                   <div
@@ -145,21 +180,23 @@ export function FallbackApprovalDialog({
                     <div
                       className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
                       style={{
-                        backgroundColor: i === progressMessages.length - 1
-                          ? service.brandColor
-                          : '#22c55e',
+                        backgroundColor: msg.completed
+                          ? '#22c55e'
+                          : i === progressMessages.length - 1
+                            ? service.brandColor
+                            : '#22c55e',
                       }}
                     />
                     <span className={
-                      i === progressMessages.length - 1
+                      i === progressMessages.length - 1 && !msg.completed
                         ? 'text-kriptik-white'
                         : 'text-kriptik-silver'
                     }>
-                      {msg}
+                      {msg.message}
                     </span>
                   </div>
                 ))
-              ) : (
+              ) : isRunning ? (
                 <div className="flex items-center gap-3 py-4">
                   <div
                     className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
@@ -169,17 +206,104 @@ export function FallbackApprovalDialog({
                     Preparing signup for {service.name}...
                   </span>
                 </div>
-              )}
+              ) : null}
+              <div ref={progressEndRef} />
             </div>
 
-            {isRunning && (
-              <button
-                onClick={onCancel}
-                className="w-full mt-4 py-2 rounded-xl text-sm text-kriptik-silver border border-white/10 hover:border-white/20 transition-all"
-              >
-                Cancel
-              </button>
+            {/* Verification code input */}
+            {waitingFor && (waitingFor === 'email-code' || waitingFor === 'sms-code') && (
+              <div className="mb-4 p-4 rounded-xl border border-white/10 bg-white/3">
+                <p className="text-sm text-kriptik-white mb-3">
+                  {waitingFor === 'sms-code'
+                    ? 'Paste the SMS verification code you received:'
+                    : 'Paste the email verification code you received:'}
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={verificationCode}
+                    onChange={e => setVerificationCode(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSubmitCode()}
+                    placeholder="Enter code..."
+                    className="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-white/10 text-kriptik-white text-sm placeholder:text-kriptik-silver/50 focus:outline-none focus:border-white/20"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleSubmitCode}
+                    disabled={!verificationCode.trim()}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-40"
+                    style={{
+                      background: verificationCode.trim() ? service.brandColor : 'rgba(255,255,255,0.05)',
+                      color: verificationCode.trim() ? '#000' : 'rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
             )}
+
+            {/* Error state */}
+            {error && (
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
+            {/* Complete state */}
+            {isComplete && (
+              <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20">
+                <p className="text-sm text-green-400">
+                  Account created successfully. Your credentials have been securely stored.
+                </p>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3">
+              {isRunning && !isComplete && (
+                <button
+                  onClick={onCancel}
+                  className="flex-1 py-2 rounded-xl text-sm text-kriptik-silver border border-white/10 hover:border-white/20 transition-all"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {error && onRetry && (
+                <>
+                  <button
+                    onClick={onCancel}
+                    className="flex-1 py-2 rounded-xl text-sm text-kriptik-silver border border-white/10 hover:border-white/20 transition-all"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={onRetry}
+                    className="flex-1 py-2 rounded-xl text-sm font-medium text-kriptik-black transition-all"
+                    style={{
+                      background: `linear-gradient(135deg, ${service.brandColor}, ${service.brandColor}cc)`,
+                      boxShadow: `0 4px 12px ${service.brandColor}30`,
+                    }}
+                  >
+                    Retry
+                  </button>
+                </>
+              )}
+
+              {isComplete && (
+                <button
+                  onClick={onCancel}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-kriptik-black transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
+                  }}
+                >
+                  Done
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
