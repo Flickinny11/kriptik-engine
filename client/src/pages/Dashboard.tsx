@@ -22,12 +22,14 @@ import { GenerateButton3D } from '@/components/ui/GenerateButton3D';
 import { DeleteConfirmModal } from '@/components/dashboard/DeleteConfirmModal';
 import { FixMyAppIntro } from '@/components/fix-my-app/FixMyAppIntro';
 import { FixBrokenAppIcon } from '@/components/ui/AbstractIcons';
+import { EmailMcpBanner } from '@/components/dependencies/EmailMcpBanner';
 import {
   SettingsIcon,
   ChevronDownIcon,
   LogOutIcon,
   CreditCardIcon,
   SparklesIcon,
+  PlugIcon,
 } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 import { v4 as uuid } from 'uuid';
@@ -321,6 +323,11 @@ function UserMenu() {
 
             {/* Menu items */}
             <div className="p-2">
+              <MenuButton
+                icon={PlugIcon}
+                label="Dependencies"
+                onClick={() => { setIsOpen(false); navigate('/dependencies'); }}
+              />
               <MenuButton
                 icon={SettingsIcon}
                 label="Settings"
@@ -642,6 +649,11 @@ export default function Dashboard() {
               />
             </div>
           </div>
+        </div>
+
+        {/* Email MCP Banner — prompts users to connect email for auto-verification */}
+        <div className="max-w-6xl mx-auto">
+          <EmailMcpBanner projectCount={projects.length} />
         </div>
 
         {/* Project grid */}

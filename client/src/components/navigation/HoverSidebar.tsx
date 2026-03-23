@@ -10,7 +10,8 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     LayoutDashboardIcon,
-    UserIcon, MenuIcon, CloseIcon
+    UserIcon, MenuIcon, CloseIcon,
+    PlugIcon,
 } from '../ui/icons';
 import { cn } from '@/lib/utils';
 import { useResponsiveLayout } from '../../hooks/useResponsiveLayout';
@@ -34,6 +35,13 @@ const NAV_ITEMS: NavItem[] = [
         icon: LayoutDashboardIcon,
         path: '/dashboard',
         description: 'Your projects & builds',
+    },
+    {
+        id: 'dependencies',
+        label: 'Dependencies',
+        icon: PlugIcon,
+        path: '/dependencies',
+        description: 'Manage connected services',
     },
     {
         id: 'settings',

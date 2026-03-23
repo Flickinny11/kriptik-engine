@@ -217,16 +217,16 @@ The email banner appears on the main dashboard and says something like: "Connect
 
 This is important because without email MCP, the browser agent fallback has to pause and ask the user to paste verification codes. With it connected, verification is fully automated.
 
-- [ ] Add "Dependencies" to the popout menu in ALL menu variants
-- [ ] Route it to the dependency management view
-- [ ] Build the email MCP connection banner — warm, non-intrusive, matches KripTik's design language
-- [ ] Banner has one-click Connect that initiates OAuth for Gmail/Outlook
-- [ ] Banner is dismissible with state persistence per user
-- [ ] Banner only shows if email MCP is not connected AND user has at least one project
-- [ ] Style per Design_References.md
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Add "Dependencies" to the popout menu in ALL menu variants
+- [x] Route it to the dependency management view
+- [x] Build the email MCP connection banner — warm, non-intrusive, matches KripTik's design language
+- [x] Banner has one-click Connect that initiates OAuth for Gmail/Outlook
+- [x] Banner is dismissible with state persistence per user
+- [x] Banner only shows if email MCP is not connected AND user has at least one project
+- [x] Style per Design_References.md
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 6: Dependency Management View — Main Layout and Catalog
 

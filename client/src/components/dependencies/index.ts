@@ -6,5 +6,6 @@
 
 export { ConnectButton } from './ConnectButton';
 export { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
+export { EmailMcpBanner } from './EmailMcpBanner';
 export { FallbackApprovalDialog } from './FallbackApprovalDialog';
 export { TierSelector } from './TierSelector';
