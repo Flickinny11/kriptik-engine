@@ -464,13 +464,13 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     category: 'email',
     iconSlug: 'gmail',
     brandColor: '#EA4335',
-    mcp: { url: 'https://mcp.google.com/gmail', authMethod: 'oauth' },
+    mcp: null,
     browserFallbackAvailable: false,
     instanceModel: 'shared',
     pricing: [
       { name: 'Free', price: 0, description: 'Personal Gmail account' },
     ],
-    tags: ['email', 'verification', 'google', 'mcp'],
+    tags: ['email', 'verification', 'google'],
   },
   {
     id: 'microsoft-outlook',
@@ -480,13 +480,13 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     category: 'email',
     iconSlug: 'microsoftoutlook',
     brandColor: '#0078D4',
-    mcp: { url: 'https://mcp.microsoft.com/outlook', authMethod: 'oauth' },
+    mcp: null,
     browserFallbackAvailable: false,
     instanceModel: 'shared',
     pricing: [
       { name: 'Free', price: 0, description: 'Personal Outlook/Hotmail account' },
     ],
-    tags: ['email', 'verification', 'microsoft', 'mcp'],
+    tags: ['email', 'verification', 'microsoft'],
   },
 
   // =========================================================================

@@ -107,9 +107,14 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
         });
       }
 
-      // Preserve browser-agent connections (those without lastHealthCheck)
-      // that aren't in the server response — they exist only in local state
-      // No action needed: they're already in connMap from the clone above
+      // Remove stale server-sourced entries that no longer exist on the server.
+      // Browser-agent connections (no lastHealthCheck) are preserved since they
+      // exist only in local state and aren't returned by the server endpoint.
+      for (const [id, entry] of connMap) {
+        if (!serverIds.has(id) && entry.lastHealthCheck) {
+          connMap.delete(id);
+        }
+      }
 
       set({ connections: connMap, connectionsLoaded: true });
     } catch {

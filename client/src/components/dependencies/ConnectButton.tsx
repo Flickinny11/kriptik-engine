@@ -134,7 +134,7 @@ export function ConnectButton({
             />
           )}
           {!showLogo && getIcon(state)}
-          {getLabel(state, service.name)}
+          {getLabel(state, service)}
         </button>
         {showFallbackDialog && (
           <FallbackApprovalDialog
@@ -163,7 +163,7 @@ export function ConnectButton({
         disabled={state === 'connecting'}
         className="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 overflow-hidden"
         style={getFullStyle(state, service.brandColor)}
-        aria-label={`${getAriaLabel(state)} ${service.name}`}
+        aria-label={`${getAriaLabel(state, service)} ${service.name}`}
       >
         {/* Subtle gradient overlay on hover */}
         <div
@@ -186,7 +186,7 @@ export function ConnectButton({
             />
           )}
           {!showLogo && getIcon(state)}
-          <span>{getLabel(state, service.name)}</span>
+          <span>{getLabel(state, service)}</span>
         </div>
 
         {/* Loading spinner for connecting state */}
@@ -255,7 +255,11 @@ function getIcon(state: ConnectFlowState) {
   }
 }
 
-function getLabel(state: ConnectFlowState, serviceName: string): string {
+function hasConnectPath(service: ServiceRegistryEntry): boolean {
+  return !!(service.mcp?.authMethod === 'oauth' || service.browserFallbackAvailable);
+}
+
+function getLabel(state: ConnectFlowState, service: ServiceRegistryEntry): string {
   switch (state) {
     case 'connected':
       return 'Connected';
@@ -268,11 +272,11 @@ function getLabel(state: ConnectFlowState, serviceName: string): string {
     case 'needs_upgrade':
       return 'Upgrade';
     default:
-      return 'Connect';
+      return hasConnectPath(service) ? 'Connect' : 'Visit Website';
   }
 }
 
-function getAriaLabel(state: ConnectFlowState): string {
+function getAriaLabel(state: ConnectFlowState, service: ServiceRegistryEntry): string {
   switch (state) {
     case 'connected':
       return 'Connected to';
@@ -283,7 +287,7 @@ function getAriaLabel(state: ConnectFlowState): string {
     case 'needs_reauth':
       return 'Reconnect to';
     default:
-      return 'Connect to';
+      return hasConnectPath(service) ? 'Connect to' : 'Visit website for';
   }
 }
 

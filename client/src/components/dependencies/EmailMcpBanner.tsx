@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '@/lib/api-client';
 import { API_ORIGIN } from '@/lib/api-config';
 import { useUserStore } from '@/store/useUserStore';
+import { useDependencyStore } from '@/store/useDependencyStore';
 import { CloseIcon } from '@/components/ui/icons';
 
 interface EmailMcpBannerProps {
@@ -36,6 +37,7 @@ function detectEmailProvider(email: string): { serviceId: string; label: string 
 
 export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
   const { user } = useUserStore();
+  const { services } = useDependencyStore();
   const [hasEmailMcp, setHasEmailMcp] = useState<boolean | null>(null);
   const [isDismissed, setIsDismissed] = useState(true); // default hidden until checked
   const [isConnecting, setIsConnecting] = useState(false);
@@ -143,8 +145,16 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
     };
   }, []);
 
-  // Don't render if: still loading, already connected, dismissed, no projects, no user
-  if (hasEmailMcp === null || hasEmailMcp || isDismissed || projectCount === 0 || !userId) {
+  // Check if the detected email provider supports MCP OAuth
+  const emailProvider = userEmail ? detectEmailProvider(userEmail) : null;
+  const emailService = emailProvider
+    ? services.find(s => s.id === emailProvider.serviceId)
+    : null;
+  const emailHasMcp = emailService?.mcp?.authMethod === 'oauth';
+
+  // Don't render if: still loading, already connected, dismissed, no projects, no user,
+  // or the email service doesn't support MCP OAuth
+  if (hasEmailMcp === null || hasEmailMcp || isDismissed || projectCount === 0 || !userId || !emailHasMcp) {
     return null;
   }
 

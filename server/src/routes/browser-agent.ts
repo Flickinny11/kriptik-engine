@@ -27,6 +27,27 @@ import type {
 
 const router = Router();
 
+// Track retry counts per user+service to prevent unlimited retries at third-party services.
+// Key: `${userId}:${serviceId}`, Value: count of retries (including the initial attempt).
+const retryTracker = new Map<string, { count: number; firstAttempt: number }>();
+const MAX_RETRIES_PER_SERVICE = 5;
+const RETRY_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkRetryLimit(userId: string, serviceId: string): boolean {
+  const key = `${userId}:${serviceId}`;
+  const entry = retryTracker.get(key);
+  const now = Date.now();
+  if (!entry || now - entry.firstAttempt > RETRY_WINDOW_MS) {
+    retryTracker.set(key, { count: 1, firstAttempt: now });
+    return true;
+  }
+  if (entry.count >= MAX_RETRIES_PER_SERVICE) {
+    return false;
+  }
+  entry.count++;
+  return true;
+}
+
 /**
  * POST /api/browser-agent/:serviceId/start
  *
@@ -68,6 +89,12 @@ router.post('/:serviceId/start', requireAuth as any, async (req, res) => {
   if (!hasTemplate(serviceId)) {
     return res.status(400).json({
       error: `No signup workflow template available for ${service.name}.`,
+    });
+  }
+
+  if (!checkRetryLimit(authReq.user!.id, serviceId)) {
+    return res.status(429).json({
+      error: `Too many signup attempts for ${service.name}. Please try again later.`,
     });
   }
 
@@ -244,6 +271,12 @@ router.post('/:sessionId/retry', requireAuth as any, async (req, res) => {
 
   if (userEmail !== authReq.user!.email) {
     return res.status(403).json({ error: 'Email must match your authenticated account email' });
+  }
+
+  if (!checkRetryLimit(authReq.user!.id, oldSession.serviceId)) {
+    return res.status(429).json({
+      error: `Too many signup attempts for this service. Please try again later.`,
+    });
   }
 
   try {
