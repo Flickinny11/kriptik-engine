@@ -33,6 +33,16 @@ const retryTracker = new Map<string, { count: number; firstAttempt: number }>();
 const MAX_RETRIES_PER_SERVICE = 5;
 const RETRY_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
+// Sweep expired entries every 30 minutes to prevent unbounded growth under viral traffic.
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of retryTracker) {
+    if (now - entry.firstAttempt > RETRY_WINDOW_MS) {
+      retryTracker.delete(key);
+    }
+  }
+}, 30 * 60 * 1000).unref();
+
 function checkRetryLimit(userId: string, serviceId: string): boolean {
   const key = `${userId}:${serviceId}`;
   const entry = retryTracker.get(key);

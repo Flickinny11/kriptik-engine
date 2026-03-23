@@ -212,8 +212,8 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     category: 'hosting',
     iconSlug: 'render',
     brandColor: '#46E3B7',
-    mcp: { url: 'https://mcp.render.com/mcp', authMethod: 'oauth' },
-    browserFallbackAvailable: false,
+    mcp: null,
+    browserFallbackAvailable: true,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Free', price: 0, description: 'Static sites, 750 hours web services, auto-suspend' },
@@ -269,8 +269,8 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     category: 'hosting',
     iconSlug: 'heroku',
     brandColor: '#430098',
-    mcp: { url: 'https://mcp.heroku.com/mcp', authMethod: 'oauth' },
-    browserFallbackAvailable: false,
+    mcp: null,
+    browserFallbackAvailable: true,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Eco', price: 5, description: 'Shared dynos, 1K dyno hours/mo, sleep after 30 min' },
@@ -288,8 +288,8 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     category: 'hosting',
     iconSlug: 'digitalocean',
     brandColor: '#0080FF',
-    mcp: { url: 'https://mcp.digitalocean.com/mcp', authMethod: 'oauth' },
-    browserFallbackAvailable: false,
+    mcp: null,
+    browserFallbackAvailable: true,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Basic Droplet', price: 4, description: '512 MB RAM, 10 GB SSD, 500 GB transfer' },

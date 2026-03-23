@@ -274,7 +274,7 @@ function StandaloneBox({
   }, []);
 
   const handleMcpConnect = useCallback(async (service: ServiceRegistryEntry) => {
-    if (!service.mcp) return;
+    if (!service.mcp || service.mcp.authMethod !== 'oauth') return;
     setConnectionState(service.id, 'connecting');
     try {
       const { authorizationUrl } = await apiClient.startMcpAuth(service.id);
