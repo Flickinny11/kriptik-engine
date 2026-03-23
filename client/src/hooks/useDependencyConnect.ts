@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '@/lib/api-client';
+import { API_ORIGIN } from '@/lib/api-config';
 import type {
   ServiceRegistryEntry,
   McpConnection,
@@ -85,9 +86,9 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
   // Listen for OAuth popup completion messages
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      // Validate message structure rather than origin — the callback page is served
-      // from the API server origin which differs from the frontend origin in production.
       if (!event.data || typeof event.data !== 'object') return;
+      // Validate the message came from our API server (which serves the OAuth callback)
+      if (event.origin !== API_ORIGIN) return;
 
       // Handle MCP OAuth completion
       if (event.data?.type === 'mcp_oauth_complete') {
@@ -215,7 +216,7 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
     pendingServiceRef.current = service.id;
 
     try {
-      const { authorizationUrl } = await apiClient.startMcpAuth(service.id, service.mcp.url);
+      const { authorizationUrl } = await apiClient.startMcpAuth(service.id);
 
       // Open OAuth popup
       const width = 600;

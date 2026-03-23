@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LinkIcon, CheckIcon } from '@/components/ui/icons';
 import { apiClient } from '@/lib/api-client';
+import { API_ORIGIN } from '@/lib/api-config';
 import { ConnectButton } from '@/components/dependencies/ConnectButton';
 import type { ServiceRegistryEntry } from '@/lib/api-client';
 import type { ConnectFlowState } from '@/hooks/useDependencyConnect';
@@ -59,6 +60,7 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (!event.data || typeof event.data !== 'object') return;
+      if (event.origin !== API_ORIGIN) return;
       if (event.data?.type === 'oauth_complete' && event.data.success) {
         setConnectedProviders(prev => new Set([...prev, event.data.provider]));
         const providerName = oauthCatalog.find(p => p.id === event.data.provider)?.displayName || event.data.provider;

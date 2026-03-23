@@ -130,8 +130,8 @@ class ApiClient {
   }
 
   // MCP Connections
-  async startMcpAuth(serviceId: string, mcpServerUrl: string) {
-    return this.request<{ authorizationUrl: string; state: string }>('POST', `/api/mcp/${serviceId}/authorize`, { mcpServerUrl });
+  async startMcpAuth(serviceId: string) {
+    return this.request<{ authorizationUrl: string; state: string }>('POST', `/api/mcp/${serviceId}/authorize`);
   }
 
   async getMcpConnections() {

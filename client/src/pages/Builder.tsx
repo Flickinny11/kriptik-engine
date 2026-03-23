@@ -25,6 +25,7 @@ import { ShaderPanel, ShaderBackground, ShaderButton } from '@/components/shader
 import { useEngineEvents } from '@/hooks/useEngineEvents';
 import { useSpeculation } from '@/hooks/useSpeculation';
 import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
+import { API_ORIGIN } from '@/lib/api-config';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useDependencyStore } from '@/store/useDependencyStore';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
@@ -80,6 +81,7 @@ export default function Builder() {
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (!event.data || typeof event.data !== 'object') return;
+      if (event.origin !== API_ORIGIN) return;
       if (event.data?.type === 'mcp_oauth_complete') {
         const { success, serviceId: connectedServiceId } = event.data;
         if (success && connectedServiceId) {

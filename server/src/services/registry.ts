@@ -454,7 +454,43 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
   },
 
   // =========================================================================
-  // EMAIL
+  // EMAIL — User email (MCP integration for auto-verification)
+  // =========================================================================
+  {
+    id: 'gmail',
+    name: 'Gmail',
+    description: 'Google email — connect for automatic verification during service signups',
+    websiteUrl: 'https://mail.google.com',
+    category: 'email',
+    iconSlug: 'gmail',
+    brandColor: '#EA4335',
+    mcp: { url: 'https://mcp.google.com/gmail', authMethod: 'oauth' },
+    browserFallbackAvailable: false,
+    instanceModel: 'shared',
+    pricing: [
+      { name: 'Free', price: 0, description: 'Personal Gmail account' },
+    ],
+    tags: ['email', 'verification', 'google', 'mcp'],
+  },
+  {
+    id: 'microsoft-outlook',
+    name: 'Outlook',
+    description: 'Microsoft email — connect for automatic verification during service signups',
+    websiteUrl: 'https://outlook.live.com',
+    category: 'email',
+    iconSlug: 'microsoftoutlook',
+    brandColor: '#0078D4',
+    mcp: { url: 'https://mcp.microsoft.com/outlook', authMethod: 'oauth' },
+    browserFallbackAvailable: false,
+    instanceModel: 'shared',
+    pricing: [
+      { name: 'Free', price: 0, description: 'Personal Outlook/Hotmail account' },
+    ],
+    tags: ['email', 'verification', 'microsoft', 'mcp'],
+  },
+
+  // =========================================================================
+  // EMAIL — Transactional email APIs
   // =========================================================================
   {
     id: 'resend',

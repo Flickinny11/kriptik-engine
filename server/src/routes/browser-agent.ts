@@ -42,15 +42,20 @@ router.post('/:serviceId/start', requireAuth as any, async (req, res) => {
     return res.status(400).json({ error: 'userEmail and userName are required' });
   }
 
+  // Prevent creating accounts at third-party services with someone else's email
+  if (userEmail !== authReq.user!.email) {
+    return res.status(403).json({ error: 'Email must match your authenticated account email' });
+  }
+
   // Verify the service exists and doesn't have MCP
   const service = getServiceById(serviceId);
   if (!service) {
     return res.status(404).json({ error: 'Service not found' });
   }
 
-  if (service.mcp) {
+  if (service.mcp && service.mcp.authMethod === 'oauth') {
     return res.status(400).json({
-      error: `${service.name} has MCP support. Use the MCP OAuth flow instead.`,
+      error: `${service.name} has MCP OAuth support. Use the MCP OAuth flow instead.`,
     });
   }
 
@@ -235,6 +240,10 @@ router.post('/:sessionId/retry', requireAuth as any, async (req, res) => {
 
   if (!userEmail || !userName) {
     return res.status(400).json({ error: 'userEmail and userName are required for retry' });
+  }
+
+  if (userEmail !== authReq.user!.email) {
+    return res.status(403).json({ error: 'Email must match your authenticated account email' });
   }
 
   try {

@@ -14,6 +14,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '@/lib/api-client';
+import { API_ORIGIN } from '@/lib/api-config';
 import { useUserStore } from '@/store/useUserStore';
 import { CloseIcon } from '@/components/ui/icons';
 
@@ -75,6 +76,7 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (!event.data || typeof event.data !== 'object') return;
+      if (event.origin !== API_ORIGIN) return;
       if (event.data?.type === 'mcp_oauth_complete' && event.data?.serviceId) {
         const sid = event.data.serviceId;
         if (sid === 'gmail' || sid === 'microsoft-outlook') {
@@ -106,20 +108,7 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
     const { serviceId, label } = detectEmailProvider(userEmail);
 
     try {
-      // The MCP server URLs for email providers
-      const mcpServerUrls: Record<string, string> = {
-        'gmail': 'https://mcp.google.com/gmail',
-        'microsoft-outlook': 'https://mcp.microsoft.com/outlook',
-      };
-
-      const mcpServerUrl = mcpServerUrls[serviceId];
-      if (!mcpServerUrl) {
-        setConnectError(`No MCP server configured for ${label}`);
-        setIsConnecting(false);
-        return;
-      }
-
-      const { authorizationUrl } = await apiClient.startMcpAuth(serviceId, mcpServerUrl);
+      const { authorizationUrl } = await apiClient.startMcpAuth(serviceId);
 
       // Open OAuth popup
       const width = 600;

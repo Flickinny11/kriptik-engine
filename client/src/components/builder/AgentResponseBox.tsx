@@ -259,7 +259,7 @@ function StandaloneBox({
     if (!service.mcp) return;
     setConnectionState(service.id, 'connecting');
     try {
-      const { authorizationUrl } = await apiClient.startMcpAuth(service.id, service.mcp.url);
+      const { authorizationUrl } = await apiClient.startMcpAuth(service.id);
       const width = 600, height = 700;
       const left = window.screenX + (window.outerWidth - width) / 2;
       const top = window.screenY + (window.outerHeight - height) / 2;

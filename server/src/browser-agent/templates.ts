@@ -98,31 +98,6 @@ templates.set('runpod', {
 });
 
 // ---------------------------------------------------------------------------
-// Render — Cloud hosting
-// ---------------------------------------------------------------------------
-
-templates.set('render', {
-  serviceId: 'render',
-  serviceName: 'Render',
-  signupUrl: 'https://dashboard.render.com/register',
-  verificationType: 'email',
-  credentialExtractions: [
-    { type: 'api-key', label: 'API Key', locationHint: 'Account Settings > API Keys' },
-    { type: 'dashboard-url', label: 'Dashboard', locationHint: 'https://dashboard.render.com' },
-  ],
-  agentInstructions: `Sign up for Render:
-1. Navigate to the Render signup page
-2. Choose email signup (not GitHub/GitLab)
-3. Fill in name, email, and password
-4. Complete email verification
-5. Navigate to Account Settings > API Keys
-6. Create a new API key
-7. Extract the API key value`,
-  postSignupUrl: 'https://dashboard.render.com/u/settings#api-keys',
-  estimatedSteps: 12,
-});
-
-// ---------------------------------------------------------------------------
 // Railway — App hosting
 // ---------------------------------------------------------------------------
 
@@ -172,52 +147,5 @@ templates.set('fly-io', {
   estimatedSteps: 12,
 });
 
-// ---------------------------------------------------------------------------
-// DigitalOcean — Cloud infrastructure
-// ---------------------------------------------------------------------------
-
-templates.set('digitalocean', {
-  serviceId: 'digitalocean',
-  serviceName: 'DigitalOcean',
-  signupUrl: 'https://cloud.digitalocean.com/registrations/new',
-  verificationType: 'email',
-  credentialExtractions: [
-    { type: 'api-key', label: 'Personal Access Token', locationHint: 'API > Tokens section in the control panel' },
-  ],
-  agentInstructions: `Sign up for DigitalOcean:
-1. Navigate to the DigitalOcean signup page
-2. Choose email signup
-3. Enter email and password
-4. Complete email verification
-5. Skip payment method if possible (or note it requires one)
-6. Navigate to API > Tokens in the control panel
-7. Generate a new personal access token
-8. Extract the token value`,
-  postSignupUrl: 'https://cloud.digitalocean.com/account/api/tokens',
-  estimatedSteps: 14,
-});
-
-// ---------------------------------------------------------------------------
-// Heroku — PaaS
-// ---------------------------------------------------------------------------
-
-templates.set('heroku', {
-  serviceId: 'heroku',
-  serviceName: 'Heroku',
-  signupUrl: 'https://signup.heroku.com/',
-  verificationType: 'email',
-  credentialExtractions: [
-    { type: 'api-key', label: 'API Key', locationHint: 'Account Settings > API Key section, click Reveal' },
-  ],
-  agentInstructions: `Sign up for Heroku:
-1. Navigate to Heroku signup page
-2. Fill in first name, last name, email, and password
-3. Select a role and country if asked
-4. Complete email verification
-5. Set up account (may need to accept terms)
-6. Navigate to Account Settings
-7. Find the API Key section and reveal/copy the key
-8. Extract the API key value`,
-  postSignupUrl: 'https://dashboard.heroku.com/account',
-  estimatedSteps: 14,
-});
+// NOTE: Render, DigitalOcean, and Heroku templates removed — these services
+// now have MCP OAuth support in the service registry and use the MCP flow.
