@@ -136,3 +136,52 @@ export const buildEvents = pgTable('build_events', {
 }, (table) => [
   index('idx_build_events_project_id').on(table.projectId),
 ]);
+
+// ── MCP tables ──────────────────────────────────────────────────────
+
+// MCP service connections — per user, per service (shared across projects)
+export const mcpConnections = pgTable('mcp_connections', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  serviceId: text('service_id').notNull(),
+  mcpServerUrl: text('mcp_server_url').notNull(),
+  authServerIssuer: text('auth_server_issuer').notNull(),
+  encryptedTokens: jsonb('encrypted_tokens').notNull(),       // AES-256-GCM envelope
+  encryptedRegistration: jsonb('encrypted_registration'),      // Client registration credentials
+  status: text('status').default('connected'),                 // connected | needs_reauth | error | disconnected
+  connectedAt: timestamp('connected_at', { withTimezone: true }).defaultNow(),
+  lastRefreshedAt: timestamp('last_refreshed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  uniqueIndex('mcp_connections_user_service').on(table.userId, table.serviceId),
+  index('idx_mcp_connections_user_id').on(table.userId),
+]);
+
+// MCP tool cache — stores discovered tools/list results per service
+export const mcpToolCaches = pgTable('mcp_tool_caches', {
+  id: text('id').primaryKey(),
+  serviceId: text('service_id').notNull().unique(),
+  tools: jsonb('tools').notNull(),                             // McpToolDefinition[]
+  cachedAt: timestamp('cached_at', { withTimezone: true }).defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+}, (table) => [
+  index('idx_mcp_tool_caches_service').on(table.serviceId),
+]);
+
+// MCP OAuth state — extends oauth_states pattern for MCP-specific fields
+export const mcpOauthStates = pgTable('mcp_oauth_states', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  serviceId: text('service_id').notNull(),
+  mcpServerUrl: text('mcp_server_url').notNull(),
+  authServerIssuer: text('auth_server_issuer').notNull(),
+  clientId: text('client_id').notNull(),
+  clientSecret: text('client_secret'),
+  codeVerifier: text('code_verifier').notNull(),
+  redirectUri: text('redirect_uri').notNull(),
+  resource: text('resource'),                                  // RFC 8707 resource indicator
+  scopes: text('scopes'),                                      // Space-separated scopes
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});

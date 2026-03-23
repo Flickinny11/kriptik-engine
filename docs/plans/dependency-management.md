@@ -75,17 +75,17 @@ The MCP authorization spec (adopted Ma25, now standard) works like this:
 - The MCP client is a server-side module — the browser only sees connection status, never tokens
 - Resindicators (RFC 8707) must be included in token requests to scope tokens to specific MCP servers
 
-- [ ] Implement the full MCP OAuth 2.1 + PKCE authorization flow
-- [ ] Implement Protected Resource Metadata discovery
-- [ ] Implement Authorization Server Metadata discovery
-- [ ] Implement Dynamic Client Registration
-- [ ] Implement token storage (encrypted, per-user, per-service)
-- [ ] Implement automatic token refresh and re-auth
-- [ ] Implement `tools/list` discovery and tool schema caching
-- [ ] Build TypeScript types for all MCP-related data structures
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md with what was built
-- [ ] Mark completed
+- [x] Implement the full MCP OAuth 2.1 + PKCE authorization flow
+- [x] Implement Protected Resource Metadata discovery
+- [x] Implement Authorization Server Metadata discovery
+- [x] Implement Dynamic Client Registration
+- [x] Implement token storage (encrypted, per-user, per-service)
+- [x] Implement automatic token refresh and re-auth
+- [x] Implement `tools/list` discovery and tool schema caching
+- [x] Build TypeScript types for all MCP-related data structures
+- [x] Verify build passes
+- [x] Update CLAUDE.md with what was built
+- [x] Mark completed
 
 ### Task 2: Service Registry — The Dependency Catalog Data Layer
 

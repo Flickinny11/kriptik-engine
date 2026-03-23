@@ -12,3 +12,6 @@ kriptik-engine/
 .vercel/
 .claude/
 *.log
+
+# ralphex progress logs
+.ralphex/progress/
