@@ -163,7 +163,7 @@ database, hosting, auth, payments, email, monitoring, ai-ml, design, communicati
    - No MCP: `null`
 3. If no MCP, set `browserFallbackAvailable: true` and add workflow template in `server/src/browser-agent/templates.ts`
 4. Set `iconSlug` to the simple-icons slug (check https://simpleicons.org)
-5. If no simple-icons logo exists, add custom SVG path to `client/src/components/ui/icons/BrandIcon.tsx`
+5. If no simple-icons logo exists, add custom SVG path to `client/src/components/ui/BrandIcon.tsx`
 6. Set `instanceModel`: `project-per-project`, `api-key-per-project`, or `shared`
 7. Add accurate `pricing` tiers from the service's pricing page
 

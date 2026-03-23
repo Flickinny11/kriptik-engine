@@ -157,7 +157,7 @@ Files created as part of the dependency management system (Tasks 1-11 in `docs/p
 | `client/src/App.tsx` | 5, 7, 8 | Added routes: `/dependencies`, `/dependencies/:serviceId`, `/projects/:projectId/dependencies` |
 | `client/src/components/builder/QuestionTile.tsx` | 3, 9 | Dual-mode: MCP ConnectButton for registry matches, legacy OAuth fallback |
 | `client/src/lib/api-client.ts` | 6, 8, 9 | Added dependency API methods: getServices, getMcpConnections, createServiceInstance, etc. |
-| `client/src/components/ui/icons/BrandIcon.tsx` | 10 | Added 13 custom brand SVGs for services missing from simple-icons |
+| `client/src/components/ui/BrandIcon.tsx` | 10 | Added 13 custom brand SVGs for services missing from simple-icons |
 | `client/src/index.css` | 10 | Added global focus-visible indicator (KripTik orange outline) |
 | `CLAUDE.md` | 1-11 | Added dependency system documentation for each task + structured reference section |
 

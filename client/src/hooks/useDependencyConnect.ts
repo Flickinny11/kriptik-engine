@@ -76,6 +76,7 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
   const [connections, setConnections] = useState<Map<string, ConnectionInfo>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const popupRef = useRef<Window | null>(null);
+  const popupCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingServiceRef = useRef<string | null>(null);
   const browserAgentStates = useRef<Map<string, BrowserAgentState>>(new Map());
   const pollingRefs = useRef<Map<string, boolean>>(new Map());
@@ -83,6 +84,9 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
   // Listen for OAuth popup completion messages
   useEffect(() => {
     const handler = (event: MessageEvent) => {
+      // Only accept messages from our own origin
+      if (event.origin !== window.location.origin) return;
+
       // Handle MCP OAuth completion
       if (event.data?.type === 'mcp_oauth_complete') {
         const { success, serviceId, error } = event.data;
@@ -133,7 +137,15 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
     };
 
     window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
+    return () => {
+      window.removeEventListener('message', handler);
+      if (popupCheckInterval.current) {
+        clearInterval(popupCheckInterval.current);
+        popupCheckInterval.current = null;
+      }
+      // Stop all polling on unmount
+      pollingRefs.current.clear();
+    };
   }, []);
 
   const fetchToolsForService = useCallback(async (serviceId: string) => {
@@ -217,9 +229,11 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
 
       // Monitor popup close without completion
       if (popupRef.current) {
-        const checkClosed = setInterval(() => {
+        if (popupCheckInterval.current) clearInterval(popupCheckInterval.current);
+        popupCheckInterval.current = setInterval(() => {
           if (popupRef.current?.closed) {
-            clearInterval(checkClosed);
+            if (popupCheckInterval.current) clearInterval(popupCheckInterval.current);
+            popupCheckInterval.current = null;
             // If still connecting after popup closed, mark as disconnected
             setConnections(prev => {
               const next = new Map(prev);

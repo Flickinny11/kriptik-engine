@@ -63,7 +63,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'mongodb',
     brandColor: '#47A248',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '512 MB storage, shared cluster' },
@@ -81,7 +81,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'upstash',
     brandColor: '#00E9A3',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '10K commands/day, 256 MB storage' },
@@ -118,7 +118,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'turso',
     brandColor: '#4FF8D2',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Starter', price: 0, description: '9 GB storage, 500 databases, 25 groups' },
@@ -136,7 +136,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'pinecone',
     brandColor: '#000000',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Starter', price: 0, description: '2 GB storage, 100K vectors, community support' },
@@ -154,7 +154,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'qdrant',
     brandColor: '#DC244C',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '1 GB RAM, 4 GB disk, 1 node' },
@@ -329,7 +329,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'auth0',
     brandColor: '#EB5424',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '25K MAUs, social connections, universal login' },
@@ -373,7 +373,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'openai',
     brandColor: '#412991',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '$5 starter credit, rate-limited' },
@@ -391,7 +391,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'anthropic',
     brandColor: '#D4A27F',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Pay as you go', price: 0, description: 'Per-token pricing, varies by model' },
@@ -465,7 +465,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'resend',
     brandColor: '#000000',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '3K emails/mo, 1 domain, 100 contacts' },
@@ -483,7 +483,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'postmark',
     brandColor: '#FFDE00',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '100 emails/mo' },
@@ -502,7 +502,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'sendgrid',
     brandColor: '#1A82E2',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Free', price: 0, description: '100 emails/day' },
@@ -543,7 +543,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'datadog',
     brandColor: '#632CA6',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'shared',
     pricing: [
       { name: 'Free', price: 0, description: '5 hosts, 1-day retention, core metrics' },
@@ -565,7 +565,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'twilio',
     brandColor: '#F22F46',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'api-key-per-project',
     pricing: [
       { name: 'Pay as you go', price: 0, description: 'SMS from $0.0079/msg, voice from $0.014/min' },
@@ -707,7 +707,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'amazonwebservices',
     brandColor: '#FF9900',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Free Tier', price: 0, description: '12-month free tier for 100+ services' },
@@ -725,7 +725,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'firebase',
     brandColor: '#DD2C00',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'project-per-project',
     pricing: [
       { name: 'Spark', price: 0, description: '1 GiB Firestore, 10 GB hosting, 2M Cloud Function invocations' },
@@ -746,7 +746,7 @@ export const SERVICE_REGISTRY: ServiceRegistryEntry[] = [
     iconSlug: 'amplitude',
     brandColor: '#1D2A3A',
     mcp: null,
-    browserFallbackAvailable: true,
+    browserFallbackAvailable: false,
     instanceModel: 'shared',
     pricing: [
       { name: 'Starter', price: 0, description: '50K MTUs, core analytics, unlimited users' },
@@ -771,16 +771,6 @@ export function getServicesByCategory(category: ServiceCategory): ServiceRegistr
   return SERVICE_REGISTRY.filter((s) => s.category === category);
 }
 
-/** Get all services that have MCP servers */
-export function getMcpEnabledServices(): ServiceRegistryEntry[] {
-  return SERVICE_REGISTRY.filter((s) => s.mcp !== null);
-}
-
-/** Get all services requiring browser-agent fallback */
-export function getFallbackServices(): ServiceRegistryEntry[] {
-  return SERVICE_REGISTRY.filter((s) => s.mcp === null && s.browserFallbackAvailable);
-}
-
 /** Search services by name, description, or tags */
 export function searchServices(query: string): ServiceRegistryEntry[] {
   const lower = query.toLowerCase();
@@ -792,9 +782,3 @@ export function searchServices(query: string): ServiceRegistryEntry[] {
   );
 }
 
-/** Get all unique categories present in the registry */
-export function getActiveCategories(): ServiceCategory[] {
-  const cats = new Set<ServiceCategory>();
-  for (const s of SERVICE_REGISTRY) cats.add(s.category);
-  return [...cats];
-}

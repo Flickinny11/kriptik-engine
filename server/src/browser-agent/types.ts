@@ -23,15 +23,6 @@ export type WorkflowStepType =
   | 'extract-credentials'
   | 'complete';
 
-export interface FormFieldMapping {
-  /** CSS selector or field identifier */
-  selector: string;
-  /** What to fill: 'user_name' | 'user_email' | 'generated_password' | 'user_first_name' | 'user_last_name' */
-  value: 'user_name' | 'user_email' | 'generated_password' | 'user_first_name' | 'user_last_name';
-  /** Optional: action type (click, type, select) — defaults to 'type' */
-  action?: 'type' | 'click' | 'select';
-}
-
 export interface CredentialExtraction {
   /** What credential to extract */
   type: 'api-key' | 'secret-key' | 'project-id' | 'dashboard-url';
@@ -48,8 +39,6 @@ export interface WorkflowTemplate {
   serviceName: string;
   /** URL to navigate to for signup */
   signupUrl: string;
-  /** Form field mappings for the signup page */
-  formFields: FormFieldMapping[];
   /** What verification the service requires */
   verificationType: VerificationType;
   /** What credentials to extract after successful signup */

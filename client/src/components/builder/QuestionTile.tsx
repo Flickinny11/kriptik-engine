@@ -52,6 +52,7 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
   // Listen for OAuth popup completion (legacy + MCP)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === 'oauth_complete' && event.data.success) {
         setConnectedProviders(prev => new Set([...prev, event.data.provider]));
         const providerName = oauthCatalog.find(p => p.id === event.data.provider)?.displayName || event.data.provider;

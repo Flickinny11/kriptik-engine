@@ -90,7 +90,7 @@ export function getCategoryMeta(id: ServiceCategory): CategoryMeta | undefined {
   return CATEGORIES.find((c) => c.id === id);
 }
 
-/** Get all categories sorted by display order */
+/** Get all categories in display order */
 export function getSortedCategories(): CategoryMeta[] {
-  return [...CATEGORIES].sort((a, b) => a.sortOrder - b.sortOrder);
+  return CATEGORIES;
 }

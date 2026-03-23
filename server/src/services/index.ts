@@ -21,10 +21,7 @@ export {
   SERVICE_REGISTRY,
   getServiceById,
   getServicesByCategory,
-  getMcpEnabledServices,
-  getFallbackServices,
   searchServices,
-  getActiveCategories,
 } from './registry.js';
 
 // Category metadata

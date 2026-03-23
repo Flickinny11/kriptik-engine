@@ -157,10 +157,6 @@ export default function DependenciesPage() {
     return counts;
   }, [services, viewMode, connectedServiceIds]);
 
-  const handleTierSelect = useCallback(() => {
-    // Tier selection handled post-connection
-  }, []);
-
   const selectedProjectName = selectedProjectId
     ? projects.find(p => p.id === selectedProjectId)?.name || 'Unknown'
     : 'All Projects';
@@ -436,7 +432,7 @@ export default function DependenciesPage() {
                       connectionState={getConnectionState(service.id)}
                       onConnect={startMcpConnect}
                       onFallbackApprove={(s) => startBrowserFallback(s, user?.email || '', user?.name || '')}
-                      onTierSelect={handleTierSelect}
+                      onTierSelect={() => {}}
                       onDisconnect={disconnect}
                       userEmail={user?.email}
                       userName={user?.name}

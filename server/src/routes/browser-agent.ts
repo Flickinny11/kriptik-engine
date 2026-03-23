@@ -115,7 +115,6 @@ router.get('/:sessionId/status', requireAuth as any, async (req, res) => {
     const messageCountBefore = session.progressMessages.length;
 
     await new Promise<void>(resolve => {
-      const timeout = setTimeout(resolve, 30_000);
       const unsubscribe = onProgress(sessionId, () => {
         const current = getSession(sessionId);
         if (!current || current.progressMessages.length > messageCountBefore || current.status !== session.status) {
@@ -124,6 +123,7 @@ router.get('/:sessionId/status', requireAuth as any, async (req, res) => {
           resolve();
         }
       });
+      const timeout = setTimeout(() => { unsubscribe(); resolve(); }, 30_000);
     });
   }
 
@@ -233,12 +233,16 @@ router.post('/:sessionId/retry', requireAuth as any, async (req, res) => {
     });
   }
 
+  if (!userEmail || !userName) {
+    return res.status(400).json({ error: 'userEmail and userName are required for retry' });
+  }
+
   try {
     const session = await startSession(
       authReq.user!.id,
       oldSession.serviceId,
-      userEmail || '',
-      userName || '',
+      userEmail,
+      userName,
       projectId,
     );
 

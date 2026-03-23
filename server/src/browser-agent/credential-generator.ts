@@ -86,6 +86,7 @@ export async function storeBrowserAgentCredentials(
     serviceId,
     {
       accessToken: credentials.apiKey || `browser-agent-${uuid()}`,
+      refreshToken: JSON.stringify(tokens),
       scope: 'browser-agent-signup',
       tokenType: 'browser-agent',
     },

@@ -197,6 +197,8 @@ function buildCallbackHtml(success: boolean, serviceId?: string, error?: string)
     error: error || null,
   });
 
+  const targetOrigin = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+
   return `<!DOCTYPE html>
 <html>
 <head><title>KripTik - MCP Connection</title></head>
@@ -204,7 +206,7 @@ function buildCallbackHtml(success: boolean, serviceId?: string, error?: string)
 <p>${success ? 'Connected! This window will close automatically.' : 'Connection failed. This window will close automatically.'}</p>
 <script>
   if (window.opener) {
-    window.opener.postMessage(${message}, '*');
+    window.opener.postMessage(${message}, ${JSON.stringify(targetOrigin)});
   }
   setTimeout(function() { window.close(); }, 1500);
 </script>

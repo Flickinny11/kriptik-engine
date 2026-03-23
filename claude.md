@@ -455,6 +455,7 @@ User clicks "Connect"
 | **Browser Agent** | `server/src/browser-agent/email-verifier.ts` | Gmail MCP polling + manual paste fallback |
 | **API Routes** | `server/src/routes/services.ts` | Service catalog, connections, project instance CRUD |
 | **API Routes** | `server/src/routes/mcp.ts` | MCP OAuth authorize, callback, tools, health-check, disconnect |
+| **API Routes** | `server/src/routes/browser-agent.ts` | Browser agent start, status (long-polling), verify, cancel, retry |
 | **Client Pages** | `client/src/pages/DependenciesPage.tsx` | Main catalog — My Dependencies / Browse All modes |
 | **Client Pages** | `client/src/pages/DependencyDashboard.tsx` | Individual service management (adaptive panels via MCP tools) |
 | **Client Pages** | `client/src/pages/ProjectDependenciesPage.tsx` | Per-project dependency view with add/remove |
@@ -491,11 +492,11 @@ User clicks "Connect"
 | GET | `/api/mcp/:serviceId/tools` | Discover/cache MCP tools for a service |
 | POST | `/api/mcp/health-check` | Validate all connection tokens, auto-refresh expired |
 | DELETE | `/api/mcp/:serviceId` | Disconnect from service (revoke + delete tokens) |
-| POST | `/api/browser-agent/start` | Start browser agent fallback session |
-| GET | `/api/browser-agent/status` | Session status with long-polling |
-| POST | `/api/browser-agent/verify` | Submit verification code |
-| POST | `/api/browser-agent/cancel` | Cancel fallback session |
-| POST | `/api/browser-agent/retry` | Retry failed fallback |
+| POST | `/api/browser-agent/:serviceId/start` | Start browser agent fallback session |
+| GET | `/api/browser-agent/:sessionId/status` | Session status with long-polling |
+| POST | `/api/browser-agent/:sessionId/verify` | Submit verification code |
+| POST | `/api/browser-agent/:sessionId/cancel` | Cancel fallback session |
+| POST | `/api/browser-agent/:sessionId/retry` | Retry failed fallback |
 
 ### Instance Models
 
@@ -515,7 +516,7 @@ Services relate to KripTik projects in three ways:
 2. If the service has an MCP server, set the `mcp` field with `{ url, authMethod: 'oauth' }`
 3. If no MCP server, set `mcp: null` and `browserFallbackAvailable: true`, then add a workflow template in `server/src/browser-agent/templates.ts`
 4. Add the service's simple-icons slug to `iconSlug` for branded logo rendering
-5. If simple-icons doesn't have the logo, add a custom SVG path to `client/src/components/ui/icons/BrandIcon.tsx`
+5. If simple-icons doesn't have the logo, add a custom SVG path to `client/src/components/ui/BrandIcon.tsx`
 
 ---
 

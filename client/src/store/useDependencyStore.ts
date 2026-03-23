@@ -13,9 +13,7 @@ import { apiClient } from '@/lib/api-client';
 import type {
   ServiceRegistryEntry,
   CategoryMeta,
-  McpConnection,
   McpToolDefinition,
-  EnrichedMcpConnection,
 } from '@/lib/api-client';
 
 export type ConnectFlowState =
@@ -179,41 +177,32 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
 
   runHealthCheck: async () => {
     try {
-      const { connections: serverConnections } = await apiClient.getMcpConnections();
+      const { results } = await apiClient.checkConnectionHealth();
       const now = new Date().toISOString();
 
       set(prev => {
         const next = new Map(prev.connections);
 
-        // Update states from server
-        for (const conn of serverConnections) {
-          const existing = next.get(conn.serviceId);
-          const serverState = mapServerStatus(conn.status);
+        for (const result of results) {
+          const existing = next.get(result.serviceId);
+          if (existing?.state === 'connecting') continue; // Don't interrupt active flows
+
+          const healthState: ConnectFlowState = result.tokenValid
+            ? 'connected'
+            : result.status === 'needs_reauth' ? 'needs_reauth' : 'error';
 
           if (existing) {
-            // Only update if server says something changed
-            if (existing.state === 'connecting') continue; // Don't interrupt active flows
-            next.set(conn.serviceId, {
+            next.set(result.serviceId, {
               ...existing,
-              state: serverState,
+              state: healthState,
               lastHealthCheck: now,
             });
           } else {
-            next.set(conn.serviceId, {
-              serviceId: conn.serviceId,
-              state: serverState,
-              connectedAt: conn.connectedAt,
+            next.set(result.serviceId, {
+              serviceId: result.serviceId,
+              state: healthState,
               lastHealthCheck: now,
             });
-          }
-        }
-
-        // Mark connections that no longer exist on server
-        for (const [id, entry] of next) {
-          if (entry.state === 'connecting') continue;
-          const stillExists = serverConnections.some((c: McpConnection) => c.serviceId === id);
-          if (!stillExists && entry.state === 'connected') {
-            next.set(id, { ...entry, state: 'disconnected', lastHealthCheck: now });
           }
         }
 

@@ -1,8 +1,8 @@
 /**
  * Workflow Templates — defines signup flows for non-MCP services.
  *
- * Each template describes: the signup URL, form field mappings,
- * verification type, and what credentials to extract post-signup.
+ * Each template describes: the signup URL, verification type,
+ * and what credentials to extract post-signup.
  * The browser agent uses these templates + natural language instructions
  * to automate account creation.
  */
@@ -35,10 +35,6 @@ templates.set('fal-ai', {
   serviceId: 'fal-ai',
   serviceName: 'fal.ai',
   signupUrl: 'https://fal.ai/dashboard/keys',
-  formFields: [
-    { selector: 'input[type="email"]', value: 'user_email' },
-    { selector: 'input[type="password"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Key', locationHint: 'Dashboard > Keys section, click "Create" if none exist' },
@@ -62,10 +58,6 @@ templates.set('replicate', {
   serviceId: 'replicate',
   serviceName: 'Replicate',
   signupUrl: 'https://replicate.com/signin',
-  formFields: [
-    { selector: 'input[name="email"]', value: 'user_email' },
-    { selector: 'input[name="password"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Token', locationHint: 'Account Settings > API tokens page' },
@@ -90,10 +82,6 @@ templates.set('runpod', {
   serviceId: 'runpod',
   serviceName: 'RunPod',
   signupUrl: 'https://www.runpod.io/console/signup',
-  formFields: [
-    { selector: 'input[name="email"]', value: 'user_email' },
-    { selector: 'input[name="password"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Key', locationHint: 'Settings > API Keys in the console' },
@@ -117,11 +105,6 @@ templates.set('render', {
   serviceId: 'render',
   serviceName: 'Render',
   signupUrl: 'https://dashboard.render.com/register',
-  formFields: [
-    { selector: 'input[name="name"]', value: 'user_name' },
-    { selector: 'input[name="email"]', value: 'user_email' },
-    { selector: 'input[name="password"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Key', locationHint: 'Account Settings > API Keys' },
@@ -147,10 +130,6 @@ templates.set('railway', {
   serviceId: 'railway',
   serviceName: 'Railway',
   signupUrl: 'https://railway.app/login',
-  formFields: [
-    { selector: 'input[type="email"]', value: 'user_email' },
-    { selector: 'input[type="password"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Token', locationHint: 'Account Settings > Tokens' },
@@ -176,11 +155,6 @@ templates.set('fly-io', {
   serviceId: 'fly-io',
   serviceName: 'Fly.io',
   signupUrl: 'https://fly.io/app/sign-up',
-  formFields: [
-    { selector: 'input[name="user[name]"]', value: 'user_name' },
-    { selector: 'input[name="user[email]"]', value: 'user_email' },
-    { selector: 'input[name="user[password]"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Token', locationHint: 'Account Settings > Access Tokens' },
@@ -206,10 +180,6 @@ templates.set('digitalocean', {
   serviceId: 'digitalocean',
   serviceName: 'DigitalOcean',
   signupUrl: 'https://cloud.digitalocean.com/registrations/new',
-  formFields: [
-    { selector: 'input[name="user[email]"]', value: 'user_email' },
-    { selector: 'input[name="user[password]"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'Personal Access Token', locationHint: 'API > Tokens section in the control panel' },
@@ -235,12 +205,6 @@ templates.set('heroku', {
   serviceId: 'heroku',
   serviceName: 'Heroku',
   signupUrl: 'https://signup.heroku.com/',
-  formFields: [
-    { selector: 'input[name="first_name"]', value: 'user_first_name' },
-    { selector: 'input[name="last_name"]', value: 'user_last_name' },
-    { selector: 'input[name="email"]', value: 'user_email' },
-    { selector: 'input[name="password"]', value: 'generated_password' },
-  ],
   verificationType: 'email',
   credentialExtractions: [
     { type: 'api-key', label: 'API Key', locationHint: 'Account Settings > API Key section, click Reveal' },

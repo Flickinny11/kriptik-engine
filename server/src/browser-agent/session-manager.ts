@@ -90,8 +90,12 @@ export function submitVerificationCode(
     return false;
   }
 
+  // Sanitize code to alphanumeric + common separators only
+  const sanitized = code.replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, 20);
+  if (!sanitized) return false;
+
   // Store the code in the session for the running flow to pick up
-  (session as any)._verificationCode = code;
+  (session as any)._verificationCode = sanitized;
   (session as any)._verificationType = type;
   addProgressMessage(sessionId, `Received ${type} verification code`, 'enter-verification-code', false);
   return true;
@@ -152,6 +156,11 @@ function updateSessionStatus(
   if (error) session.error = error;
 
   notifyProgress(sessionId);
+
+  // Schedule cleanup for terminal states
+  if (status === 'completed' || status === 'failed' || status === 'cancelled') {
+    setTimeout(() => cleanupSession(sessionId), 5 * 60 * 1000);
+  }
 }
 
 function addProgressMessage(
@@ -505,7 +514,7 @@ function interpretStepForProgress(action: string, serviceName: string): string |
   if (lower.includes('type') || lower.includes('fill') || lower.includes('input')) {
     return 'Filling in signup details...';
   }
-  if (lower.includes('submit') || lower.includes('click') && lower.includes('button')) {
+  if ((lower.includes('submit') || lower.includes('click')) && lower.includes('button')) {
     return 'Submitting signup form...';
   }
   if (lower.includes('verify') || lower.includes('confirm') || lower.includes('email')) {
