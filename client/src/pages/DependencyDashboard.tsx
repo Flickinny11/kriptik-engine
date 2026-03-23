@@ -258,6 +258,37 @@ export default function DependencyDashboard() {
             onRefresh={refreshConnections}
           />
 
+          {/* Not connected prompt */}
+          {connectionState !== 'connected' && connectionState !== 'connecting' && (
+            <div
+              className="mt-6 rounded-2xl p-8 text-center"
+              style={{
+                background: 'linear-gradient(145deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.5) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.6)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.04), inset 0 1px 2px rgba(255,255,255,0.9)',
+              }}
+            >
+              <p className="text-base font-medium mb-2" style={{ color: '#1a1a1a' }}>
+                Not connected to {service.name}
+              </p>
+              <p className="text-sm mb-5" style={{ color: '#888' }}>
+                Connect to manage subscriptions, API keys, and project instances.
+              </p>
+              <button
+                onClick={() => navigate('/dependencies')}
+                className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-[1.02]"
+                style={{
+                  background: `linear-gradient(135deg, ${brandColor} 0%, ${brandColor}cc 100%)`,
+                  color: '#fff',
+                  boxShadow: `0 4px 12px ${brandColor}40`,
+                }}
+              >
+                Browse Dependencies
+              </button>
+            </div>
+          )}
+
           {/* Dashboard panels */}
           <div className="mt-6 flex flex-col gap-5">
             {/* Overview panel — always shown for connected services */}

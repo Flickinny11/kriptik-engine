@@ -589,6 +589,7 @@ function AddDependencyDialog({
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [addingServiceId, setAddingServiceId] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -673,6 +674,7 @@ function AddDependencyDialog({
 
   const handleAddService = useCallback(async (service: ServiceRegistryEntry) => {
     if (existingServiceIds.has(service.id)) return;
+    setAddError(null);
 
     // If connected, create instance directly
     if (connectedServiceIds.has(service.id)) {
@@ -681,7 +683,7 @@ function AddDependencyDialog({
         await apiClient.createServiceInstance(service.id, projectId, `${service.name} for project`);
         onAdded();
       } catch {
-        // Add failed
+        setAddError(`Failed to add ${service.name} to project`);
       } finally {
         setAddingServiceId(null);
       }
@@ -699,14 +701,15 @@ function AddDependencyDialog({
           await apiClient.createServiceInstance(addingServiceId, projectId);
           onAdded();
         } catch {
-          // Auto-add failed
+          const svc = services.find(s => s.id === addingServiceId);
+          setAddError(`Failed to add ${svc?.name || 'service'} to project`);
         } finally {
           setAddingServiceId(null);
         }
       }
     };
     autoAddConnected();
-  }, [connections, addingServiceId, getConnectionState, projectId, onAdded]);
+  }, [connections, addingServiceId, getConnectionState, projectId, onAdded, services]);
 
   return (
     <motion.div
@@ -715,6 +718,9 @@ function AddDependencyDialog({
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-dep-dialog-title"
     >
       <motion.div
         ref={dialogRef}
@@ -734,7 +740,7 @@ function AddDependencyDialog({
         {/* Dialog header */}
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(0,0,0,0.06)' }}>
           <div>
-            <h2 className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Add Dependency</h2>
+            <h2 id="add-dep-dialog-title" className="text-lg font-bold" style={{ color: '#1a1a1a' }}>Add Dependency</h2>
             <p className="text-xs" style={{ color: '#888' }}>Connect a service to this project</p>
           </div>
           <button
@@ -747,6 +753,28 @@ function AddDependencyDialog({
             <XIcon size={18} />
           </button>
         </div>
+
+        {/* Error message */}
+        {addError && (
+          <div className="px-6 pt-3">
+            <div
+              className="px-4 py-2.5 rounded-xl text-sm font-medium flex items-center justify-between"
+              style={{
+                background: 'linear-gradient(135deg, rgba(220,38,38,0.08) 0%, rgba(220,38,38,0.04) 100%)',
+                border: '1px solid rgba(220,38,38,0.15)',
+                color: '#b91c1c',
+              }}
+            >
+              <span>{addError}</span>
+              <button
+                onClick={() => setAddError(null)}
+                className="ml-2 p-0.5 rounded hover:bg-red-100/50 transition-colors"
+              >
+                <XIcon size={14} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Search */}
         <div className="px-6 pt-4 pb-2">
@@ -959,6 +987,9 @@ function RemoveDependencyDialog({ instance, isRemoving, onConfirm, onCancel }: R
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="remove-dep-dialog-title"
     >
       <motion.div
         ref={dialogRef}
@@ -991,7 +1022,7 @@ function RemoveDependencyDialog({ instance, isRemoving, onConfirm, onCancel }: R
             </div>
           )}
           <div>
-            <h3 className="text-base font-bold" style={{ color: '#1a1a1a' }}>Remove {serviceName}?</h3>
+            <h3 id="remove-dep-dialog-title" className="text-base font-bold" style={{ color: '#1a1a1a' }}>Remove {serviceName}?</h3>
           </div>
         </div>
 

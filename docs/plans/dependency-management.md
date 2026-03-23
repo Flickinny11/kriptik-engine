@@ -397,17 +397,17 @@ This task is about integration, not new features. It connects all the pieces:
 - Mobile: test at 375px width — everything must be usable, not just "visible"
 -ust be keyboard navigable, color contrast must meet WCAG AA
 
-- [ ] Scan and remove ALL placeholders, stubs, TODOs, console.logs
-- [ ] Walk through all user flows and verify logical correctness
-- [ ] Verify all branded logos render correctly
-- [ ] Check bundle size and implement lazy loading where needed
-- [ ] Test responsive layout at all breakpoints (375, 390, 768, 1024, 1440, 1920)
-- [ ] Verify keyboard accessibility
-- [ ] Run `npm run build` — zero errors, zero warnings
-- [ ] Run `npm run lint` — clean
-- [ ] Run `npm run type-check` — clean
-- [ ] Update CLAUDE.md with final state
-- [ ] Mark completed
+- [x] Scan and remove ALL placeholders, stubs, TODOs, console.logs
+- [x] Walk through all user flows and verify logical correctness
+- [x] Verify all branded logos render correctly
+- [x] Check bundle size and implement lazy loading where needed
+- [x] Test responsive layout at all breakpoints (375, 390, 768, 1024, 1440, 1920)
+- [x] Verify keyboard accessibility
+- [x] Run `npm run build` — zero errors, zero warnings
+- [x] Run `npm run lint` — clean
+- [x] Run `npm run type-check` — clean
+- [x] Update CLAUDE.md with final state
+- [x] Mark completed
 
 ### Task 11: Documentation and Merge
 

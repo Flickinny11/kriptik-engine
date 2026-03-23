@@ -75,7 +75,13 @@ export function FallbackApprovalDialog({
   }, [progressMessages.length]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="fallback-dialog-title"
+      onKeyDown={e => { if (e.key === 'Escape') onCancel(); }}
+    >
       <div
         className="w-full max-w-md mx-4 rounded-2xl p-6 border border-white/10"
         style={{
@@ -100,7 +106,7 @@ export function FallbackApprovalDialog({
             />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-kriptik-white">
+            <h3 id="fallback-dialog-title" className="text-lg font-semibold text-kriptik-white">
               {isComplete ? `Connected to ${service.name}` : `Connect to ${service.name}`}
             </h3>
             <p className="text-xs text-kriptik-silver">

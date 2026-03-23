@@ -89,16 +89,25 @@ export default function DependenciesPage() {
     }
   }, [registryLoaded, storeServices, storeCategories]);
 
-  // Close project dropdown on outside click
+  // Close project dropdown on outside click or Escape
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (projectDropdownRef.current && !projectDropdownRef.current.contains(e.target as Node)) {
         setShowProjectDropdown(false);
       }
     };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showProjectDropdown) {
+        setShowProjectDropdown(false);
+      }
+    };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    document.addEventListener('keydown', keyHandler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('keydown', keyHandler);
+    };
+  }, [showProjectDropdown]);
 
   // Filter logic
   const connectedServiceIds = useMemo(() => {
