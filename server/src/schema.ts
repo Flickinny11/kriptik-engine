@@ -137,6 +137,28 @@ export const buildEvents = pgTable('build_events', {
   index('idx_build_events_project_id').on(table.projectId),
 ]);
 
+// ── Project-service instances ────────────────────────────────────────
+// Tracks which services are associated with which projects, with per-instance metadata.
+
+export const projectServiceInstances = pgTable('project_service_instances', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  serviceId: text('service_id').notNull(),
+  instanceModel: text('instance_model').notNull(), // project-per-project | api-key-per-project | shared
+  label: text('label'),
+  status: text('status').default('active'),        // active | pending | error
+  environment: text('environment').default('development'), // development | staging | production
+  externalId: text('external_id'),                 // Project/instance ID at the service
+  apiKeyMasked: text('api_key_masked'),            // Masked API key for display
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  uniqueIndex('project_service_instances_project_service').on(table.projectId, table.serviceId),
+  index('idx_project_service_instances_project').on(table.projectId),
+  index('idx_project_service_instances_user').on(table.userId),
+]);
+
 // ── MCP tables ──────────────────────────────────────────────────────
 
 // MCP service connections — per user, per service (shared across projects)

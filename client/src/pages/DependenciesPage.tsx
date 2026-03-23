@@ -275,15 +275,15 @@ export default function DependenciesPage() {
                         {projects.map(p => (
                           <button
                             key={p.id}
-                            onClick={() => { setSelectedProjectId(p.id); setShowProjectDropdown(false); }}
+                            onClick={() => { setShowProjectDropdown(false); navigate(`/projects/${p.id}/dependencies`); }}
                             className="w-full text-left px-4 py-2.5 text-sm transition-colors truncate"
                             style={{
-                              color: selectedProjectId === p.id ? '#c25a00' : '#1a1a1a',
-                              background: selectedProjectId === p.id ? 'rgba(194,90,0,0.06)' : 'transparent',
-                              fontWeight: selectedProjectId === p.id ? 600 : 400,
+                              color: '#1a1a1a',
+                              background: 'transparent',
+                              fontWeight: 400,
                             }}
-                            onMouseEnter={e => { if (selectedProjectId !== p.id) (e.target as HTMLButtonElement).style.background = 'rgba(0,0,0,0.03)'; }}
-                            onMouseLeave={e => { if (selectedProjectId !== p.id) (e.target as HTMLButtonElement).style.background = 'transparent'; }}
+                            onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = 'rgba(0,0,0,0.03)'; }}
+                            onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; }}
                           >
                             {p.name}
                           </button>

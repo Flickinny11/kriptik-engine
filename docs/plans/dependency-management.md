@@ -337,16 +337,16 @@ User clicks "Add Dependency" → mini catalog opens (filtered, can search) → u
 **"Remove from Project" flow:**
 Removes the association between the KripTik project and the dependency instance. Does NOT delete the account or the instance at the service. Shows a confirmation: "This will remove [Service] from [Project]. Your [Service] account and data wileleted."
 
-- [ ] Build the project dependency view showing all dependencies for one project
-- [ ] Implement the "Add Dependency" flow with mini catalog
-- [ ] Implement per-service instance creation logic based on instanceModel
-- [ ] Implement "Remove from Project" with confirmation
-- [ ] Wire into project dashboard/settings so it's accessible from the project context
-- [ ] Show per-instance details: instance ID, API keys, environment, status
-- [ ] Style per Design_References.md
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Build the project dependency view showing all dependencies for one project
+- [x] Implement the "Add Dependency" flow with mini catalog
+- [x] Implement per-service instance creation logic based on instanceModel
+- [x] Implement "Remove from Project" with confirmation
+- [x] Wire into project dashboard/settings so it's accessible from the project context
+- [x] Show per-instance details: instance ID, API keys, environment, status
+- [x] Style per Design_References.md
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 9: State Management, API Routes, and Full Wiring
 

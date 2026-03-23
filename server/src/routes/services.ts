@@ -2,10 +2,13 @@
  * Service Registry API Routes
  *
  * Serves the dependency catalog to the client for the dependency management
- * UI and connect flows. Also handles post-connection instance creation.
+ * UI and connect flows. Also handles project-service instance creation,
+ * listing, and removal.
  */
 
 import { Router } from 'express';
+import { eq, and } from 'drizzle-orm';
+import { v4 as uuid } from 'uuid';
 import { requireAuth } from '../middleware/auth.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 import {
@@ -16,6 +19,8 @@ import {
   getSortedCategories,
 } from '../services/index.js';
 import { listMcpConnections } from '../mcp/index.js';
+import { db } from '../db.js';
+import { projectServiceInstances } from '../schema.js';
 
 const router = Router();
 
@@ -55,19 +60,6 @@ router.get('/categories', (_req, res) => {
 });
 
 /**
- * GET /api/services/:serviceId
- *
- * Get a single service by ID.
- */
-router.get('/:serviceId', (req, res) => {
-  const service = getServiceById(req.params.serviceId);
-  if (!service) {
-    return res.status(404).json({ error: 'Service not found' });
-  }
-  res.json({ service });
-});
-
-/**
  * GET /api/services/user/connections
  *
  * Get all connected services for the authenticated user, enriched with
@@ -96,6 +88,52 @@ router.get('/user/connections', requireAuth as any, async (req, res) => {
 });
 
 /**
+ * GET /api/services/project/:projectId/dependencies
+ *
+ * List all service instances associated with a project, enriched with
+ * registry metadata.
+ */
+router.get('/project/:projectId/dependencies', requireAuth as any, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const { projectId } = req.params;
+
+  try {
+    const instances = await db.select()
+      .from(projectServiceInstances)
+      .where(
+        and(
+          eq(projectServiceInstances.projectId, projectId),
+          eq(projectServiceInstances.userId, authReq.user!.id),
+        ),
+      );
+
+    // Enrich with registry data
+    const enriched = instances.map(inst => ({
+      ...inst,
+      service: getServiceById(inst.serviceId) || null,
+    }));
+
+    res.json({ dependencies: enriched });
+  } catch (err) {
+    console.error('[Services] Failed to list project dependencies:', err);
+    res.status(500).json({ error: 'Failed to list project dependencies' });
+  }
+});
+
+/**
+ * GET /api/services/:serviceId
+ *
+ * Get a single service by ID.
+ */
+router.get('/:serviceId', (req, res) => {
+  const service = getServiceById(req.params.serviceId);
+  if (!service) {
+    return res.status(404).json({ error: 'Service not found' });
+  }
+  res.json({ service });
+});
+
+/**
  * POST /api/services/:serviceId/create-instance
  *
  * After connecting to a service, create the appropriate instance for a project.
@@ -104,8 +142,8 @@ router.get('/user/connections', requireAuth as any, async (req, res) => {
  * - api-key-per-project: Generates a new API key for billing visibility
  * - shared: Associates the existing connection with the project
  *
- * This endpoint records the association. Actual resource creation at the service
- * is done via MCP tool calls (handled separately by the agent or connect flow).
+ * This endpoint records the association in project_service_instances. Actual
+ * resource creation at the service is done via MCP tool calls or browser agent.
  */
 router.post('/:serviceId/create-instance', requireAuth as any, async (req, res) => {
   const authReq = req as AuthenticatedRequest;
@@ -129,18 +167,72 @@ router.post('/:serviceId/create-instance', requireAuth as any, async (req, res) 
     return res.status(400).json({ error: 'Not connected to this service. Connect first.' });
   }
 
-  // Return the instance model info — actual resource creation happens via MCP tools
-  // or browser agent, depending on the service
-  res.json({
-    instance: {
-      serviceId,
+  try {
+    // Check if already associated
+    const existing = await db.select()
+      .from(projectServiceInstances)
+      .where(
+        and(
+          eq(projectServiceInstances.projectId, projectId),
+          eq(projectServiceInstances.serviceId, serviceId),
+        ),
+      );
+
+    if (existing.length > 0) {
+      return res.json({ instance: { ...existing[0], service } });
+    }
+
+    const id = uuid();
+    const label = instanceLabel || `${service.name} for project`;
+
+    const [instance] = await db.insert(projectServiceInstances).values({
+      id,
       projectId,
+      userId: authReq.user!.id,
+      serviceId,
       instanceModel: service.instanceModel,
-      label: instanceLabel || `${service.name} for project`,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    },
-  });
+      label,
+      status: 'active',
+      environment: 'development',
+    }).returning();
+
+    res.json({ instance: { ...instance, service } });
+  } catch (err) {
+    console.error('[Services] Failed to create instance:', err);
+    res.status(500).json({ error: 'Failed to create service instance' });
+  }
+});
+
+/**
+ * DELETE /api/services/:serviceId/project/:projectId
+ *
+ * Remove a service association from a project. Does NOT disconnect the user
+ * from the service or delete the account at the service.
+ */
+router.delete('/:serviceId/project/:projectId', requireAuth as any, async (req, res) => {
+  const authReq = req as AuthenticatedRequest;
+  const { serviceId, projectId } = req.params;
+
+  try {
+    const deleted = await db.delete(projectServiceInstances)
+      .where(
+        and(
+          eq(projectServiceInstances.projectId, projectId),
+          eq(projectServiceInstances.serviceId, serviceId),
+          eq(projectServiceInstances.userId, authReq.user!.id),
+        ),
+      )
+      .returning();
+
+    if (deleted.length === 0) {
+      return res.status(404).json({ error: 'Dependency association not found' });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Services] Failed to remove project dependency:', err);
+    res.status(500).json({ error: 'Failed to remove dependency' });
+  }
 });
 
 export default router;

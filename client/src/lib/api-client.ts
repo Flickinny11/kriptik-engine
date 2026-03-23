@@ -168,7 +168,15 @@ class ApiClient {
   }
 
   async createServiceInstance(serviceId: string, projectId: string, instanceLabel?: string) {
-    return this.request<{ instance: ServiceInstance }>('POST', `/api/services/${serviceId}/create-instance`, { projectId, instanceLabel });
+    return this.request<{ instance: ProjectServiceInstance }>('POST', `/api/services/${serviceId}/create-instance`, { projectId, instanceLabel });
+  }
+
+  async getProjectDependencies(projectId: string) {
+    return this.request<{ dependencies: ProjectServiceInstance[] }>('GET', `/api/services/project/${projectId}/dependencies`);
+  }
+
+  async removeProjectDependency(serviceId: string, projectId: string) {
+    return this.request<{ success: boolean }>('DELETE', `/api/services/${serviceId}/project/${projectId}`);
   }
 
   // Billing
@@ -375,6 +383,22 @@ export interface ServiceInstance {
   label: string;
   status: string;
   createdAt: string;
+}
+
+export interface ProjectServiceInstance {
+  id: string;
+  projectId: string;
+  userId: string;
+  serviceId: string;
+  instanceModel: InstanceModel;
+  label: string | null;
+  status: string | null;
+  environment: string | null;
+  externalId: string | null;
+  apiKeyMasked: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  service: ServiceRegistryEntry | null;
 }
 
 // Browser Agent Types
