@@ -90,10 +90,14 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
   loadConnections: async () => {
     try {
       const { connections: serverConnections } = await apiClient.getMcpConnections();
-      const connMap = new Map<string, ConnectionEntry>();
+      const connMap = new Map<string, ConnectionEntry>(get().connections);
+
+      // Track which IDs came from the server so we can reconcile
+      const serverIds = new Set<string>();
 
       for (const conn of serverConnections) {
-        const existing = get().connections.get(conn.serviceId);
+        serverIds.add(conn.serviceId);
+        const existing = connMap.get(conn.serviceId);
         connMap.set(conn.serviceId, {
           serviceId: conn.serviceId,
           state: mapServerStatus(conn.status),
@@ -102,6 +106,10 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
           lastHealthCheck: new Date().toISOString(),
         });
       }
+
+      // Preserve browser-agent connections (those without lastHealthCheck)
+      // that aren't in the server response — they exist only in local state
+      // No action needed: they're already in connMap from the clone above
 
       set({ connections: connMap, connectionsLoaded: true });
     } catch {

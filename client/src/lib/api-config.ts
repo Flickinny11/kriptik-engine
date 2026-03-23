@@ -12,7 +12,7 @@ export const FRONTEND_URL = typeof window !== 'undefined' ? window.location.orig
  * events from the callback popup will have this origin.
  */
 export const API_ORIGIN = import.meta.env.VITE_API_ORIGIN
-  || (import.meta.env.DEV ? 'http://localhost:3001' : `https://api.${window.location.hostname}`);
+  || (import.meta.env.DEV ? 'http://localhost:3001' : 'https://api.kriptik.app');
 
 export async function authenticatedFetch(url: string, options: RequestInit = {}) {
   return fetch(url, {

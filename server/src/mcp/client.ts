@@ -340,11 +340,9 @@ export class McpClient {
       );
     }
 
-    // We need the token endpoint from auth server metadata
-    // Get it from the stored connection's MCP server URL
+    // Get current tokens for preserving scope on refresh
     const tokens = await getMcpTokens(userId, serviceId);
-    // We need the MCP server URL to discover metadata
-    // Get it from the connection record
+    // We need the MCP server URL to discover auth server metadata
     const { listMcpConnections } = await import('./token-store.js');
     const connections = await listMcpConnections(userId);
     const connection = connections.find(c => c.serviceId === serviceId);

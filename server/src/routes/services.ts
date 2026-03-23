@@ -164,14 +164,13 @@ router.post('/:serviceId/create-instance', requireAuth as any, async (req, res) 
   const hasMcpConnection = mcpConns.some(c => c.serviceId === serviceId);
 
   if (!hasMcpConnection) {
-    // Also check browser-agent credentials in the vault
+    // Also check browser-agent credentials in the vault (any project scope)
     const browserCreds = await db.select({ id: credentials.id })
       .from(credentials)
       .where(
         and(
           eq(credentials.userId, authReq.user!.id),
           eq(credentials.providerId, serviceId),
-          eq(credentials.projectId, projectId),
         ),
       )
       .limit(1);

@@ -75,7 +75,6 @@ export async function getMcpTokens(
     and(
       eq(mcpConnections.userId, userId),
       eq(mcpConnections.serviceId, serviceId),
-      eq(mcpConnections.status, 'connected'),
     ),
   );
   if (!row) return null;

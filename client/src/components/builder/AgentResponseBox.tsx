@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, MessageSquareIcon } from '@/components/ui/icons';
 import type { AgentInfo, EventGroup } from '@/hooks/useAgentTracker';
 import type { EngineEvent } from '@/hooks/useEngineEvents';
@@ -254,6 +254,13 @@ function StandaloneBox({
   const connectionsMap = useDependencyStore(s => s.getConnectionsMap());
   const setConnectionState = useDependencyStore(s => s.setConnectionState);
   const setToolsForService = useDependencyStore(s => s.setToolsForService);
+  const popupCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (popupCheckRef.current) clearInterval(popupCheckRef.current);
+    };
+  }, []);
 
   const handleMcpConnect = useCallback(async (service: ServiceRegistryEntry) => {
     if (!service.mcp) return;
@@ -265,9 +272,11 @@ function StandaloneBox({
       const top = window.screenY + (window.outerHeight - height) / 2;
       const popup = window.open(authorizationUrl, `mcp_oauth_${service.id}`, `width=${width},height=${height},left=${left},top=${top}`);
       if (popup) {
-        const checkClosed = setInterval(() => {
+        if (popupCheckRef.current) clearInterval(popupCheckRef.current);
+        popupCheckRef.current = setInterval(() => {
           if (popup.closed) {
-            clearInterval(checkClosed);
+            if (popupCheckRef.current) clearInterval(popupCheckRef.current);
+            popupCheckRef.current = null;
             // If still connecting, revert to disconnected
             const current = useDependencyStore.getState().connections.get(service.id);
             if (current?.state === 'connecting') {
