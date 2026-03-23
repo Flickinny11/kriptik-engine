@@ -70,7 +70,7 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [nodeId, oauthCatalog, serviceRegistry]);
+  }, [nodeId, oauthCatalog, serviceRegistry, handleAnswer]);
 
   const handleAnswer = useCallback((answer: string) => {
     if (answered) return;

@@ -40,6 +40,7 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
   const popupRef = useRef<Window | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const userId = user?.id ?? '';
   const userEmail = user?.email ?? '';
@@ -132,9 +133,11 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
       );
 
       // Poll for popup close (user cancelled)
-      const pollTimer = setInterval(() => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+      pollTimerRef.current = setInterval(() => {
         if (popupRef.current?.closed) {
-          clearInterval(pollTimer);
+          if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+          pollTimerRef.current = null;
           setIsConnecting(false);
         }
       }, 500);
@@ -143,6 +146,13 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
       setIsConnecting(false);
     }
   }, [userEmail, isConnecting]);
+
+  // Cleanup poll timer on unmount
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
+    };
+  }, []);
 
   // Don't render if: still loading, already connected, dismissed, no projects, no user
   if (hasEmailMcp === null || hasEmailMcp || isDismissed || projectCount === 0 || !userId) {

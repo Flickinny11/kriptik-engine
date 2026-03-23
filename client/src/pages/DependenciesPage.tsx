@@ -432,7 +432,6 @@ export default function DependenciesPage() {
                       connectionState={getConnectionState(service.id)}
                       onConnect={startMcpConnect}
                       onFallbackApprove={(s) => startBrowserFallback(s, user?.email || '', user?.name || '')}
-                      onTierSelect={() => {}}
                       onDisconnect={disconnect}
                       userEmail={user?.email}
                       userName={user?.name}

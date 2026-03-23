@@ -65,11 +65,21 @@ async function executeViaCloudApi(task: BrowserUseTask): Promise<BrowserUseResul
 
     const { task_id } = await createResponse.json() as { task_id: string };
 
-    // Poll for task completion
+    // Poll for task completion (5 minute absolute timeout)
     let stepCount = 0;
     let lastStepCount = 0;
+    const startTime = Date.now();
+    const TIMEOUT_MS = 5 * 60 * 1000;
 
     while (true) {
+      if (Date.now() - startTime > TIMEOUT_MS) {
+        return {
+          success: false,
+          extractedData: {},
+          totalSteps: stepCount,
+          error: 'Task timed out after 5 minutes',
+        };
+      }
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const statusResponse = await fetch(`${BROWSER_USE_API_URL}/tasks/${task_id}`, {

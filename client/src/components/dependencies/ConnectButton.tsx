@@ -89,7 +89,7 @@ export function ConnectButton({
       return;
     }
 
-    if (service.mcp) {
+    if (service.mcp && service.mcp.authMethod === 'oauth') {
       await onConnect(service);
     } else if (service.browserFallbackAvailable) {
       setShowFallbackDialog(true);

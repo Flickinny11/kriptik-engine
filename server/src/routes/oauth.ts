@@ -75,18 +75,29 @@ router.get('/callback/:provider', async (req: Request, res: Response) => {
  * and closes the popup. The Builder receives { provider, success } and handles it.
  */
 function callbackPage(success: boolean, provider: string, error?: string): string {
+  // Escape '<' to prevent script injection via error messages from OAuth providers.
+  // JSON.stringify alone doesn't prevent '</script>' from terminating the script block.
+  const message = JSON.stringify({
+    type: 'oauth_complete',
+    provider,
+    success,
+    error: error || null,
+  }).replace(/</g, '\\u003c');
+
+  const targetOrigin = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
+
   return `<!DOCTYPE html>
 <html><head><title>OAuth ${success ? 'Complete' : 'Failed'}</title></head>
 <body style="background:#0a0a0a;color:#fafafa;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
 <div style="text-align:center">
   <p style="font-size:18px">${success ? 'Connected!' : 'Connection failed'}</p>
-  ${error ? `<p style="color:#ef4444;font-size:14px">${error}</p>` : ''}
   <p style="color:#8a8a8a;font-size:12px">This window will close automatically...</p>
 </div>
 <script>
-  const targetOrigin = window.location.origin || 'http://localhost:5173';
-  window.opener?.postMessage({ type: 'oauth_complete', provider: '${provider}', success: ${success}${error ? `, error: '${error.replace(/'/g, "\\'")}'` : ''} }, targetOrigin);
-  setTimeout(() => window.close(), 1500);
+  if (window.opener) {
+    window.opener.postMessage(${message}, ${JSON.stringify(targetOrigin)});
+  }
+  setTimeout(function() { window.close(); }, 1500);
 </script>
 </body></html>`;
 }
