@@ -260,19 +260,19 @@ The view has two modes toggled at the top:
 
 **Layout:** Responsive grid — 4 columns wide desktop, 3 narrow desktop, 2 tablet, 1 mobile. Tiles must have visible depth with shadows, subtle gradients, hover elevation. The whole page should feel like a polished app store, not a flat admin panel.
 
-- [ ] Build the main dependency management page with routing
-- [ ] Build the My Dependencies / Browse All mode toggle
-- [ ] Build the search bar with real-time filtering
-- [ ] Build the category filter tabs
-- [ ] Build the dependency tile component with branded logos, status indicators, project badges
-- [ ] Build the project selector dropdown for filtering
-- [ ] Build thBrowse All catalog view with Connect buttons
-- [ ] Populate with real data from the service registry (Task 2)
-- [ ] Make the grid fully responsive across all breakpoints
-- [ ] Style everything per Design_References.md — depth, warmth, smooth interactions
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Build the main dependency management page with routing
+- [x] Build the My Dependencies / Browse All mode toggle
+- [x] Build the search bar with real-time filtering
+- [x] Build the category filter tabs
+- [x] Build the dependency tile component with branded logos, status indicators, project badges
+- [x] Build the project selector dropdown for filtering
+- [x] Build the Browse All catalog view with Connect buttons
+- [x] Populate with real data from the service registry (Task 2)
+- [x] Make the grid fully responsive across all breakpoints
+- [x] Style everything per Design_References.md — depth, warmth, smooth interactions
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 7: Individual Dependency Dashboard
 
