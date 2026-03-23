@@ -167,6 +167,23 @@ class ApiClient {
     return this.request<{ success: boolean }>('DELETE', '/api/github/connection');
   }
 
+  // GitLab Integration
+  async getGitLabConnection() {
+    return this.request<{ connected: boolean; username?: string; avatarUrl?: string }>('GET', '/api/gitlab/connection');
+  }
+
+  async getGitLabAuthUrl() {
+    return this.request<{ url: string; state: string }>('GET', '/api/gitlab/auth/url');
+  }
+
+  async getGitLabRepos() {
+    return this.request<{ repos: GitHubRepo[] }>('GET', '/api/gitlab/repos');
+  }
+
+  async disconnectGitLab() {
+    return this.request<{ success: boolean }>('DELETE', '/api/gitlab/connection');
+  }
+
   // File upload
   async uploadFiles(projectId: string, files: FormData) {
     const res = await authenticatedFetch(`${API_URL}/api/projects/${projectId}/upload`, {

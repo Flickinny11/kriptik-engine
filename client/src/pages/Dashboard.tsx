@@ -413,6 +413,371 @@ function GitHubRepoSelector({
   );
 }
 
+// ── Import App Dropdown ──────────────────────────────────────────────
+function ImportAppDropdown() {
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<'zip' | 'github' | 'gitlab' | null>(null);
+  const [ghConnected, setGhConnected] = useState(false);
+  const [ghUsername, setGhUsername] = useState('');
+  const [glConnected, setGlConnected] = useState(false);
+  const [glUsername, setGlUsername] = useState('');
+  const [repos, setRepos] = useState<GitHubRepo[]>([]);
+  const [reposLoading, setReposLoading] = useState(false);
+  const [repoSearch, setRepoSearch] = useState('');
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
+  const [showRepoSelector, setShowRepoSelector] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  // Check connection status on mount
+  useEffect(() => {
+    apiClient.getGitHubConnection()
+      .then(data => { setGhConnected(data.connected); if (data.username) setGhUsername(data.username); })
+      .catch(() => setGhConnected(false));
+    apiClient.getGitLabConnection()
+      .then(data => { setGlConnected(data.connected); if (data.username) setGlUsername(data.username); })
+      .catch(() => setGlConnected(false));
+  }, []);
+
+  // Click outside to close
+  useEffect(() => {
+    if (!isOpen && !showRepoSelector) return;
+    const handle = (e: MouseEvent) => {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setShowRepoSelector(false);
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [isOpen, showRepoSelector]);
+
+  const handleSourceSelect = async (source: 'zip' | 'github' | 'gitlab') => {
+    setSelectedSource(source);
+    setIsOpen(false);
+
+    if (source === 'zip') {
+      fileRef.current?.click();
+      return;
+    }
+
+    const isConnected = source === 'github' ? ghConnected : glConnected;
+    if (!isConnected) {
+      // Redirect to OAuth
+      try {
+        if (source === 'github') {
+          const { url } = await apiClient.getGitHubAuthUrl();
+          window.location.href = url;
+        } else {
+          const { url } = await apiClient.getGitLabAuthUrl();
+          window.location.href = url;
+        }
+      } catch (err) {
+        console.error(`${source} auth failed:`, err);
+      }
+      return;
+    }
+
+    // Connected — show repo selector
+    setShowRepoSelector(true);
+    setReposLoading(true);
+    try {
+      const data = source === 'github'
+        ? await apiClient.getGitHubRepos()
+        : await apiClient.getGitLabRepos();
+      setRepos(data.repos);
+    } catch { setRepos([]); }
+    finally { setReposLoading(false); }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setShowConfirmModal(true);
+    }
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const handleRepoSelect = (repo: GitHubRepo) => {
+    setSelectedRepo(repo);
+    setShowRepoSelector(false);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setShowConfirmModal(false);
+    try {
+      const projectId = uuid();
+      const name = selectedRepo
+        ? selectedRepo.name
+        : selectedFile?.name.replace(/\.zip$/i, '') || 'Imported App';
+      const { project } = await apiClient.createProject({ id: projectId, name, description: `Imported from ${selectedSource}` });
+      const { addProject } = useProjectStore.getState();
+      addProject(project);
+      navigate(`/builder/${projectId}`, {
+        state: {
+          importSource: selectedSource,
+          repoUrl: selectedRepo?.htmlUrl,
+          repoFullName: selectedRepo?.fullName,
+          defaultBranch: selectedRepo?.defaultBranch,
+          runForensicAudit: true,
+          initialPrompt: `[FORENSIC AUDIT] Import and audit ${selectedRepo?.fullName || selectedFile?.name || 'uploaded project'} — clone the repository, install dependencies, start the dev server, and run a comprehensive forensic audit of the entire codebase.`,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to create import project:', err);
+    }
+  };
+
+  const filteredRepos = repoSearch
+    ? repos.filter(r => r.name.toLowerCase().includes(repoSearch.toLowerCase()) || r.fullName.toLowerCase().includes(repoSearch.toLowerCase()))
+    : repos;
+
+  return (
+    <div ref={dropRef} className="relative">
+      <input ref={fileRef} type="file" accept=".zip" className="hidden" onChange={handleFileChange} />
+
+      <button
+        onClick={() => { setIsOpen(!isOpen); setShowRepoSelector(false); }}
+        className="glass-button flex items-center gap-2 px-4 py-2 text-sm font-medium"
+        style={{ borderRadius: '12px', color: '#1a1a1a' }}
+      >
+        <UploadIcon size={16} />
+        <span>Import App</span>
+        <ChevronDownIcon size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {/* Source dropdown */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full mt-2 right-0 z-50"
+            style={{
+              width: '13rem',
+              borderRadius: '14px',
+              overflow: 'hidden',
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(248,248,250,0.96) 100%)',
+              backdropFilter: 'blur(40px) saturate(200%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+              border: '1px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)',
+            }}
+          >
+            {/* ZIP Upload */}
+            <button
+              onClick={() => handleSourceSelect('zip')}
+              className="w-full px-4 py-3 text-left hover:bg-black/[0.04] transition-colors flex items-center gap-3"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span className="text-sm font-medium" style={{ color: '#1a1a1a' }}>ZIP Upload</span>
+            </button>
+
+            <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }} />
+
+            {/* GitHub */}
+            <button
+              onClick={() => handleSourceSelect('github')}
+              className="w-full px-4 py-3 text-left hover:bg-black/[0.04] transition-colors flex items-center gap-3"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#24292f">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium" style={{ color: '#1a1a1a' }}>GitHub</span>
+                {ghConnected && <span className="text-[10px] ml-1.5 text-emerald-600">Connected</span>}
+              </div>
+            </button>
+
+            <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)' }} />
+
+            {/* GitLab */}
+            <button
+              onClick={() => handleSourceSelect('gitlab')}
+              className="w-full px-4 py-3 text-left hover:bg-black/[0.04] transition-colors flex items-center gap-3"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 01-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 014.82 2a.43.43 0 01.58 0 .42.42 0 01.11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0118.6 2a.43.43 0 01.58 0 .42.42 0 01.11.18l2.44 7.51L23 13.45a.84.84 0 01-.35.94z" fill="#FC6D26" />
+                <path d="M12 22.13L16.05 9.67H7.95L12 22.13z" fill="#E24329" />
+                <path d="M12 22.13L7.95 9.67H4.71L12 22.13z" fill="#FC6D26" />
+                <path d="M4.71 9.67L1.35 14.39a.84.84 0 00.3.94L12 22.13 4.71 9.67z" fill="#FCA326" />
+                <path d="M4.71 9.67H7.95L5.51 2.18A.42.42 0 005.4 2a.43.43 0 00-.58 0 .42.42 0 00-.11.18L4.71 9.67z" fill="#E24329" />
+                <path d="M12 22.13L16.05 9.67H19.29L12 22.13z" fill="#FC6D26" />
+                <path d="M19.29 9.67L22.65 14.39a.84.84 0 01-.3.94L12 22.13l7.29-12.46z" fill="#FCA326" />
+                <path d="M19.29 9.67H16.05l2.44-7.49A.42.42 0 0118.6 2a.43.43 0 01.58 0c.05.05.09.11.11.18l2.44 7.49h-2.44z" fill="#E24329" />
+              </svg>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium" style={{ color: '#1a1a1a' }}>GitLab</span>
+                {glConnected && <span className="text-[10px] ml-1.5 text-emerald-600">Connected</span>}
+              </div>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Repo selector dropdown */}
+      <AnimatePresence>
+        {showRepoSelector && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            className="absolute top-full mt-2 right-0 z-50"
+            style={{
+              width: '22rem',
+              maxHeight: '24rem',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.92) 0%, rgba(248,248,250,0.96) 100%)',
+              backdropFilter: 'blur(40px) saturate(200%)',
+              WebkitBackdropFilter: 'blur(40px) saturate(200%)',
+              border: '1px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06)',
+            }}
+          >
+            <div className="p-3 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              {selectedSource === 'github' ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#24292f"><path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.579.688.481C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" /></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22.65 14.39L12 22.13 1.35 14.39a.84.84 0 01-.3-.94l1.22-3.78 2.44-7.51A.42.42 0 014.82 2a.43.43 0 01.58 0 .42.42 0 01.11.18l2.44 7.49h8.1l2.44-7.51A.42.42 0 0118.6 2a.43.43 0 01.58 0 .42.42 0 01.11.18l2.44 7.51L23 13.45a.84.84 0 01-.35.94z" fill="#FC6D26" /></svg>
+              )}
+              <input
+                type="text"
+                value={repoSearch}
+                onChange={(e) => setRepoSearch(e.target.value)}
+                placeholder={`Search ${selectedSource === 'github' ? 'GitHub' : 'GitLab'} repos...`}
+                className="flex-1 px-2 py-1.5 text-sm rounded-lg"
+                style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.06)', outline: 'none', color: '#1a1a1a' }}
+                autoFocus
+              />
+            </div>
+            <div style={{ maxHeight: '18rem', overflowY: 'auto' }}>
+              {reposLoading ? (
+                <div className="p-6 text-center">
+                  <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              ) : filteredRepos.length === 0 ? (
+                <div className="p-4 text-center text-sm" style={{ color: '#999' }}>No repos found</div>
+              ) : (
+                filteredRepos.map(repo => (
+                  <button
+                    key={repo.id}
+                    onClick={() => handleRepoSelect(repo)}
+                    className="w-full px-4 py-2.5 text-left hover:bg-black/[0.03] transition-colors flex items-center gap-3"
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#1a1a1a' }}>{repo.name}</p>
+                      {repo.description && <p className="text-xs truncate mt-0.5" style={{ color: '#999' }}>{repo.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {repo.language && <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.04)', color: '#666' }}>{repo.language}</span>}
+                      {repo.private && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirmation Modal */}
+      <AnimatePresence>
+        {showConfirmModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => setShowConfirmModal(false)}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative z-10 w-full max-w-md mx-4"
+              style={{
+                borderRadius: '20px',
+                background: 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(248,248,250,0.98) 100%)',
+                backdropFilter: 'blur(40px)',
+                border: '1px solid rgba(255,255,255,0.6)',
+                boxShadow: '0 24px 80px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.08)',
+                padding: '2rem',
+              }}
+            >
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center text-3xl"
+                  style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.15), rgba(249,115,22,0.15))' }}>
+                  🔬
+                </div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: '#1a1a1a' }}>Do you wish to continue?</h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#666' }}>
+                  Selecting yes will perform a <strong>forensic audit</strong> of your codebase.
+                  This will analyze every component, endpoint, route, hook, API call, and function —
+                  running concurrent AI agents that build, browse, and test your app in real-time
+                  to detect issues including silent errors that traditional tools miss.
+                </p>
+              </div>
+
+              {selectedRepo && (
+                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                  <p className="text-sm font-medium" style={{ color: '#1a1a1a' }}>{selectedRepo.fullName}</p>
+                  {selectedRepo.description && <p className="text-xs mt-1" style={{ color: '#999' }}>{selectedRepo.description}</p>}
+                </div>
+              )}
+              {selectedFile && (
+                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                  <p className="text-sm font-medium" style={{ color: '#1a1a1a' }}>{selectedFile.name}</p>
+                  <p className="text-xs mt-1" style={{ color: '#999' }}>{(selectedFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 px-4 py-3 text-sm font-medium rounded-xl transition-colors"
+                  style={{ background: 'rgba(0,0,0,0.05)', color: '#666', border: 'none', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="flex-1 px-4 py-3 text-sm font-semibold rounded-xl transition-all hover:translate-y-[-1px]"
+                  style={{
+                    background: 'linear-gradient(135deg, #fbbf24, #f97316)',
+                    color: 'white',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(249,115,22,0.3)',
+                  }}
+                >
+                  Yes, Start Audit
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // Credit usage meter component
 function CreditMeter({ used, total }: { used: number; total: number }) {
   const percentage = Math.min((used / total) * 100, 100);
@@ -1068,15 +1433,8 @@ export default function Dashboard() {
               {/* Create Project */}
               <NewProjectModal />
 
-              {/* Import App */}
-              <button
-                onClick={() => navigate('/fix-my-app')}
-                className="glass-button flex items-center gap-2 px-4 py-2 text-sm font-medium"
-                style={{ borderRadius: '12px', color: '#1a1a1a' }}
-              >
-                <UploadIcon size={16} />
-                <span>Import App</span>
-              </button>
+              {/* Import App — dropdown with zip/github/gitlab */}
+              <ImportAppDropdown />
 
               {/* Fix My App — moved here from NLP input area */}
               <button

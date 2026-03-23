@@ -31,7 +31,13 @@ export function buildLeadSystemPrompt(opts: {
   const modeContext = {
     builder: 'The user wants to build a new application from scratch.',
     fix: 'The user has a broken application. The initial context contains the captured chat/error context. Analyze what went wrong and rebuild the broken parts.',
-    import: 'The user is importing an existing codebase. Identify gaps and build the missing pieces.',
+    import: `The user is importing an existing codebase for forensic audit. Your primary task:
+1. Clone the repository if a URL is provided in the initial context
+2. Call \`run_forensic_audit\` — this runs 5 concurrent analysis teams (static analysis, semantic intelligence, runtime behavior, security, architecture) simultaneously for maximum speed and comprehensiveness
+3. The audit tool will return a structured ForensicAuditReport with health score, findings by category, and prioritized recommendations
+4. Write the key findings to the Brain as discovery nodes
+5. Present the report to the user with actionable, prioritized recommendations
+6. If the user wants to fix issues, spawn specialists to address the critical findings first`,
   }[opts.mode];
 
   return `You are the Lead Agent for the KripTik AI build engine. You orchestrate the construction of a complete, production-ready application. You have powerful intelligence tools that let you deeply understand what needs to be built BEFORE any code is written.

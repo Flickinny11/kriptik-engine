@@ -114,8 +114,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       const callbackUrl = apiBase ? `${apiBase}/api/events/callback/${projectId}` : undefined;
 
       // Fire and return — Modal streams events via callback + returns full list
+      const isAuditModeModal = typeof prompt === 'string' && prompt.startsWith('[FORENSIC AUDIT]');
       startModalBuildStreaming(
-        { projectId, prompt, mode: 'builder', budgetCapDollars: 5, callbackUrl },
+        { projectId, prompt, mode: isAuditModeModal ? 'import' : 'builder', budgetCapDollars: isAuditModeModal ? 10 : 5, callbackUrl },
         persistEvent,
       ).catch((err) => {
         console.error('Modal build error:', err);
@@ -131,10 +132,13 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
       const brainDir = path.join(os.tmpdir(), 'kriptik-brains');
       const sandboxDir = path.join(os.tmpdir(), 'kriptik-sandboxes', projectId);
 
+      // Detect forensic audit mode from prompt
+      const isAuditMode = typeof prompt === 'string' && prompt.startsWith('[FORENSIC AUDIT]');
+
       const initEngine = await loadEngine();
       const handle = await initEngine({
         projectId,
-        mode: 'builder',
+        mode: isAuditMode ? 'import' : 'builder',
         initialContext: prompt,
         anthropicApiKey: process.env.ANTHROPIC_API_KEY!,
         qdrantUrl: process.env.QDRANT_URL!,

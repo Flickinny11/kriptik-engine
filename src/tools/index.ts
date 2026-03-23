@@ -10,6 +10,7 @@ import { createVerifyTools } from './verify/index.js';
 import { createAnalyzeTools } from './analyze/index.js';
 import { createDesignTools } from './design/index.js';
 import { createVisionTools } from './vision/index.js';
+import { createAuditTools } from './audit/index.js';
 import type { SandboxProvider } from './sandbox/provider.js';
 
 export interface ToolRegistryConfig {
@@ -24,6 +25,7 @@ export function buildToolRegistry(config: ToolRegistryConfig): ToolDefinition[] 
     ...createAnalyzeTools({ router: config.router }),
     ...createDesignTools({ sandbox: config.sandbox }),
     ...createVisionTools(),
+    ...createAuditTools({ sandbox: config.sandbox, router: config.router }),
   ];
 }
 

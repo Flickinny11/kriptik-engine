@@ -114,4 +114,33 @@ router.get('/:id/preview', async (req: AuthenticatedRequest, res: Response) => {
   res.json({ url: null, status: project.status });
 });
 
+// ── POST /api/projects/:id/import ────────────────────────────────
+// Record import source metadata for a project (used before audit starts)
+router.post('/:id/import', async (req: AuthenticatedRequest, res: Response) => {
+  const project = await verifyProjectOwnership(req, req.params.id);
+  if (!project) {
+    res.status(403).json({ error: 'Project not found or access denied' });
+    return;
+  }
+
+  const { source, repoUrl, repoFullName, defaultBranch } = req.body;
+  if (!source) {
+    res.status(400).json({ error: 'source is required (github, gitlab, or zip)' });
+    return;
+  }
+
+  // Store import metadata in project description for now
+  // (could be a dedicated column in future)
+  const importMeta = JSON.stringify({ source, repoUrl, repoFullName, defaultBranch, importedAt: new Date().toISOString() });
+
+  await db.update(projects)
+    .set({
+      description: `Imported from ${source}: ${repoFullName || repoUrl || 'zip upload'}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(projects.id, req.params.id));
+
+  res.json({ success: true, importMeta });
+});
+
 export default router;

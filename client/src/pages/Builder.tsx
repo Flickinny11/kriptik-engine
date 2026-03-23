@@ -50,6 +50,9 @@ export default function Builder() {
   const location = useLocation();
   const navigate = useNavigate();
   const initialPrompt = (location.state as any)?.initialPrompt as string | undefined;
+  const runForensicAudit = (location.state as any)?.runForensicAudit as boolean | undefined;
+  const importSource = (location.state as any)?.importSource as string | undefined;
+  const repoFullName = (location.state as any)?.repoFullName as string | undefined;
   const headerRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
 
@@ -186,7 +189,9 @@ export default function Builder() {
 
   // Map project status to Glass3DStatusBadge status format
   const badgeStatus = isIdle ? 'idle' : isBuilding ? 'building' : isComplete ? 'complete' : 'idle';
-  const badgeLabel = isIdle ? 'Ready' : isBuilding ? 'Building' : isComplete ? 'Complete' : projectName || 'Project';
+  const badgeLabel = runForensicAudit && isBuilding
+    ? 'Auditing'
+    : isIdle ? 'Ready' : isBuilding ? 'Building' : isComplete ? 'Complete' : projectName || 'Project';
 
   return (
     <div
@@ -243,9 +248,19 @@ export default function Builder() {
             maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             fontFamily: "'Space Grotesk', system-ui, sans-serif",
           }}>
-            {projectName || initialPrompt?.slice(0, 50) || 'New Project'}
+            {repoFullName || projectName || initialPrompt?.slice(0, 50) || 'New Project'}
           </span>
           <Glass3DStatusBadge status={badgeStatus} label={badgeLabel} />
+          {runForensicAudit && isBuilding && (
+            <span style={{
+              fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em',
+              padding: '3px 8px', borderRadius: 6,
+              background: 'linear-gradient(135deg, rgba(251,191,36,0.2), rgba(249,115,22,0.2))',
+              color: '#fbbf24', border: '1px solid rgba(251,191,36,0.3)',
+            }}>
+              Forensic Audit
+            </span>
+          )}
         </div>
 
         {/* Center: Tab Switcher */}
