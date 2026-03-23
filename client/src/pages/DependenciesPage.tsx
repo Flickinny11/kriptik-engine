@@ -483,6 +483,7 @@ function DependencyTile({
   onRetryFallback,
   connectedServiceIds,
 }: DependencyTileProps) {
+  const tileNavigate = useNavigate();
   const isConnected = connectedServiceIds.has(service.id);
   const freeTier = service.pricing.find(t => t.price === 0);
   const lowestPaidTier = service.pricing
@@ -508,6 +509,10 @@ function DependencyTile({
         boxShadow: isConnected
           ? `0 4px 0 ${service.brandColor}12, 0 8px 24px rgba(0,0,0,0.06), inset 0 1px 2px rgba(255,255,255,0.8), 0 0 0 0 ${service.brandColor}00`
           : '0 4px 0 rgba(200,195,190,0.35), 0 8px 24px rgba(0,0,0,0.05), inset 0 1px 2px rgba(255,255,255,0.9)',
+        cursor: isConnected ? 'pointer' : 'default',
+      }}
+      onClick={() => {
+        if (isConnected) tileNavigate(`/dependencies/${service.id}`);
       }}
       onMouseEnter={e => {
         const el = e.currentTarget;

@@ -296,18 +296,18 @@ The dashboard is a detail view (slide-over panel, modal, or new page — match t
 
 **The dashboard adapts to what's available via MCP.** If a service's MCP server exposes billing tools, show billing inline. If it only exposes database tools, only show database management. Use `tools/list` results to determine what panels to render. For anything not available via MCP, show a "Manage on [Service]" link.
 
-- [ ] Build the dependency dashboard container/layout
-- [ ] Build the header with branded logo, status, and actions
-- [ ] Build the overview panel that pulls data via MCP tools
-- [ ] Build the project instances panel with per-project cards
-- [ ] Build the subscription management panel with plan comparison
-- [ ] Build the API keys panel with create/revoke/copy actions
-- [ ] Build the billing panel (MCP data or external link fallback)
-- [ ] Make panels render conditionally based on what MCP tools the service exposes
-- [ ] Style every panel with depth, the service's brand color as accent, proper spacing
-- [ ] Verify build passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Build the dependency dashboard container/layout
+- [x] Build the header with branded logo, status, and actions
+- [x] Build the overview panel that pulls data via MCP tools
+- [x] Build the project instances panel with per-project cards
+- [x] Build the subscription management panel with plan comparison
+- [x] Build the API keys panel with create/revoke/copy actions
+- [x] Build the billing panel (MCP data or external link fallback)
+- [x] Make panels render conditionally based on what MCP tools the service exposes
+- [x] Style every panel with depth, the service's brand color as accent, proper spacing
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 8: Per-Project Dependency Management
 

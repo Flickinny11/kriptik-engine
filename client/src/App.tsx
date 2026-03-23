@@ -29,6 +29,7 @@ const MyStuff = React.lazy(() => import('@/pages/MyStuff'));
 const UsageDashboard = React.lazy(() => import('@/pages/UsageDashboard'));
 const AILabPage = React.lazy(() => import('@/pages/AILabPage'));
 const DependenciesPage = React.lazy(() => import('@/pages/DependenciesPage'));
+const DependencyDashboard = React.lazy(() => import('@/pages/DependencyDashboard'));
 const PrivacyPolicy = React.lazy(() => import('@/pages/PrivacyPolicy'));
 const GitHubCallback = React.lazy(() => import('@/pages/GitHubCallback'));
 const OAuthCallback = React.lazy(() => import('@/pages/OAuthCallback'));
@@ -97,6 +98,7 @@ export default function App() {
           <Route path="/usage" element={<ProtectedRoute><UsageDashboard /></ProtectedRoute>} />
           <Route path="/ai-lab" element={<ProtectedRoute><AILabPage /></ProtectedRoute>} />
           <Route path="/dependencies" element={<ProtectedRoute><DependenciesPage /></ProtectedRoute>} />
+          <Route path="/dependencies/:serviceId" element={<ProtectedRoute><DependencyDashboard /></ProtectedRoute>} />
 
           {/* OAuth callback routes */}
           <Route path="/oauth-callback" element={<OAuthCallback />} />
