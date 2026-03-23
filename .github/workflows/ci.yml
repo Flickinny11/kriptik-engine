@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install engine dependencies
+        run: npm ci
+
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      - name: Install client dependencies
+        run: cd client && npm ci
+
+      - name: Typecheck engine
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Typecheck server
+        run: cd server && npx tsc --noEmit
+
+      - name: Typecheck client
+        run: cd client && npx tsc --noEmit
+
+      - name: Run mechanical pattern scanner
+        run: CHECK_ALL=true bash scripts/check-mechanical.sh
+
+      - name: Run modularity checker
+        run: CHECK_ALL=true SKIP_ENGINE_CHECK=true bash scripts/check-modularity.sh
+
+      - name: Build client
+        run: cd client && npm run build
+
+      - name: Build server
+        run: cd server && npm run build

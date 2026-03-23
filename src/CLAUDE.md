@@ -7,5 +7,7 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
+| #1966 | 6:39 PM | 🔵 | Read engine initialization function (partial, first 80 of 119 lines) | ~697 |
 | #1952 | 5:32 PM | 🔵 | Re-examined engine public API exports | ~505 |
+| #1935 | 5:19 PM | 🔵 | Examined new engine's public API surface | ~480 |
 </claude-mem-context>
