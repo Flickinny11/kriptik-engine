@@ -77,7 +77,7 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
     function handleMessage(event: MessageEvent) {
       if (!event.data || typeof event.data !== 'object') return;
       if (event.origin !== API_ORIGIN) return;
-      if (event.data?.type === 'mcp_oauth_complete' && event.data?.serviceId) {
+      if (event.data?.type === 'mcp_oauth_complete' && event.data?.serviceId && event.data?.success === true) {
         const sid = event.data.serviceId;
         if (sid === 'gmail' || sid === 'microsoft-outlook') {
           setHasEmailMcp(true);

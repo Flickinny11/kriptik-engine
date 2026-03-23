@@ -290,18 +290,26 @@ async function runSignupFlow(
           );
 
           // Feed the code/link back to the browser agent
+          // Sanitize extracted values to prevent prompt injection via crafted emails
           if (verifyResult.code) {
-            await executeBrowserTask({
-              task: `Enter the verification code "${verifyResult.code}" in the verification input field and submit`,
-              url: template.signupUrl,
-              maxSteps: 5,
-            });
+            const sanitizedCode = verifyResult.code.replace(/[^a-zA-Z0-9\-_.\s]/g, '').trim().slice(0, 20);
+            if (sanitizedCode) {
+              await executeBrowserTask({
+                task: `Enter the verification code "${sanitizedCode}" in the verification input field and submit`,
+                url: template.signupUrl,
+                maxSteps: 5,
+              });
+            }
           } else if (verifyResult.link) {
-            await executeBrowserTask({
-              task: `Navigate to this verification link: ${verifyResult.link}`,
-              url: verifyResult.link,
-              maxSteps: 3,
-            });
+            // Only allow HTTPS URLs to prevent navigation to malicious schemes
+            const linkUrl = verifyResult.link.trim();
+            if (linkUrl.startsWith('https://')) {
+              await executeBrowserTask({
+                task: `Navigate to this verification link: ${linkUrl}`,
+                url: linkUrl,
+                maxSteps: 3,
+              });
+            }
           }
         } else {
           // Email MCP didn't find the code, fall through to user input

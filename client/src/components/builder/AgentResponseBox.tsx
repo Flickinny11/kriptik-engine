@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, MessageSquareIcon } from '@/components/ui/icons';
 import type { AgentInfo, EventGroup } from '@/hooks/useAgentTracker';
 import type { EngineEvent } from '@/hooks/useEngineEvents';
@@ -251,10 +251,21 @@ function StandaloneBox({
 }) {
   // Pull MCP service data from the global dependency store
   const services = useDependencyStore(s => s.services);
-  const connectionsMap = useDependencyStore(s => s.getConnectionsMap());
+  const connections = useDependencyStore(s => s.connections);
   const setConnectionState = useDependencyStore(s => s.setConnectionState);
   const setToolsForService = useDependencyStore(s => s.setToolsForService);
   const popupCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Derive a stable Map<serviceId, state> from the connections map.
+  // Using useMemo avoids creating a new Map on every render (which would cause
+  // infinite re-renders if selected via getConnectionsMap() inside a Zustand selector).
+  const connectionsMap = useMemo(() => {
+    const map = new Map<string, import('@/store/useDependencyStore').ConnectFlowState>();
+    for (const [id, entry] of connections) {
+      map.set(id, entry.state);
+    }
+    return map;
+  }, [connections]);
 
   useEffect(() => {
     return () => {
