@@ -109,15 +109,15 @@ Non-MCP / fallback required (Layer 2): fal.ai, Replicate, RunPod, Render, Railwa
 
 Search the web to verify which services currently have MCP servers as of March 2026 — the ecosystem is growing fast and some of these may have added MCP since this plan was written.
 
-- [ ] Create the service registry data structure and types
-- [ ] Populate with 30+ real services across all categories with accurate MCP server URLs
-- [ ] Include real pricing tier data for each service (fetch from their websites if needed)
-- [ ] Install simple-icons or equivalent and verify branded logos are available for each service
-- [ ] Create category definitions with display metadata
-- [ ] Build a "custom MCP server" entry type for user-added servers
-- [ ] Verifyuild passes
-- [ ] Update CLAUDE.md
-- [ ] Mark completed
+- [x] Create the service registry data structure and types
+- [x] Populate with 30+ real services across all categories with accurate MCP server URLs
+- [x] Include real pricing tier data for each service (fetch from their websites if needed)
+- [x] Install simple-icons or equivalent and verify branded logos are available for each service
+- [x] Create category definitions with display metadata
+- [x] Build a "custom MCP server" entry type for user-added servers
+- [x] Verify build passes
+- [x] Update CLAUDE.md
+- [x] Mark completed
 
 ### Task 3: Connect Flow — One-Click from Planning Tiles and Catalog
 

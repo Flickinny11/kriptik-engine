@@ -327,6 +327,8 @@ No phases. No waves. No gates. Agents reasoning their way to a complete app.
 - System sort of 154 old app systems completed (see `SYSTEM_SORT.md`)
 - Architecture enforcement: `scripts/check-modularity.sh` + `scripts/check-mechanical.sh` + Husky hooks
 - Mechanical pattern scan: ZERO violations across all 11 prohibitions (see `MECHANICAL_SCAN_REPORT.md`)
+- MCP Client Core: Universal MCP OAuth 2.1 + PKCE client in `server/src/mcp/` — metadata discovery, dynamic client registration, token storage, refresh, tools/list caching. Routes at `/api/mcp/`. DB tables: `mcp_connections`, `mcp_tool_caches`, `mcp_oauth_states`.
+- Service Registry: Dependency catalog data layer in `server/src/services/` — 38 real developer services across 13 categories with MCP server URLs, pricing tiers, instance models, and brand metadata. Types in `registry-types.ts`, categories in `categories.ts`, catalog in `registry.ts`, custom MCP server support in `custom-servers.ts`. Client has `simple-icons` installed for branded logo rendering (25/38 services covered, rest need custom SVGs).
 
 ### Deployment Infrastructure (as of 2026-03-19)
 - **Frontend**: Vercel project `prj_MqCB45npYNv8fyQ37mLvtHfmOyqz` → kriptik.app (Vite, Node 22)
