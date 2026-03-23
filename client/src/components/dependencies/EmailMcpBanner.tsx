@@ -73,7 +73,7 @@ export function EmailMcpBanner({ projectCount }: EmailMcpBannerProps) {
   // Listen for OAuth popup completion
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
+      if (!event.data || typeof event.data !== 'object') return;
       if (event.data?.type === 'mcp_oauth_complete' && event.data?.serviceId) {
         const sid = event.data.serviceId;
         if (sid === 'gmail' || sid === 'microsoft-outlook') {

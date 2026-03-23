@@ -79,7 +79,7 @@ export default function Builder() {
   // and auto-create project instance when connecting during a build
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
+      if (!event.data || typeof event.data !== 'object') return;
       if (event.data?.type === 'mcp_oauth_complete') {
         const { success, serviceId: connectedServiceId } = event.data;
         if (success && connectedServiceId) {

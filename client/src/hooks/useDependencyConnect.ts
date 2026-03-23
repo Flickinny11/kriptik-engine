@@ -84,8 +84,9 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
   // Listen for OAuth popup completion messages
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      // Only accept messages from our own origin
-      if (event.origin !== window.location.origin) return;
+      // Validate message structure rather than origin — the callback page is served
+      // from the API server origin which differs from the frontend origin in production.
+      if (!event.data || typeof event.data !== 'object') return;
 
       // Handle MCP OAuth completion
       if (event.data?.type === 'mcp_oauth_complete') {

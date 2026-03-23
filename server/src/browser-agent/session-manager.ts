@@ -90,8 +90,8 @@ export function submitVerificationCode(
     return false;
   }
 
-  // Sanitize code to alphanumeric + common separators only
-  const sanitized = code.replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, 20);
+  // Sanitize code to alphanumeric + common separators (spaces, dots, hyphens)
+  const sanitized = code.replace(/[^a-zA-Z0-9\-_.\s]/g, '').trim().slice(0, 20);
   if (!sanitized) return false;
 
   // Store the code in the session for the running flow to pick up

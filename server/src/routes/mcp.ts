@@ -190,12 +190,14 @@ router.delete('/:serviceId', requireAuth as any, async (req, res) => {
  * Posts a message to the opener window and auto-closes.
  */
 function buildCallbackHtml(success: boolean, serviceId?: string, error?: string): string {
+  // Escape '<' to prevent script injection via error messages from OAuth providers.
+  // JSON.stringify alone doesn't prevent '</script>' from terminating the script block.
   const message = JSON.stringify({
     type: 'mcp_oauth_complete',
     success,
     serviceId: serviceId || null,
     error: error || null,
-  });
+  }).replace(/</g, '\\u003c');
 
   const targetOrigin = process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:5173';
 
