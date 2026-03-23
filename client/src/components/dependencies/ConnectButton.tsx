@@ -93,6 +93,8 @@ export function ConnectButton({
       await onConnect(service);
     } else if (service.browserFallbackAvailable) {
       setShowFallbackDialog(true);
+    } else if (service.websiteUrl) {
+      window.open(service.websiteUrl, '_blank', 'noopener,noreferrer');
     }
   }, [service, state, onConnect]);
 

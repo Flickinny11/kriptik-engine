@@ -79,6 +79,7 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
   const popupCheckInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const pendingServiceRef = useRef<string | null>(null);
   const browserAgentStates = useRef<Map<string, BrowserAgentState>>(new Map());
+  const [, setBrowserAgentVersion] = useState(0);
   const pollingRefs = useRef<Map<string, boolean>>(new Map());
 
   // Listen for OAuth popup completion messages
@@ -305,6 +306,7 @@ export function useDependencyConnect(): UseDependencyConnectReturn {
           error: response.error,
         };
         browserAgentStates.current.set(serviceId, agentState);
+        setBrowserAgentVersion(v => v + 1);
 
         // Update connection state based on agent status
         if (response.status === 'completed') {

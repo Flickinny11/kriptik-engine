@@ -91,6 +91,6 @@ export function getCategoryMeta(id: ServiceCategory): CategoryMeta | undefined {
 }
 
 /** Get all categories in display order */
-export function getSortedCategories(): CategoryMeta[] {
+export function getSortedCategories(): readonly CategoryMeta[] {
   return CATEGORIES;
 }

@@ -465,7 +465,7 @@ interface DependencyTileProps {
   connectionState: ReturnType<ReturnType<typeof useDependencyConnect>['getConnectionState']>;
   onConnect: (service: ServiceRegistryEntry) => Promise<void>;
   onFallbackApprove: (service: ServiceRegistryEntry) => void;
-  onTierSelect: (service: ServiceRegistryEntry, tier: import('@/lib/api-client').PricingTier) => void;
+  onTierSelect?: (service: ServiceRegistryEntry, tier: import('@/lib/api-client').PricingTier) => void;
   onDisconnect: (serviceId: string) => Promise<void>;
   userEmail?: string;
   userName?: string;

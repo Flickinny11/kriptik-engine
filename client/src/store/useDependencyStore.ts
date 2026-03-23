@@ -183,8 +183,6 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
       set(prev => {
         const next = new Map(prev.connections);
 
-        const serverServiceIds = new Set(results.map(r => r.serviceId));
-
         for (const result of results) {
           const existing = next.get(result.serviceId);
           if (existing?.state === 'connecting') continue; // Don't interrupt active flows
@@ -205,14 +203,6 @@ export const useDependencyStore = create<DependencyState>((set, get) => ({
               state: healthState,
               lastHealthCheck: now,
             });
-          }
-        }
-
-        // Remove connections that no longer exist on the server
-        for (const [id, entry] of next) {
-          if (entry.state === 'connecting') continue;
-          if (!serverServiceIds.has(id)) {
-            next.delete(id);
           }
         }
 

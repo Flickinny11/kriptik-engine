@@ -49,6 +49,12 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
   // Try to parse numbered options from the agent's natural language
   const parsed = parseOptions(question);
 
+  const handleAnswer = useCallback((answer: string) => {
+    if (answered) return;
+    setAnswered(true);
+    onAnswer(nodeId, answer);
+  }, [nodeId, onAnswer, answered]);
+
   // Listen for OAuth popup completion (legacy + MCP)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -71,12 +77,6 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
   }, [nodeId, oauthCatalog, serviceRegistry, handleAnswer]);
-
-  const handleAnswer = useCallback((answer: string) => {
-    if (answered) return;
-    setAnswered(true);
-    onAnswer(nodeId, answer);
-  }, [nodeId, onAnswer, answered]);
 
   const handleConnect = async (providerId: string) => {
     try {
