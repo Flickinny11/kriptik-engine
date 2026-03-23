@@ -1,57 +1,86 @@
+/**
+ * Agent Store — Dynamic, reactive agent state management
+ *
+ * Agents are spawned dynamically by the Brain. There is NO fixed roster,
+ * NO predetermined pipeline. Agents appear when needed and are tracked
+ * by their unique ID. The store simply observes and reflects reality.
+ */
+
 import { create } from 'zustand';
-import { AgentType, AgentStatus, AgentLog, AgentState, AGENTS } from '../lib/agent-types';
+import type { AgentStatus, AgentLog, AgentState } from '../lib/agent-types';
 
 interface AgentStore {
+    /** Overall system status — derived from agent activity */
     globalStatus: 'idle' | 'running' | 'paused' | 'completed' | 'failed';
-    activeAgent: AgentType | null;
-    agents: Record<AgentType, AgentState>;
+    /** Currently focused agent (for UI highlight) */
+    activeAgentId: string | null;
+    /** Dynamic map of spawned agents — keyed by agent ID */
+    agents: Map<string, AgentState>;
+    /** Chronological log stream from all agents */
     logs: AgentLog[];
 
     setGlobalStatus: (status: AgentStore['globalStatus']) => void;
-    setActiveAgent: (type: AgentType | null) => void;
-    updateAgentStatus: (type: AgentType, status: AgentStatus) => void;
-    updateAgentProgress: (type: AgentType, progress: number) => void;
+    setActiveAgent: (id: string | null) => void;
+    /** Register a newly spawned agent */
+    spawnAgent: (id: string, role: string, name: string) => void;
+    /** Remove an agent that has finished or been stopped */
+    removeAgent: (id: string) => void;
+    updateAgentStatus: (id: string, status: AgentStatus) => void;
+    updateAgentProgress: (id: string, progress: number) => void;
     addLog: (log: AgentLog) => void;
     reset: () => void;
 }
 
-const initialAgentState = (type: AgentType): AgentState => ({
-    type,
-    name: AGENTS[type].name,
-    status: 'idle',
-    progress: 0,
-    logs: []
-});
-
 export const useAgentStore = create<AgentStore>((set) => ({
     globalStatus: 'idle',
-    activeAgent: null,
-    agents: {
-        planning: initialAgentState('planning'),
-        generation: initialAgentState('generation'),
-        testing: initialAgentState('testing'),
-        refinement: initialAgentState('refinement'),
-        deployment: initialAgentState('deployment'),
-    },
+    activeAgentId: null,
+    agents: new Map(),
     logs: [],
 
     setGlobalStatus: (status) => set({ globalStatus: status }),
 
-    setActiveAgent: (type) => set({ activeAgent: type }),
+    setActiveAgent: (id) => set({ activeAgentId: id }),
 
-    updateAgentStatus: (type, status) => set((state) => ({
-        agents: {
-            ...state.agents,
-            [type]: { ...state.agents[type], status }
-        }
-    })),
+    spawnAgent: (id, role, name) => set((state) => {
+        const next = new Map(state.agents);
+        next.set(id, {
+            id,
+            role,
+            name,
+            status: 'running',
+            progress: 0,
+            logs: [],
+            spawnedAt: Date.now(),
+        });
+        return { agents: next, globalStatus: 'running' };
+    }),
 
-    updateAgentProgress: (type, progress) => set((state) => ({
-        agents: {
-            ...state.agents,
-            [type]: { ...state.agents[type], progress }
-        }
-    })),
+    removeAgent: (id) => set((state) => {
+        const next = new Map(state.agents);
+        next.delete(id);
+        const anyRunning = Array.from(next.values()).some(a => a.status === 'running');
+        return {
+            agents: next,
+            activeAgentId: state.activeAgentId === id ? null : state.activeAgentId,
+            globalStatus: anyRunning ? 'running' : next.size > 0 ? 'idle' : 'completed',
+        };
+    }),
+
+    updateAgentStatus: (id, status) => set((state) => {
+        const agent = state.agents.get(id);
+        if (!agent) return state;
+        const next = new Map(state.agents);
+        next.set(id, { ...agent, status });
+        return { agents: next };
+    }),
+
+    updateAgentProgress: (id, progress) => set((state) => {
+        const agent = state.agents.get(id);
+        if (!agent) return state;
+        const next = new Map(state.agents);
+        next.set(id, { ...agent, progress });
+        return { agents: next };
+    }),
 
     addLog: (log) => set((state) => ({
         logs: [...state.logs, log]
@@ -59,14 +88,8 @@ export const useAgentStore = create<AgentStore>((set) => ({
 
     reset: () => set({
         globalStatus: 'idle',
-        activeAgent: null,
-        agents: {
-            planning: initialAgentState('planning'),
-            generation: initialAgentState('generation'),
-            testing: initialAgentState('testing'),
-            refinement: initialAgentState('refinement'),
-            deployment: initialAgentState('deployment'),
-        },
-        logs: []
-    })
+        activeAgentId: null,
+        agents: new Map(),
+        logs: [],
+    }),
 }));
