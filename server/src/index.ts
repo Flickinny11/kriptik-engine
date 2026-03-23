@@ -15,6 +15,7 @@ import speculateRouter from './routes/speculate.js';
 import accountRouter from './routes/account.js';
 import billingRouter, { handleStripeWebhook } from './routes/billing.js';
 import mcpRouter from './routes/mcp.js';
+import servicesRouter from './routes/services.js';
 
 
 const app = express();
@@ -69,6 +70,7 @@ app.use('/api/speculate', speculateRouter);
 app.use('/api/account', accountRouter);
 app.use('/api/billing', billingRouter);
 app.use('/api/mcp', mcpRouter);
+app.use('/api/services', servicesRouter);
 // Client error reporting — captures error boundary crashes
 app.post('/api/errors/report', (req, res) => {
   const { message, stack, componentStack, url, userAgent } = req.body || {};

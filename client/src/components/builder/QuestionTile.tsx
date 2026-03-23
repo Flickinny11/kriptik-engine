@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LinkIcon, CheckIcon } from '@/components/ui/icons';
 import { apiClient } from '@/lib/api-client';
+import { ConnectButton } from '@/components/dependencies/ConnectButton';
+import type { ServiceRegistryEntry } from '@/lib/api-client';
+import type { ConnectFlowState } from '@/hooks/useDependencyConnect';
 
 interface OAuthCatalogEntry {
   id: string;
@@ -15,6 +18,12 @@ interface QuestionTileProps {
   context?: string;
   projectId: string;
   oauthCatalog: OAuthCatalogEntry[];
+  /** Service registry entries for MCP-aware connect buttons */
+  serviceRegistry?: ServiceRegistryEntry[];
+  /** MCP connection states keyed by serviceId */
+  mcpConnectionStates?: Map<string, ConnectFlowState>;
+  /** Start MCP connect flow */
+  onMcpConnect?: (service: ServiceRegistryEntry) => Promise<void>;
   onAnswer: (nodeId: string, answer: string) => void;
 }
 
@@ -31,7 +40,7 @@ interface QuestionTileProps {
  * The agent has NO knowledge of this component. It just writes naturally.
  * The UI enriches the display — that's the only mechanical part.
  */
-export function QuestionTile({ nodeId, question, context, projectId, oauthCatalog, onAnswer }: QuestionTileProps) {
+export function QuestionTile({ nodeId, question, context, projectId, oauthCatalog, serviceRegistry, mcpConnectionStates, onMcpConnect, onAnswer }: QuestionTileProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [connectedProviders, setConnectedProviders] = useState<Set<string>>(new Set());
   const [textAnswer, setTextAnswer] = useState('');
@@ -40,20 +49,27 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
   // Try to parse numbered options from the agent's natural language
   const parsed = parseOptions(question);
 
-  // Listen for OAuth popup completion
+  // Listen for OAuth popup completion (legacy + MCP)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'oauth_complete' && event.data.success) {
         setConnectedProviders(prev => new Set([...prev, event.data.provider]));
-        // Auto-select and answer with the connected provider
         const providerName = oauthCatalog.find(p => p.id === event.data.provider)?.displayName || event.data.provider;
         setSelectedOption(providerName);
         handleAnswer(providerName);
       }
+      // Handle MCP OAuth completion
+      if (event.data?.type === 'mcp_oauth_complete' && event.data.success) {
+        const serviceId = event.data.serviceId;
+        setConnectedProviders(prev => new Set([...prev, serviceId]));
+        const serviceName = serviceRegistry?.find(s => s.id === serviceId)?.name || serviceId;
+        setSelectedOption(serviceName);
+        handleAnswer(serviceName);
+      }
     };
     window.addEventListener('message', handler);
     return () => window.removeEventListener('message', handler);
-  }, [nodeId, oauthCatalog]);
+  }, [nodeId, oauthCatalog, serviceRegistry]);
 
   const handleAnswer = useCallback((answer: string) => {
     if (answered) return;
@@ -100,7 +116,12 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
         <div className="space-y-2 mt-3">
           {parsed.options.map((opt, i) => {
             const matchedProvider = findMatchingProvider(opt.name, oauthCatalog);
-            const isConnected = matchedProvider ? connectedProviders.has(matchedProvider.id) : false;
+            const matchedService = serviceRegistry ? findMatchingService(opt.name, serviceRegistry) : null;
+            const isConnected = matchedProvider
+              ? connectedProviders.has(matchedProvider.id)
+              : matchedService
+                ? connectedProviders.has(matchedService.id)
+                : false;
 
             return (
               <div
@@ -112,7 +133,6 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
                 }`}
                 onClick={() => {
                   setSelectedOption(opt.name);
-                  // Don't auto-submit — let user connect or confirm
                 }}
               >
                 <div className="flex-1">
@@ -122,8 +142,21 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
                   )}
                 </div>
 
-                {/* Connect button if OAuth exists for this provider */}
-                {matchedProvider && !isConnected && (
+                {/* MCP ConnectButton if service registry match found */}
+                {matchedService && onMcpConnect && (
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <ConnectButton
+                      service={matchedService}
+                      state={mcpConnectionStates?.get(matchedService.id) || (isConnected ? 'connected' : 'disconnected')}
+                      onConnect={onMcpConnect}
+                      compact
+                      showLogo
+                    />
+                  </div>
+                )}
+
+                {/* Legacy OAuth connect button (only if no MCP match) */}
+                {!matchedService && matchedProvider && !isConnected && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleConnect(matchedProvider.id); }}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-kriptik-lime/10 text-kriptik-lime text-xs font-medium rounded-md hover:bg-kriptik-lime/20 transition-colors"
@@ -133,8 +166,8 @@ export function QuestionTile({ nodeId, question, context, projectId, oauthCatalo
                   </button>
                 )}
 
-                {/* Connected indicator */}
-                {isConnected && (
+                {/* Connected indicator (only if no MCP match and legacy connected) */}
+                {!matchedService && isConnected && (
                   <span className="flex items-center gap-1.5 px-3 py-1.5 text-green-400 text-xs font-medium">
                     <CheckIcon size={12} />
                     Connected
@@ -217,5 +250,20 @@ function findMatchingProvider(name: string, catalog: OAuthCatalogEntry[]): OAuth
   return catalog.find(p =>
     (p.authType === 'oauth2' || p.authType === 'oauth2-pkce') &&
     (p.id === lower || p.displayName.toLowerCase() === lower || p.id === lower.replace(/\s+/g, '-'))
+  ) || null;
+}
+
+/**
+ * Fuzzy match a service name against the MCP service registry.
+ * Prefers MCP-enabled services but also matches non-MCP (fallback) services.
+ */
+function findMatchingService(name: string, registry: ServiceRegistryEntry[]): ServiceRegistryEntry | null {
+  const lower = name.toLowerCase().trim();
+  return registry.find(s =>
+    s.id === lower ||
+    s.name.toLowerCase() === lower ||
+    s.id === lower.replace(/\s+/g, '-') ||
+    s.name.toLowerCase().includes(lower) ||
+    lower.includes(s.name.toLowerCase())
   ) || null;
 }

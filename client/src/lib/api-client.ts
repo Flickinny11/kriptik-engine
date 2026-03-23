@@ -129,6 +129,48 @@ class ApiClient {
     return this.request<{ success: boolean }>('DELETE', '/api/account');
   }
 
+  // MCP Connections
+  async startMcpAuth(serviceId: string, mcpServerUrl: string) {
+    return this.request<{ authorizationUrl: string; state: string }>('POST', `/api/mcp/${serviceId}/authorize`, { mcpServerUrl });
+  }
+
+  async getMcpConnections() {
+    return this.request<{ connections: McpConnection[] }>('GET', '/api/mcp/connections');
+  }
+
+  async getMcpTools(serviceId: string) {
+    return this.request<{ tools: McpToolDefinition[] }>('GET', `/api/mcp/${serviceId}/tools`);
+  }
+
+  async disconnectMcpService(serviceId: string) {
+    return this.request<{ success: boolean }>('DELETE', `/api/mcp/${serviceId}`);
+  }
+
+  // Service Registry
+  async getServiceRegistry(params?: { category?: string; search?: string }) {
+    const query = new URLSearchParams();
+    if (params?.category) query.set('category', params.category);
+    if (params?.search) query.set('search', params.search);
+    const qs = query.toString();
+    return this.request<{ services: ServiceRegistryEntry[] }>('GET', `/api/services${qs ? `?${qs}` : ''}`);
+  }
+
+  async getServiceCategories() {
+    return this.request<{ categories: CategoryMeta[] }>('GET', '/api/services/categories');
+  }
+
+  async getService(serviceId: string) {
+    return this.request<{ service: ServiceRegistryEntry }>('GET', `/api/services/${serviceId}`);
+  }
+
+  async getUserServiceConnections() {
+    return this.request<{ connections: EnrichedMcpConnection[] }>('GET', '/api/services/user/connections');
+  }
+
+  async createServiceInstance(serviceId: string, projectId: string, instanceLabel?: string) {
+    return this.request<{ instance: ServiceInstance }>('POST', `/api/services/${serviceId}/create-instance`, { projectId, instanceLabel });
+  }
+
   // Billing
   async getBillingBalance() {
     return this.request<{ credits: number; tier: string }>('GET', '/api/billing/balance');
@@ -230,6 +272,87 @@ export interface CreditTransaction {
   description: string | null;
   projectId: string | null;
   stripeSessionId: string | null;
+  createdAt: string;
+}
+
+// MCP Types
+export interface McpConnection {
+  id: string;
+  userId: string;
+  serviceId: string;
+  mcpServerUrl: string;
+  authServerIssuer: string;
+  status: McpConnectionStatus;
+  connectedAt?: string;
+  lastRefreshedAt?: string;
+}
+
+export type McpConnectionStatus =
+  | 'disconnected'
+  | 'discovering'
+  | 'registering'
+  | 'authorizing'
+  | 'connected'
+  | 'refreshing'
+  | 'error'
+  | 'needs_reauth';
+
+export interface McpToolDefinition {
+  name: string;
+  description?: string;
+  inputSchema: {
+    type: 'object';
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
+// Service Registry Types (client-side mirrors of server types)
+export type ServiceCategory =
+  | 'database' | 'hosting' | 'auth' | 'payments' | 'email'
+  | 'monitoring' | 'ai-ml' | 'design' | 'communication'
+  | 'storage' | 'analytics' | 'devtools' | 'other';
+
+export type InstanceModel = 'project-per-project' | 'api-key-per-project' | 'shared';
+
+export interface ServiceRegistryEntry {
+  id: string;
+  name: string;
+  description: string;
+  websiteUrl: string;
+  category: ServiceCategory;
+  iconSlug: string;
+  brandColor: string;
+  mcp: { url: string; authMethod: 'oauth' | 'api-key' | 'bearer-token'; sseFallbackUrl?: string } | null;
+  browserFallbackAvailable: boolean;
+  instanceModel: InstanceModel;
+  pricing: PricingTier[];
+  tags: string[];
+}
+
+export interface PricingTier {
+  name: string;
+  price: number;
+  description: string;
+}
+
+export interface CategoryMeta {
+  id: ServiceCategory;
+  label: string;
+  description: string;
+  sortOrder: number;
+}
+
+export interface EnrichedMcpConnection extends McpConnection {
+  service: ServiceRegistryEntry | null;
+}
+
+export interface ServiceInstance {
+  serviceId: string;
+  projectId: string;
+  instanceModel: InstanceModel;
+  label: string;
+  status: string;
   createdAt: string;
 }
 

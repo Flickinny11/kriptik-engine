@@ -145,16 +145,16 @@ When KripTik's agents are planning an app build, they identify needed dependenci
 - The user must explicitly approve any account creation and any payment method attachment
 - Show real-time progress during the browser agent fallback ("Filling out signup form..." → "Waiting for email verification..." → "Account created!")
 
-- [ ] Build the ConnectButton component that handles both MCP and fallback flows
-- [ ] Implement the OAuth popup/redirect flow for MCP connections
-- [ ] Build the approval dialog for browser agent fallback
-- [ ] Build the subscription tier selector shown after connection
-- [ ] Build the connection status indicator with real branded logos
-- [ ] Wire into planning tile context — the connect button must work when rendered inside a planning tile
-- [ ] Implement post-connection instance creation logic (project-per-project vs api-key-per-project vs shared)
-- [ ] Style everything per Design_References.md — depth, glow, smooth state transitions
-- [ ] Verify build passpdate CLAUDE.md
-- [ ] Mark completed
+- [x] Build the ConnectButton component that handles both MCP and fallback flows
+- [x] Implement the OAuth popup/redirect flow for MCP connections
+- [x] Build the approval dialog for browser agent fallback
+- [x] Build the subscription tier selector shown after connection
+- [x] Build the connection status indicator with real branded logos
+- [x] Wire into planning tile context — the connect button must work when rendered inside a planning tile
+- [x] Implement post-connection instance creation logic (project-per-project vs api-key-per-project vs shared)
+- [x] Style everything per Design_References.md — depth, glow, smooth state transitions
+- [x] Verify build passes, update CLAUDE.md
+- [x] Mark completed
 
 ### Task 4: Browser Agent Fallback — For Services Without MCP
 
