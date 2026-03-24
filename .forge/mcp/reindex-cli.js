@@ -1,12 +1,8 @@
 #!/usr/bin/env node
 /**
  * ForgeLoop Architecture Map — Standalone Reindex CLI
- * 
- * Called directly by hooks without going through MCP protocol.
- * Usage:
- *   node .forge/mcp/reindex-cli.js              # Full reindex
- *   node .forge/mcp/reindex-cli.js --changed     # Only files changed since last commit
- *   node .forge/mcp/reindex-cli.js file1.ts file2.ts  # Specific files
+ * ⚠️  DEV-ONLY: Uses collection "forgeloop_dev_codebase" — NEVER product collections.
+ * See architecture-server.js header for full separation policy.
  */
 
 import { QdrantClient } from '@qdrant/js-client-rest';
@@ -18,7 +14,7 @@ import { execSync } from 'child_process';
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 const QDRANT_API_KEY = process.env.QDRANT_API_KEY || undefined;
 const HF_API_KEY = process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY || undefined;
-const COLLECTION = process.env.QDRANT_COLLECTION || 'kriptik-architecture';
+const COLLECTION = process.env.QDRANT_COLLECTION || 'forgeloop_dev_codebase';
 const EMBEDDING_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
 const VECTOR_SIZE = 384;
 const PROJECT_ROOT = process.cwd();

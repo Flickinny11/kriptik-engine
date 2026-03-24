@@ -25,7 +25,7 @@
       "args": [".forge/mcp/architecture-server.js"],
       "env": {
         "QDRANT_URL": "http://localhost:6333",
-        "QDRANT_COLLECTION": "kriptik-architecture",
+        "QDRANT_COLLECTION": "forgeloop_dev_codebase",
         "PROJECT_ROOT": "."
       }
     }

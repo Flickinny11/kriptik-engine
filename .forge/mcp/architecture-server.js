@@ -1,14 +1,27 @@
 #!/usr/bin/env node
 /**
  * ForgeLoop Architecture Map MCP Server
+ * ======================================================================
+ * ⚠️  CRITICAL SEPARATION: THIS IS DEV-ONLY INFRASTRUCTURE
+ * ======================================================================
  * 
- * Qdrant-backed MCP server that gives Claude Code live, queryable
- * access to the KripTik codebase architecture during execution.
+ * This MCP server is part of ForgeLoop — the Claude Code-based system
+ * Logan uses to BUILD KripTik. It is NOT part of KripTik's product.
  * 
- * This is the anti-drift weapon — provides fresh architectural context
- * mid-session without consuming context window.
+ * - Collection: "forgeloop_dev_codebase" (NEVER use a kriptik_ prefix)
+ * - Purpose: Indexes KripTik's OWN source code so Claude Code can
+ *   query architecture during development sessions
+ * - This NEVER ships to users. This NEVER runs in production.
+ * - This does NOT import from src/brain/embeddings.ts — it only
+ *   reuses the same PATTERN (HuggingFace + Qdrant) independently.
  * 
- * Reuses KripTik's existing embedding pattern (HuggingFace + Qdrant).
+ * KripTik's PRODUCT Qdrant (src/brain/) uses different collections
+ * (kriptik_experience, etc.) for user app building. Those are the
+ * Brain's domain. ForgeLoop must NEVER touch those collections.
+ * 
+ * If you see this MCP referencing any collection that doesn't start
+ * with "forgeloop_", something is wrong. Stop and fix it.
+ * ======================================================================
  * 
  * Tools: search_architecture, get_interface, check_integration,
  *        query_endpoints, query_dependencies, update_map
@@ -30,7 +43,7 @@ import { execSync } from 'child_process';
 const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
 const QDRANT_API_KEY = process.env.QDRANT_API_KEY || undefined;
 const HF_API_KEY = process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY || undefined;
-const COLLECTION = process.env.QDRANT_COLLECTION || 'kriptik-architecture';
+const COLLECTION = process.env.QDRANT_COLLECTION || 'forgeloop_dev_codebase';
 const PROJECT_ROOT = process.env.PROJECT_ROOT || process.cwd();
 const EMBEDDING_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
 const VECTOR_SIZE = 384;

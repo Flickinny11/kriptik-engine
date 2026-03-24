@@ -32,3 +32,11 @@
 **Context:** The script required [engine] tag in commit messages to modify src/ files, enforcing the "UNTOUCHABLE" rule.
 **Decision:** Remove the [engine] tag requirement. Show advisory notice when src/ files are modified. Keep cross-layer import checks (still valid).
 **Reasoning:** src/ will be substantially modified during engine replacement. Blocking commits to src/ defeats the purpose of ForgeLoop. Cross-layer imports remain genuinely harmful regardless of architecture.
+
+
+## D-006: Strict Forge/KripTik Product Boundary
+**Date:** 2026-03-24
+**Context:** Logan identified that the Architecture Map MCP was using a collection name (kriptik-architecture) that could be confused with KripTik's product Qdrant collections. If ForgeLoop's dev data contaminated product collections, users building apps with KripTik would get KripTik's own source code architecture in their queries instead of their app's structure.
+**Decision:** Rename ForgeLoop's collection to `forgeloop_dev_codebase`. Add explicit separation documentation to CLAUDE.md, architecture-server.js, and FORGELOOP-SPEC.md. ForgeLoop NEVER imports from `src/brain/`. ForgeLoop NEVER writes to product collections. ForgeLoop NEVER ships to users.
+**Reasoning:** ForgeLoop wraps Claude Code which cannot be resold. It is a development tool only. KripTik's Brain/Qdrant is product infrastructure for user app building. These must never be entangled. Even the pattern reuse (HuggingFace embeddings + Qdrant) is reimplemented independently in .forge/mcp/ rather than imported from src/brain/.
+**Consequences:** ForgeLoop operates in a completely isolated Qdrant namespace. Any future MCP tools for ForgeLoop must use `forgeloop_` prefix for collections.
