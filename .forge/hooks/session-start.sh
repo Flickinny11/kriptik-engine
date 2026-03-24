@@ -8,6 +8,13 @@ echo "║           ForgeLoop Session Bootstrap            ║"
 echo "╚══════════════════════════════════════════════════╝"
 echo ""
 
+# Check for Claude Code version changes
+FORGE_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/.forge"
+if [ -f "$FORGE_DIR/hooks/version-check.sh" ]; then
+  bash "$FORGE_DIR/hooks/version-check.sh"
+fi
+
+
 FORGE_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/.forge"
 
 if [ ! -d "$FORGE_DIR" ]; then

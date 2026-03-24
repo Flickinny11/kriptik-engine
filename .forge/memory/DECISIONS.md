@@ -40,3 +40,10 @@
 **Decision:** Rename ForgeLoop's collection to `forgeloop_dev_codebase`. Add explicit separation documentation to CLAUDE.md, architecture-server.js, and FORGELOOP-SPEC.md. ForgeLoop NEVER imports from `src/brain/`. ForgeLoop NEVER writes to product collections. ForgeLoop NEVER ships to users.
 **Reasoning:** ForgeLoop wraps Claude Code which cannot be resold. It is a development tool only. KripTik's Brain/Qdrant is product infrastructure for user app building. These must never be entangled. Even the pattern reuse (HuggingFace embeddings + Qdrant) is reimplemented independently in .forge/mcp/ rather than imported from src/brain/.
 **Consequences:** ForgeLoop operates in a completely isolated Qdrant namespace. Any future MCP tools for ForgeLoop must use `forgeloop_` prefix for collections.
+
+
+## D-007: ForgeLoop Is Permanent Infrastructure, Not Scaffolding
+**Date:** 2026-03-24
+**Context:** Initial ForgeLoop documentation incorrectly described it as "scaffolding" and implied the code it produces is separate from production. KripTik is live on Vercel. ForgeLoop writes code that deploys to production.
+**Decision:** ForgeLoop is permanent. It stays in the repo. It produces production code. It will be used for ALL future KripTik development. The `.forge/` directory is dev tooling that doesn't run in production, but the code ForgeLoop writes (in src/, server/, client/) absolutely does.
+**Reasoning:** Logan does not code. ForgeLoop IS how KripTik gets built. Calling it scaffolding implies it gets removed — it doesn't. Calling its output "dev-only" implies it doesn't ship — it does. The only things that are dev-only are ForgeLoop's own tooling files and its Qdrant data (forgeloop_dev_codebase collection).

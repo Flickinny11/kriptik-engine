@@ -13,6 +13,29 @@ ForgeLoop is the development pipeline for building KripTik. It is NOT the build 
 
 Pipeline: **Brainstorm → Plan → Compile → Execute → Review**
 
+## ⛔ FORGE / KRIPTIK PRODUCT BOUNDARY (NON-NEGOTIABLE)
+
+ForgeLoop is **permanent development infrastructure** that lives in this repo alongside KripTik's product code. It is NOT scaffolding. Logan will use ForgeLoop for all current and future KripTik development.
+
+**What ForgeLoop is:**
+- The Claude Code-based build system Logan uses to develop KripTik (`.forge/` directory)
+- It produces PRODUCTION CODE — the code ForgeLoop writes in `src/`, `server/`, `client/` deploys to Vercel and serves real users
+- It stays in the repo permanently and is used for every enhancement, update, and new feature
+- It cannot be resold (uses Claude Code), but that doesn't matter — it's Logan's dev tool, not a product feature
+
+**What KripTik's build engine is (lives in `src/`):**
+- The engine inside KripTik that builds USER apps (uses Opus 4.6 via API, not Claude Code)
+- This IS the product. This is what users interact with. This ships and runs in production.
+
+**The critical DATA boundary:**
+- ForgeLoop's MCP uses Qdrant collection `forgeloop_dev_codebase` — indexes KripTik's OWN source code so Claude Code can query architecture during development
+- KripTik's Brain uses collections like `kriptik_experience` — indexes USER APP data during builds
+- **NEVER mix these.** If the product engine queries Qdrant during a user build, it must NEVER hit `forgeloop_dev_codebase`. Users would get KripTik source code architecture instead of their app's context.
+- NEVER import from `src/brain/` into `.forge/`. NEVER let ForgeLoop write to product collections.
+
+**If you are making changes and are unsure whether something belongs in ForgeLoop's tooling or in KripTik's product code, STOP and ask.**
+
+
 ## CRITICAL: Memory Protocol
 
 **At the start of EVERY session, read these files first:**
