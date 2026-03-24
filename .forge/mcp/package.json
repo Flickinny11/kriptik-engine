@@ -1,0 +1,17 @@
+{
+  "name": "forgeloop-architecture-map",
+  "version": "1.0.0",
+  "description": "Qdrant-backed MCP server for codebase architecture queries",
+  "type": "module",
+  "main": "architecture-server.js",
+  "scripts": {
+    "start": "node architecture-server.js",
+    "reindex": "bash reindex.sh --full",
+    "reindex:changed": "bash reindex.sh"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@qdrant/js-client-rest": "^1.12.0"
+  },
+  "notes": "BUILD TARGET — Sprint 3. Dependencies listed but not installed. Run npm install when building."
+}

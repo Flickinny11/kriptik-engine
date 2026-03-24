@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Vercel__search_vercel_documentation",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "mcp__claude_ai_Vercel__get_runtime_logs",
+      "mcp__claude_ai_Vercel__web_fetch_vercel_url",
+      "Bash(cat .forge/*)",
+      "Bash(cat .forge/**/*)",
+      "Bash(.forge/hooks/*)"
+    ]
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .forge/hooks/post-edit.sh \"$CLAUDE_FILE_PATH\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .forge/hooks/post-task.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .forge/hooks/pre-compact.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
