@@ -4,7 +4,7 @@ description: "Start real-time monitoring during implementation — build logs, r
 
 Read the skill definition at `.forge/skills/forge-monitor/SKILL.md` and follow its instructions.
 
-Spawn three monitoring subagents:
+Spawn three monitoring teammates:
 1. Build log monitor — watches `npx tsc --noEmit --watch` output for errors
 2. Runtime log monitor — watches dev server output for crashes, 500s, auth failures, silent errors
 3. Quality monitor — checks each edited file for placeholders, stubs, debug logging, constraint violations

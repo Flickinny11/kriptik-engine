@@ -7,7 +7,7 @@ Read the skill definition at `.forge/skills/forge-browser-test/SKILL.md` and fol
 
 ## Three concurrent jobs:
 1. **USE the app** — navigate, click, fill forms, test every feature from the plan
-2. **READ runtime logs** — spawn a subagent monitoring dev server output for errors
+2. **READ runtime logs** — spawn a teammate monitoring dev server output for errors
 3. **COMPARE** — what you see in the browser vs what the plan says should exist
 
 ## Protocol:

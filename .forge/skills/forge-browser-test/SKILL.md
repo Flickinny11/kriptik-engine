@@ -34,7 +34,7 @@ what's happening under the hood.
      to log in before proceeding with authenticated tests.
 
 ### Step BT2: Start Runtime Log Monitor
-Spawn a subagent with this prompt:
+Spawn a teammate with this prompt:
 "Tail the dev server output and watch for:
 - Unhandled errors and exceptions
 - 500/4xx responses that aren't expected
@@ -65,7 +65,7 @@ Read `.forge/plans/active-plan.md`. For EACH feature/change the plan implemented
 3. **Interact** — click the button, fill the form, trigger the action
 4. **Observe** — does the expected behavior happen?
 5. **Check runtime logs** — did the action trigger the expected backend calls?
-   Are there any errors in the subagent's log file?
+   Are there any errors in the teammate's log file?
 6. **Screenshot after interaction** — does the state change correctly?
 
 Example for an auth feature:
@@ -97,7 +97,7 @@ For each feature tested, explicitly check:
 - Does the browser console show any suppressed errors?
 
 ### Step BT6: Cross-Reference with Runtime Logs
-After each test interaction, read `.forge/logs/browser-test-runtime.log` from the monitor subagent.
+After each test interaction, read `.forge/logs/browser-test-runtime.log` from the monitor teammate.
 Compare what you observed visually with what the runtime logs show:
 - Did the backend receive the request?
 - Did it process correctly or throw internally?

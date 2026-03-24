@@ -1,6 +1,6 @@
 ---
 name: forge-monitor
-description: "Real-time monitoring during implementation. Spawns subagents to watch build logs, runtime logs, and implementation quality concurrently while the executor works. Use /forge-monitor to activate alongside /forge-implement."
+description: "Real-time monitoring during implementation. Spawns teammates to watch build logs, runtime logs, and implementation quality concurrently while the executor works. Use /forge-monitor to activate alongside /forge-implement."
 disable-model-invocation: false
 ---
 
@@ -12,7 +12,7 @@ and catch problems in real-time — not after the fact.
 ## What You Monitor (3 concurrent streams)
 
 ### Stream 1: Build Log Monitor
-Spawn a subagent with this prompt:
+Spawn a teammate with this prompt:
 "Watch the TypeScript build output. Run `npx tsc --noEmit --watch` and monitor
 the output stream. For every error that appears:
 1. Log it to `.forge/logs/build-errors.log` with timestamp
@@ -20,7 +20,7 @@ the output stream. For every error that appears:
 3. Track error count over time — if errors are INCREASING, flag it immediately"
 
 ### Stream 2: Runtime Log Monitor (when dev server is running)
-Spawn a subagent with this prompt:
+Spawn a teammate with this prompt:
 "Monitor the dev server runtime output. Watch for:
 - Unhandled promise rejections
 - Uncaught exceptions
@@ -34,7 +34,7 @@ Log ALL of these to `.forge/logs/runtime-errors.log` with timestamp and full sta
 For critical errors (crashes, unhandled rejections), immediately write to progress.md."
 
 ### Stream 3: Implementation Quality Monitor
-Spawn a subagent with this prompt:
+Spawn a teammate with this prompt:
 "After each file edit by the Executor, run these checks:
 1. `grep -rn 'TODO\|FIXME\|HACK\|PLACEHOLDER\|STUB\|mock\|dummy\|fake\|temp\|xxx\|TBD' [edited-file]`
    — Flag any placeholder patterns introduced
@@ -49,7 +49,7 @@ Log findings to `.forge/logs/quality-check.log`"
 Monitoring runs ALONGSIDE implementation, not after it. The typical flow:
 
 1. `/forge-implement` starts working on Task N
-2. `/forge-monitor` spawns its 3 subagents in parallel
+2. `/forge-monitor` spawns its 3 teammates in parallel
 3. Build monitor catches a type error → Executor sees it via post-edit hook → self-corrects
 4. Quality monitor catches a placeholder → logs it → Executor gets flagged at next post-task check
 5. Runtime monitor catches a crash → logs it → progress.md gets an ALERT

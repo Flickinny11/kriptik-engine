@@ -59,9 +59,9 @@ Read these files (MANDATORY):
 5. Log server startup to `.forge/logs/dev-server.log`
 
 ### Step 0c: Start Monitoring Agents
-Spawn TWO subagents that run for the ENTIRE implementation session:
+Spawn TWO teammates that run for the ENTIRE implementation session:
 
-**Subagent 1: Build Monitor**
+**Teammate 1: Build Monitor**
 "You are the build monitor. Continuously watch for TypeScript and build errors.
 Run `npx tsc --noEmit --watch` and monitor. For every error:
 - Log to `.forge/logs/build-errors.log` with timestamp
@@ -69,7 +69,7 @@ Run `npx tsc --noEmit --watch` and monitor. For every error:
 - Track: error count, files with errors, error types
 You run until told to stop. Never modify code."
 
-**Subagent 2: Runtime Monitor**
+**Teammate 2: Runtime Monitor**
 "You are the runtime monitor. Tail the dev server output. Watch for:
 - Unhandled promise rejections → log as CRITICAL
 - 500/4xx status codes (unexpected) → log with route and response
@@ -234,7 +234,7 @@ Implementation is ONLY "done" when ALL of these are true:
 
 Write "PLAN VERIFIED AND BROWSER-TESTED" to progress.md.
 Write the final verification report to `.forge/logs/final-verification-report.md`.
-Stop the monitoring subagents.
+Stop the monitoring teammates.
 Report to Logan that the implementation is complete and verified.
 
 ---
