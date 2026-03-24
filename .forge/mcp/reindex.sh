@@ -1,29 +1,24 @@
 #!/bin/bash
-# ForgeLoop Architecture Map Reindex
-# Re-indexes changed files in Qdrant after each completed task
+# ForgeLoop Architecture Map Reindex (shell wrapper)
+# Delegates to reindex-cli.js
 #
-# SCAFFOLD — The actual reindex logic will be built in Sprint 3
-# alongside the architecture-server.js MCP.
-#
-# Usage: .forge/mcp/reindex.sh [--changed-since=COMMIT] [--full]
-#
-# --changed-since: Only reindex files changed since this commit (default: HEAD~1)
-# --full: Reindex the entire codebase
+# Usage:
+#   .forge/mcp/reindex.sh              # Full reindex
+#   .forge/mcp/reindex.sh --changed    # Changed files only
+#   .forge/mcp/reindex.sh file1.ts     # Specific files
 
-FORGE_DIR="$(git rev-parse --show-toplevel)/.forge"
-CHANGED_SINCE="${1:-HEAD~1}"
+FORGE_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/.forge"
+CLI="$FORGE_DIR/mcp/reindex-cli.js"
 
-echo "ForgeLoop Architecture Map Reindex"
-echo "==================================="
-
-if [ "$1" = "--full" ]; then
-  echo "Mode: Full reindex"
-  # TODO: Sprint 3 — call architecture-server.js update_map tool
-  echo "⚠️  Full reindex not yet implemented (Sprint 3)"
-else
-  echo "Mode: Changed files since $CHANGED_SINCE"
-  echo "Changed files:"
-  git diff --name-only "$CHANGED_SINCE" -- '*.ts' '*.tsx' 2>/dev/null | head -20
-  # TODO: Sprint 3 — feed changed files to architecture-server.js update_map
-  echo "⚠️  Incremental reindex not yet implemented (Sprint 3)"
+if [ ! -f "$CLI" ]; then
+  echo "Error: reindex-cli.js not found at $CLI"
+  exit 1
 fi
+
+# Check if dependencies are installed
+if [ ! -d "$FORGE_DIR/mcp/node_modules" ]; then
+  echo "Installing architecture map dependencies..."
+  cd "$FORGE_DIR/mcp" && npm install --silent && cd - > /dev/null
+fi
+
+node "$CLI" "$@"

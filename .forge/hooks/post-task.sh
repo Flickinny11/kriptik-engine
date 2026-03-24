@@ -49,3 +49,14 @@ if [ -f "$FORGE_DIR/drift-prevention/acceptance-criteria.md" ]; then
 else
   echo "(no acceptance criteria — no plan compiled yet)"
 fi
+
+# Trigger architecture map reindex for changed files (non-blocking)
+if [ -f "$FORGE_DIR/mcp/reindex-cli.js" ] && command -v node &>/dev/null; then
+  echo ""
+  echo "🗺️  Updating architecture map (changed files)..."
+  node "$FORGE_DIR/mcp/reindex-cli.js" --changed 2>/dev/null &
+  REINDEX_PID=$!
+  # Don't wait — let it run in background so it doesn't block Claude
+  disown $REINDEX_PID 2>/dev/null
+  echo "   (reindex running in background, PID: $REINDEX_PID)"
+fi

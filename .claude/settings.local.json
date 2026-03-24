@@ -5,6 +5,12 @@
       "mcp__claude_ai_Vercel__get_deployment_build_logs",
       "mcp__claude_ai_Vercel__get_runtime_logs",
       "mcp__claude_ai_Vercel__web_fetch_vercel_url",
+      "mcp__architecture-map__search_architecture",
+      "mcp__architecture-map__get_interface",
+      "mcp__architecture-map__check_integration",
+      "mcp__architecture-map__query_endpoints",
+      "mcp__architecture-map__query_dependencies",
+      "mcp__architecture-map__update_map",
       "Bash(cat .forge/*)",
       "Bash(cat .forge/**/*)",
       "Bash(.forge/hooks/*)"
@@ -12,6 +18,17 @@
   },
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "mcpServers": {
+    "architecture-map": {
+      "command": "node",
+      "args": [".forge/mcp/architecture-server.js"],
+      "env": {
+        "QDRANT_URL": "http://localhost:6333",
+        "QDRANT_COLLECTION": "kriptik-architecture",
+        "PROJECT_ROOT": "."
+      }
+    }
   },
   "hooks": {
     "PostToolUse": [
