@@ -21,13 +21,8 @@
   },
   "mcpServers": {
     "architecture-map": {
-      "command": "node",
-      "args": [".forge/mcp/architecture-server.js"],
-      "env": {
-        "QDRANT_URL": "http://localhost:6333",
-        "QDRANT_COLLECTION": "forgeloop_dev_codebase",
-        "PROJECT_ROOT": "."
-      }
+      "command": "bash",
+      "args": [".forge/mcp/start-mcp.sh"]
     }
   },
   "hooks": {

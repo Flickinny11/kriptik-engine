@@ -40,7 +40,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';
 
 // --- Configuration ---
-const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6333';
+const QDRANT_URL = process.env.QDRANT_URL || 'http://localhost:6334';
 const QDRANT_API_KEY = process.env.QDRANT_API_KEY || undefined;
 const HF_API_KEY = process.env.HF_API_KEY || process.env.HUGGINGFACE_API_KEY || undefined;
 const COLLECTION = process.env.QDRANT_COLLECTION || 'forgeloop_dev_codebase';

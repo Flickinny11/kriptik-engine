@@ -15,3 +15,5 @@ kriptik-engine/
 
 # ralphex progress logs
 .ralphex/progress/
+.forge/.env
+.forge/mcp/node_modules
