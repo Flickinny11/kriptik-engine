@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@kriptik/shared-interfaces': path.resolve(__dirname, '../packages/shared-interfaces/src/index.ts'),
     },
   },
   server: {

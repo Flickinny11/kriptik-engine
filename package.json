@@ -1,37 +1,17 @@
 {
-  "name": "kriptik-engine",
+  "name": "kriptik",
   "version": "0.1.0",
-  "description": "Core build engine for KripTik AI — Brain-driven autonomous agent system",
+  "private": true,
+  "description": "KripTik — autonomous AI-powered app-building platform powered by the Cortex Engine",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "test:brain": "tsx src/brain/brain-service.test.ts",
-    "test": "vitest run",
-    "test:experience": "vitest run src/brain/__tests__/",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "@huggingface/inference": "^4.13.15",
-    "@qdrant/js-client-rest": "^1.12.0",
-    "better-sqlite3": "^11.7.0",
-    "drizzle-orm": "^0.38.0",
-    "openai": "^6.29.0",
-    "playwright": "^1.58.2",
-    "uuid": "^11.0.0",
-    "zod": "^3.24.0"
+    "build": "tsc --build",
+    "typecheck": "tsc --build",
+    "test": "pnpm -r run test",
+    "clean": "pnpm -r exec rm -rf dist"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.0",
-    "@types/uuid": "^10.0.0",
-    "drizzle-kit": "^0.30.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
-    "vitest": "^4.1.0"
+    "typescript": "^5.7.0"
   }
 }

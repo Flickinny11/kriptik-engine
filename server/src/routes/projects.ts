@@ -20,18 +20,21 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 // Create project
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
-  const { name, description } = req.body;
+  const { name, description, engineType } = req.body;
   if (!name) {
     res.status(400).json({ error: 'name is required' });
     return;
   }
   const id = req.body.id || uuid();
+  // engineType defaults to 'cortex' — only 'prism' is the other valid option
+  const engine = engineType === 'prism' ? 'prism' : 'cortex';
   const [project] = await db.insert(projects).values({
     id,
     name,
     description: description || null,
     ownerId: req.user!.id,
     status: 'idle',
+    engineType: engine,
   }).returning();
   res.status(201).json({ project });
 });

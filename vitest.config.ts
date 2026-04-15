@@ -4,7 +4,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/__tests__/**/*.test.ts'],
+    include: [
+      'src/**/__tests__/**/*.test.ts',
+      'packages/prism-engine/src/__tests__/**/*.test.ts',
+      'packages/cortex-engine/src/__tests__/**/*.test.ts',
+    ],
     testTimeout: 30000,
     pool: 'forks',
     server: {

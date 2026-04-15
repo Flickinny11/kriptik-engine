@@ -17,6 +17,7 @@ import billingRouter, { handleStripeWebhook } from './routes/billing.js';
 import mcpRouter from './routes/mcp.js';
 import servicesRouter from './routes/services.js';
 import browserAgentRouter from './routes/browser-agent.js';
+import prismRouter from './routes/prism.js';
 
 
 const app = express();
@@ -73,6 +74,7 @@ app.use('/api/billing', billingRouter);
 app.use('/api/mcp', mcpRouter);
 app.use('/api/services', servicesRouter);
 app.use('/api/browser-agent', browserAgentRouter);
+app.use('/api/prism', prismRouter);
 // Client error reporting — captures error boundary crashes
 app.post('/api/errors/report', (req, res) => {
   const { message, stack, componentStack, url, userAgent } = req.body || {};

@@ -4,7 +4,7 @@ import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 import { verifyProjectOwnership } from '../middleware/ownership.js';
 import { activeEngines } from './execute.js';
 import { db } from '../db.js';
-import { buildEvents } from '../schema.js';
+import { buildEvents, projects } from '../schema.js';
 
 const router = Router();
 router.use(requireAuth as any);
@@ -106,6 +106,46 @@ router.post('/callback/:projectId', async (req: AuthenticatedRequest, res: Respo
     });
   } catch (err) {
     console.error('Callback persist error:', err);
+  }
+
+  // Prism event side-effects: update project records when significant
+  // events arrive. Additive — cortex events don't match these types.
+  try {
+    if (event.type === 'prism_preview_ready' && event.data?.previewUrl) {
+      await db.update(projects)
+        .set({ previewUrl: event.data.previewUrl, updatedAt: new Date() })
+        .where(eq(projects.id, projectId));
+    } else if (event.type === 'prism_build_complete') {
+      await db.update(projects)
+        .set({ status: 'complete', updatedAt: new Date() })
+        .where(eq(projects.id, projectId));
+
+      // Persist the completed graph to prism_graphs if graph data is included.
+      // The orchestrator includes graph stats; the full graph is on the Modal
+      // volume and R2. We update the graph status to 'complete' here.
+      if (event.data?.previewUrl) {
+        const { prismGraphs } = await import('../schema.js');
+        const latestGraph = await db.query.prismGraphs.findFirst({
+          where: eq(prismGraphs.projectId, projectId),
+          orderBy: (g, { desc }) => [desc(g.version)],
+        });
+        if (latestGraph) {
+          await db.update(prismGraphs)
+            .set({
+              status: 'complete',
+              frontendBundle: event.data.previewUrl,
+              updatedAt: new Date(),
+            })
+            .where(eq(prismGraphs.id, latestGraph.id));
+        }
+      }
+    } else if (event.type === 'prism_build_error' && event.data?.recoverable === false) {
+      await db.update(projects)
+        .set({ status: 'failed', updatedAt: new Date() })
+        .where(eq(projects.id, projectId));
+    }
+  } catch (err) {
+    console.error('Prism event side-effect error:', err);
   }
 
   res.json({ ok: true });

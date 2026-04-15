@@ -18,6 +18,7 @@ export default function NewProjectModal() {
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [engineType, setEngineType] = useState<'cortex' | 'prism'>('cortex');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -78,6 +79,7 @@ export default function NewProjectModal() {
                 name: trimmedName,
                 description: description.trim() || undefined,
                 framework: 'react',
+                engineType,
             }),
         }).then(async (res) => {
             if (res.ok) {
@@ -101,6 +103,7 @@ export default function NewProjectModal() {
         setOpen(false);
         setName('');
         setDescription('');
+        setEngineType('cortex');
         setIsLoading(false);
         navigate(`/builder/${projectId}`);
     }, [name, description, addProject, navigate]);
@@ -117,6 +120,7 @@ export default function NewProjectModal() {
         setOpen(false);
         setName('');
         setDescription('');
+        setEngineType('cortex');
         setError('');
     }, [isLoading]);
 
@@ -292,6 +296,64 @@ export default function NewProjectModal() {
                                         boxSizing: 'border-box',
                                     }}
                                 />
+
+                                {/* Engine Type */}
+                                <label style={{
+                                    fontFamily: '"Cabinet Grotesk", "Satoshi", sans-serif',
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    color: '#666',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.1em',
+                                    display: 'block',
+                                    marginTop: '20px',
+                                    marginBottom: '8px',
+                                }}>
+                                    Engine
+                                </label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    {([
+                                        { value: 'cortex' as const, label: 'Cortex', desc: 'Multi-agent AI' },
+                                        { value: 'prism' as const, label: 'Prism', desc: 'Diffusion pipeline' },
+                                    ]).map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setEngineType(opt.value)}
+                                            style={{
+                                                flex: 1,
+                                                padding: '10px 14px',
+                                                borderRadius: '10px',
+                                                border: engineType === opt.value
+                                                    ? '1.5px solid rgba(245,158,11,0.4)'
+                                                    : '1px solid rgba(0,0,0,0.08)',
+                                                background: engineType === opt.value
+                                                    ? 'linear-gradient(145deg, rgba(255,240,210,0.6) 0%, rgba(255,225,175,0.4) 100%)'
+                                                    : 'rgba(255,255,255,0.5)',
+                                                cursor: 'pointer',
+                                                textAlign: 'left',
+                                                transition: 'all 0.15s ease',
+                                            }}
+                                        >
+                                            <div style={{
+                                                fontFamily: '"Clash Display", sans-serif',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                                color: engineType === opt.value ? '#92400e' : '#555',
+                                            }}>
+                                                {opt.label}
+                                            </div>
+                                            <div style={{
+                                                fontFamily: '"Satoshi", sans-serif',
+                                                fontSize: '11px',
+                                                color: engineType === opt.value ? '#b45309' : '#999',
+                                                marginTop: '2px',
+                                            }}>
+                                                {opt.desc}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
 
                                 {/* Buttons */}
                                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '28px' }}>

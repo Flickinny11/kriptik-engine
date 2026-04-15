@@ -28,10 +28,18 @@ import { apiClient, type OAuthCatalogEntry } from '@/lib/api-client';
 import { API_ORIGIN } from '@/lib/api-config';
 import { useProjectStore } from '@/store/useProjectStore';
 import { useDependencyStore } from '@/store/useDependencyStore';
+import { usePrismStore } from '@/store/usePrismStore';
 import { SpeculativePlan } from '@/components/builder/SpeculativePlan';
 import { AgentStreamView } from '@/components/builder/AgentStreamView';
 import { AccountSlideOut } from '@/components/account/AccountSlideOut';
 import { FloatingDevToolbar } from '@/components/developer-bar';
+import { EngineSelector, type EngineType } from '@/components/builder/EngineSelector';
+import { PlanApprovalView } from '@/components/builder/prism/PlanApprovalView';
+import { GenerationProgress } from '@/components/builder/prism/GenerationProgress';
+import { NodeStatusGrid } from '@/components/builder/prism/NodeStatusGrid';
+import { GraphVisualization } from '@/components/builder/prism/GraphVisualization';
+import { NodeInspector } from '@/components/builder/prism/NodeInspector';
+import { ImagePreview } from '@/components/builder/prism/ImagePreview';
 
 type ActiveTab = 'preview' | 'code';
 
@@ -51,6 +59,13 @@ export default function Builder() {
   const [projectName, setProjectName] = useState('');
   const [activeTab, setActiveTab] = useState<ActiveTab>('preview');
   const { updateProjectStatus } = useProjectStore();
+
+  // Prism engine state
+  const [engineType, setEngineType] = useState<EngineType>('cortex');
+  const [engineLocked, setEngineLocked] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const prismStore = usePrismStore();
+  const isPrism = engineType === 'prism';
 
   // Publish
   const [showPublish, setShowPublish] = useState(false);
@@ -135,11 +150,18 @@ export default function Builder() {
     if (!projectId) return;
     if (initialPrompt) {
       apiClient.startBuild(projectId, initialPrompt)
-        .then(() => { setProjectStatus('building'); updateProjectStatus(projectId, 'building'); setSseReady(true); })
+        .then(() => { setProjectStatus('building'); updateProjectStatus(projectId, 'building'); setSseReady(true); setEngineLocked(true); })
         .catch(() => setProjectStatus('failed'));
     } else {
       apiClient.getProject(projectId)
-        .then(({ project }) => { setProjectStatus(project.status); setProjectName(project.name); setSseReady(true); })
+        .then(({ project }) => {
+          setProjectStatus(project.status);
+          setProjectName(project.name);
+          const et = project.engineType || 'cortex';
+          setEngineType(et as EngineType);
+          if (project.status !== 'idle') setEngineLocked(true);
+          setSseReady(true);
+        })
         .catch(() => setProjectStatus('failed'));
     }
   }, [projectId]);
@@ -151,14 +173,33 @@ export default function Builder() {
         if (url) setPreviewUrl(url);
       }
       if (event.type === 'build_complete') setProjectStatus('complete');
+      if (event.type === 'prism_build_complete') setProjectStatus('complete');
     }
   }, [events]);
+
+  // Sync Prism preview URL from store
+  useEffect(() => {
+    if (isPrism && prismStore.previewUrl) {
+      setPreviewUrl(prismStore.previewUrl);
+    }
+  }, [isPrism, prismStore.previewUrl]);
 
   async function handleSubmit() {
     if (!userInput.trim() || !projectId) return;
     if (projectStatus === 'idle') {
-      try { await apiClient.startBuild(projectId, userInput.trim()); setProjectStatus('building'); updateProjectStatus(projectId, 'building'); setSseReady(true); setUserInput(''); }
-      catch (err) { console.error('Build start failed:', err); }
+      try {
+        if (isPrism) {
+          await apiClient.startPrismBuild(projectId, userInput.trim());
+          setProjectStatus('planning');
+          setEngineLocked(true);
+        } else {
+          await apiClient.startBuild(projectId, userInput.trim());
+          setProjectStatus('building');
+        }
+        updateProjectStatus(projectId, 'building');
+        setSseReady(true);
+        setUserInput('');
+      } catch (err) { console.error('Build start failed:', err); }
     } else if (projectStatus === 'building') {
       try { await apiClient.sendDirective(projectId, userInput.trim()); setUserInput(''); }
       catch (err) { console.error('Directive failed:', err); }
@@ -214,6 +255,7 @@ export default function Builder() {
           <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {projectName || initialPrompt?.slice(0, 50) || 'New Project'}
           </span>
+          <EngineSelector value={engineType} onChange={setEngineType} disabled={engineLocked} />
           {isBuilding && <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 500, color: '#34d399' }}><span style={{ width: 5, height: 5, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px rgba(52,211,153,0.5)' }} />Building</span>}
           {isComplete && <span style={{ fontSize: 11, fontWeight: 500, color: '#34d399' }}>Complete</span>}
         </div>
@@ -239,7 +281,41 @@ export default function Builder() {
         <Panel defaultSize={25} minSize={18} maxSize={40}>
           <ShaderPanel style={{ height: '100%', margin: 5, display: 'flex', flexDirection: 'column' }} colorA={[0.035, 0.033, 0.045]} colorB={[0.065, 0.06, 0.075]} noiseScale={2.5} warpStrength={0.6}>
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              {isIdle ? (
+              {isPrism ? (
+                /* ── Prism Builder Left Panel ── */
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <GenerationProgress />
+                  {prismStore.pipelinePhase === 'awaiting_approval' && prismStore.currentPlan ? (
+                    <PlanApprovalView plan={prismStore.currentPlan} />
+                  ) : prismStore.currentGraph ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                      <NodeStatusGrid onSelectNode={setSelectedNodeId} selectedNodeId={selectedNodeId} />
+                      {selectedNodeId ? (
+                        <div style={{ flex: 1, overflow: 'auto', borderTop: '1px solid rgba(255,255,255,0.04)', marginTop: 8 }}>
+                          <NodeInspector nodeId={selectedNodeId} onClose={() => setSelectedNodeId(null)} />
+                        </div>
+                      ) : (
+                        <div style={{ flex: 1, overflow: 'auto' }}>
+                          <GraphVisualization onSelectNode={setSelectedNodeId} selectedNodeId={selectedNodeId} />
+                        </div>
+                      )}
+                    </div>
+                  ) : prismStore.pipelinePhase === 'idle' ? (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+                      <div style={{ textAlign: 'center', maxWidth: 260 }}>
+                        <SparklesIcon size={24} style={{ color: 'rgba(251,191,36,0.3)', marginBottom: 10 }} />
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 6 }}>Prism Diffusion Engine</div>
+                        <div style={{ fontSize: 11, color: 'rgba(113,113,122,0.6)', lineHeight: 1.6 }}>Describe your app below. Prism will generate a visual plan, then build it with parallel diffusion + code generation.</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <LoadingIcon size={16} style={{ color: 'rgba(251,191,36,0.3)' }} />
+                    </div>
+                  )}
+                </div>
+              ) : isIdle ? (
+                /* ── Cortex Builder Left Panel (UNCHANGED) ── */
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, height: '100%' }}>
                   <div style={{ textAlign: 'center', maxWidth: 260 }}>
                     <SparklesIcon size={24} style={{ color: 'rgba(251,191,36,0.3)', marginBottom: 10 }} />
@@ -251,7 +327,7 @@ export default function Builder() {
                 <AgentStreamView events={events} projectId={projectId!} oauthCatalog={oauthCatalog} onAnswer={handleAnswer} />
               )}
             </div>
-            {isIdle && (speculation || isAnalyzing) && <SpeculativePlan speculation={speculation} isAnalyzing={isAnalyzing} />}
+            {!isPrism && isIdle && (speculation || isAnalyzing) && <SpeculativePlan speculation={speculation} isAnalyzing={isAnalyzing} />}
             <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.03)' }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input value={userInput} onChange={(e) => setUserInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && canSubmit && handleSubmit()}
@@ -270,6 +346,10 @@ export default function Builder() {
             {activeTab === 'preview' ? (
               previewUrl ? (
                 <iframe src={previewUrl} style={{ width: '100%', height: '100%', border: 0, borderRadius: 14 }} title="App Preview" sandbox="allow-scripts allow-forms allow-popups" />
+              ) : isPrism && prismStore.generatedImageUrl ? (
+                <div style={{ height: '100%', padding: 16, overflow: 'auto' }}>
+                  <ImagePreview showSegmentation={!!prismStore.segmentationMasks} />
+                </div>
               ) : (
                 <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ textAlign: 'center' }}>

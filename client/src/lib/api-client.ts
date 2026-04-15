@@ -18,7 +18,7 @@ class ApiClient {
     return this.request<{ projects: Project[] }>('GET', '/api/projects');
   }
 
-  async createProject(data: { id?: string; name: string; description?: string }) {
+  async createProject(data: { id?: string; name: string; description?: string; engineType?: 'cortex' | 'prism' }) {
     return this.request<{ project: Project }>('POST', '/api/projects', data);
   }
 
@@ -204,6 +204,49 @@ class ApiClient {
     return this.request<{ transactions: CreditTransaction[] }>('GET', '/api/billing/history');
   }
 
+  // Prism Engine
+  async startPrismBuild(projectId: string, prompt: string) {
+    return this.request<{ planId: string; status: string; projectId: string }>('POST', '/api/prism/build', { projectId, prompt });
+  }
+
+  async getPrismPlan(planId: string) {
+    return this.request<{ plan: PrismPlanResponse }>('GET', `/api/prism/plan/${planId}`);
+  }
+
+  async approvePrismPlan(planId: string) {
+    return this.request<{ status: string }>('POST', '/api/prism/plan/approve', { planId });
+  }
+
+  async rejectPrismPlan(planId: string, feedback?: string) {
+    return this.request<{ status: string; planId: string }>('POST', '/api/prism/plan/reject', { planId, feedback });
+  }
+
+  async getPrismGraph(graphId: string) {
+    return this.request<{ graph: PrismGraphResponse }>('GET', `/api/prism/graph/${graphId}`);
+  }
+
+  async editPrismNode(graphId: string, nodeId: string, changes: Record<string, unknown>) {
+    return this.request<{ status: string; graphId: string; nodeId: string }>('POST', `/api/prism/graph/${graphId}/edit`, { nodeId, changes });
+  }
+
+  async getPrismModels() {
+    return this.request<PrismModelsResponse>('GET', '/api/prism/models');
+  }
+
+  async getPrismConfig() {
+    return this.request<PrismConfigResponse>('GET', '/api/prism/config');
+  }
+
+  async deployPrismProject(projectId: string) {
+    return this.request<{
+      status: string;
+      deploymentId?: string;
+      deploymentUrl?: string;
+      productionUrl?: string;
+      deployTimeMs?: number;
+    }>('POST', `/api/prism/deploy/${projectId}`);
+  }
+
   // Browser Agent Fallback
   async startBrowserAgent(serviceId: string, userEmail: string, userName: string, projectId?: string) {
     return this.request<BrowserAgentStartResponse>('POST', `/api/browser-agent/${serviceId}/start`, { userEmail, userName, projectId });
@@ -238,7 +281,8 @@ export interface Project {
   name: string;
   description: string | null;
   ownerId: string;
-  status: 'idle' | 'building' | 'complete' | 'failed';
+  status: 'idle' | 'building' | 'planning' | 'complete' | 'failed';
+  engineType: 'cortex' | 'prism';
   engineSessionId: string | null;
   appSlug: string | null;
   isPublished: boolean;
@@ -442,6 +486,51 @@ export interface BrowserAgentStatusResponse {
   progressMessages: BrowserAgentProgressMessage[];
   waitingFor?: string;
   error?: string;
+}
+
+// Prism Types (client-side response shapes)
+export interface PrismPlanResponse {
+  id: string;
+  projectId: string;
+  userId: string;
+  prompt: string;
+  parsedIntent: Record<string, unknown>;
+  graphPlan: Record<string, unknown>;
+  status: 'pending' | 'generating' | 'complete' | 'failed';
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PrismGraphResponse {
+  id: string;
+  planId: string;
+  projectId: string;
+  version: number;
+  nodes: Record<string, unknown>[];
+  edges: Record<string, unknown>[];
+  hubs: Record<string, unknown>[];
+  metadata: Record<string, unknown>;
+  status: string;
+}
+
+export interface PrismModelsResponse {
+  diffusionModels: Array<{ id: string; name: string; gpu: string; description: string }>;
+  codeModels: Array<{ id: string; name: string; gpu: string; description: string }>;
+}
+
+export interface PrismConfigResponse {
+  defaultConfig: {
+    diffusionModel: string;
+    codeModel: string;
+    targetResolution: { width: number; height: number };
+    styleReferences: string[];
+    backendTargets: string[];
+    deploymentTargets: string[];
+    enableCompetitiveAnalysis: boolean;
+    enableOvernightOptimization: boolean;
+  };
+  prismEnabled: boolean;
 }
 
 export const apiClient = new ApiClient();

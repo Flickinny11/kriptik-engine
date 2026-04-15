@@ -1,7 +1,7 @@
 import { Router, type Response } from 'express';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../db.js';
-import { projects, users } from '../schema.js';
+import { projects } from '../schema.js';
 import { requireAuth, type AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -123,12 +123,47 @@ router.post('/:projectId/publish', async (req: AuthenticatedRequest, res: Respon
 
   const version = (project.publishedVersion || 0) + 1;
 
+  // For Prism projects, deploy the bundle to Vercel with the slug domain
+  let deploymentUrl: string | undefined;
+  if (project.engineType === 'prism') {
+    try {
+      const { deployToVercel } = await import('../utils/vercel-deploy.js');
+      const { prismGraphs } = await import('../schema.js');
+
+      // Find the latest graph version for this project
+      const graph = await db.query.prismGraphs.findFirst({
+        where: eq(prismGraphs.projectId, projectId),
+        orderBy: (g, { desc }) => [desc(g.version)],
+      });
+
+      if (graph) {
+        const vercelProjectName = `kriptik-prism-${projectId.slice(0, 8)}`;
+        const result = await deployToVercel({
+          projectId,
+          graphVersion: graph.version,
+          vercelProjectName,
+          slug,
+        });
+
+        if (result.success) {
+          deploymentUrl = result.productionUrl || result.deploymentUrl;
+        }
+      }
+    } catch (err) {
+      // Vercel deployment is best-effort during publish.
+      // The project is still marked as published even if deploy fails,
+      // since the preview URL (Modal tunnel) remains available.
+      console.error('Prism Vercel deploy during publish failed:', err);
+    }
+  }
+
   await db.update(projects)
     .set({
       appSlug: slug,
       isPublished: true,
       publishedAt: new Date(),
       publishedVersion: version,
+      ...(deploymentUrl ? { previewUrl: deploymentUrl } : {}),
       updatedAt: new Date(),
     })
     .where(eq(projects.id, projectId));
@@ -138,6 +173,7 @@ router.post('/:projectId/publish', async (req: AuthenticatedRequest, res: Respon
     slug,
     url: `https://${slug}.kriptik.app`,
     version,
+    deploymentUrl,
   });
 });
 

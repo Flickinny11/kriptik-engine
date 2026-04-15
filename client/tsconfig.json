@@ -16,7 +16,8 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@kriptik/shared-interfaces": ["../packages/shared-interfaces/src/index.ts"]
     }
   },
   "include": ["src"]

@@ -8,6 +8,7 @@ import { verifyProjectOwnership } from '../middleware/ownership.js';
 import path from 'path';
 import os from 'os';
 import { isModalEnabled, startModalBuildStreaming } from '../modal/sandbox-manager.js';
+import { handlePrismBuild } from './prism.js';
 
 // Engine types — defined inline to avoid TypeScript resolving the engine path.
 // The actual engine is at ../../../src/engine.js but we don't import it at compile time.
@@ -55,6 +56,13 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     res.status(403).json({ error: 'Project not found or access denied' });
     return;
   }
+
+  // Branch on engine type — prism projects route to Prism pipeline
+  const engine = project.engineType || 'cortex';
+  if (engine === 'prism') {
+    return handlePrismBuild(req, res, project, prompt);
+  }
+  // Default: existing cortex logic continues unchanged below
 
   // Check engine isn't already running or starting for this project
   if (activeEngines.has(projectId) || startingBuilds.has(projectId)) {

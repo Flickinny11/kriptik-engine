@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, integer, timestamp, jsonb, serial, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, boolean, integer, real, timestamp, jsonb, serial, uniqueIndex, index } from 'drizzle-orm/pg-core';
 
 // ── Better Auth managed tables ──────────────────────────────────────
 
@@ -77,6 +77,9 @@ export const projects = pgTable('projects', {
   customDomain: text('custom_domain'),       // future: user's own domain
   previewUrl: text('preview_url'),           // Modal tunnel or dev server URL
   lastAccessedAt: timestamp('last_accessed_at', { withTimezone: true }),
+  // Prism engine support — additive columns
+  engineType: text('engine_type').notNull().default('cortex'),
+  prismConfig: jsonb('prism_config'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 }, (table) => [
@@ -207,3 +210,69 @@ export const mcpOauthStates = pgTable('mcp_oauth_states', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+// ── Prism Engine tables ────────────────────────────────────────────
+
+export const prismPlans = pgTable('prism_plans', {
+  id: text('id').primaryKey(),
+  projectId: text('project_id').notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  prompt: text('prompt').notNull(),
+  parsedIntent: jsonb('parsed_intent').notNull(),
+  competitiveAnalysis: jsonb('competitive_analysis'),
+  inferredNeeds: jsonb('inferred_needs'),
+  graphPlan: jsonb('graph_plan').notNull(),
+  backendContract: jsonb('backend_contract'),
+  status: text('status').notNull().default('pending'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  totalCost: integer('total_cost'),
+  generationTimeMs: integer('generation_time_ms'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_prism_plans_project').on(table.projectId),
+]);
+
+export const prismGraphs = pgTable('prism_graphs', {
+  id: text('id').primaryKey(),
+  planId: text('plan_id').notNull()
+    .references(() => prismPlans.id, { onDelete: 'cascade' }),
+  projectId: text('project_id').notNull()
+    .references(() => projects.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull().default(1),
+  nodes: jsonb('nodes').notNull(),
+  edges: jsonb('edges').notNull(),
+  hubs: jsonb('hubs').notNull(),
+  metadata: jsonb('metadata').notNull(),
+  frontendBundle: text('frontend_bundle_url'),
+  backendManifest: jsonb('backend_manifest'),
+  optimizationReport: jsonb('optimization_report'),
+  status: text('status').notNull().default('draft'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_prism_graphs_project').on(table.projectId),
+  uniqueIndex('idx_prism_graphs_project_version').on(table.projectId, table.version),
+]);
+
+export const prismNodeAssets = pgTable('prism_node_assets', {
+  id: text('id').primaryKey(),
+  graphId: text('graph_id').notNull()
+    .references(() => prismGraphs.id, { onDelete: 'cascade' }),
+  nodeId: text('node_id').notNull(),
+  imageUrl: text('image_url'),
+  atlasUrl: text('atlas_url'),
+  atlasRegion: jsonb('atlas_region'),
+  generatedCode: text('generated_code'),
+  codeHash: text('code_hash'),
+  verificationScore: real('verification_score'),
+  captionVerified: boolean('caption_verified').default(false),
+  generationAttempts: integer('generation_attempts').default(1),
+  status: text('status').notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+}, (table) => [
+  index('idx_prism_node_assets_graph').on(table.graphId),
+]);

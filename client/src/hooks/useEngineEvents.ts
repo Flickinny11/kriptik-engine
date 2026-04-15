@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { usePrismStore } from '@/store/usePrismStore';
+import type { PrismEvent } from '@kriptik/shared-interfaces';
 
 export interface EngineEvent {
   id: string;
@@ -47,7 +49,7 @@ export function useEngineEvents(projectId: string | null) {
 
         setEvents(prev => [...prev, event]);
 
-        if (event.type === 'build_complete') {
+        if (event.type === 'build_complete' || event.type === 'prism_build_complete') {
           setIsComplete(true);
           es.close();
         }
@@ -75,6 +77,15 @@ export function useEngineEvents(projectId: string | null) {
     es.onmessage = (e: MessageEvent) => {
       try {
         const event: EngineEvent = JSON.parse(e.data);
+
+        // Route prism_* events to usePrismStore — existing cortex handling UNCHANGED
+        if (event.type?.startsWith('prism_')) {
+          usePrismStore.getState().handlePrismEvent(event as unknown as PrismEvent);
+          // Still add to the events array for history/replay
+          handleEvent(e);
+          return;
+        }
+
         // Only process if this event type isn't in our named list
         if (!eventTypes.includes(event.type)) {
           handleEvent(e);
