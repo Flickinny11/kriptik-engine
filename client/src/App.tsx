@@ -41,8 +41,8 @@ const AuthLayout = React.lazy(() => import('@/components/layouts/AuthLayout'));
 
 function Loading() {
   return (
-    <div className="min-h-screen bg-kriptik-black flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-kriptik-lime border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #e8e4df 0%, #d8d4cf 50%, #ccc8c3 100%)' }}>
+      <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }

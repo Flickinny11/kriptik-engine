@@ -64,38 +64,38 @@ export default {
                     design: '#06b6d4',
                 },
                 primary: {
-                    DEFAULT: '#c8ff64',
-                    foreground: '#0a0a0a'
+                    DEFAULT: '#c25a00',
+                    foreground: '#ffffff'
                 },
                 secondary: {
                     DEFAULT: '#f59e0b',
-                    foreground: '#0a0a0a'
+                    foreground: '#1a1a1a'
                 },
-                background: '#0a0a0a',
-                foreground: '#fafafa',
+                background: '#e8e4df',
+                foreground: '#1a1a1a',
                 card: {
-                    DEFAULT: 'rgba(20, 20, 20, 0.8)',
-                    foreground: '#fafafa'
+                    DEFAULT: 'rgba(255, 255, 255, 0.6)',
+                    foreground: '#1a1a1a'
                 },
                 popover: {
-                    DEFAULT: '#1a1a1e',
-                    foreground: '#fafafa'
+                    DEFAULT: 'rgba(255, 255, 255, 0.9)',
+                    foreground: '#1a1a1a'
                 },
                 muted: {
-                    DEFAULT: '#2d2d2d',
-                    foreground: '#8a8a8a'
+                    DEFAULT: 'rgba(0, 0, 0, 0.06)',
+                    foreground: '#666666'
                 },
                 accent: {
-                    DEFAULT: '#c8ff64',
-                    foreground: '#0a0a0a'
+                    DEFAULT: '#c25a00',
+                    foreground: '#ffffff'
                 },
                 destructive: {
                     DEFAULT: '#ef4444',
                     foreground: '#ffffff'
                 },
-                border: 'rgba(255,255,255,0.08)',
-                input: 'rgba(255,255,255,0.08)',
-                ring: '#c8ff64'
+                border: 'rgba(0,0,0,0.08)',
+                input: 'rgba(0,0,0,0.08)',
+                ring: '#c25a00'
             },
             borderRadius: {
                 lg: 'var(--radius)',
